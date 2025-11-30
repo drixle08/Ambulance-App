@@ -1,0 +1,21 @@
+{
+  "name": "MWCS Paramedic Toolkit",
+  "short_name": "MWCS Tools",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#22c55e",
+  "description": "Paramedic toolkit with MWCS, BEFAST, asthma, vitals, paediatric arrest and GCS calculators.",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

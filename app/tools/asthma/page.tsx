@@ -21,6 +21,7 @@ export default function AsthmaSeverityPage() {
   const [wheeze, setWheeze] = useState<SeverityLevel>("none");
   const [accessory, setAccessory] = useState<SeverityLevel>("none");
   const [spo2, setSpo2] = useState<SeverityLevel>("none");
+  const [copied, setCopied] = useState(false);
 
   const features = [speech, respRate, wheeze, accessory, spo2];
 
@@ -35,65 +36,80 @@ export default function AsthmaSeverityPage() {
   let label = "No criteria selected";
   let explain =
     "Start by choosing features that best describe the patient. This tool is a guide only and must be used with your local asthma CPG.";
-  let color =
-    "border-slate-700 bg-slate-900 text-slate-100";
+  let color = "border-slate-700 bg-slate-900 text-slate-100";
   let managementLines: string[] = [
     "Complete a full respiratory assessment.",
     "Check vital signs and SpO₂.",
-    "Reassess after bronchodilator if given."
+    "Reassess after bronchodilator if given.",
   ];
 
   if (highestLevel === "mild") {
     label = "Mild exacerbation";
     explain =
       "Likely mild asthma exacerbation with minimal work of breathing and near-normal speech.";
-    color =
-      "border-emerald-500/40 bg-emerald-500/10 text-emerald-50";
+    color = "border-emerald-500/40 bg-emerald-500/10 text-emerald-50";
     managementLines = [
       "Administer short-acting bronchodilator (e.g. salbutamol) as per CPG.",
       "Monitor RR, HR, SpO₂ and work of breathing.",
       "Consider steroid if indicated by your CPG.",
-      "Assess response; arrange follow-up or ED as per protocol."
+      "Assess response; arrange follow-up or ED as per protocol.",
     ];
   } else if (highestLevel === "moderate") {
     label = "Moderate exacerbation";
     explain =
       "Increased work of breathing with reduced exercise tolerance or speech, but no features of life-threatening asthma.";
-    color =
-      "border-amber-500/40 bg-amber-500/10 text-amber-50";
+    color = "border-amber-500/40 bg-amber-500/10 text-amber-50";
     managementLines = [
       "Give repeated or continuous short-acting bronchodilator as per CPG.",
       "Administer systemic steroid if not already given.",
       "Monitor HR, RR, SpO₂ and ability to speak or complete sentences.",
-      "Transport to ED; consider higher transport priority if slow to respond."
+      "Transport to ED; consider higher transport priority if slow to respond.",
     ];
   } else if (highestLevel === "severe") {
     label = "Severe exacerbation";
     explain =
       "Marked work of breathing with significant limitation of speech and abnormal vital signs.";
-    color =
-      "border-red-500/50 bg-red-500/10 text-red-50";
+    color = "border-red-500/50 bg-red-500/10 text-red-50";
     managementLines = [
       "Urgent treatment with frequent/continuous bronchodilators as per CPG.",
       "Administer systemic steroid; consider ipratropium if in protocol.",
       "Provide oxygen if SpO₂ is below target range in your CPG.",
       "High-priority transport to ED; pre-alert receiving facility.",
-      "Monitor closely for signs of fatigue or deterioration."
+      "Monitor closely for signs of fatigue or deterioration.",
     ];
   } else if (highestLevel === "life") {
     label = "Life-threatening / near respiratory failure";
     explain =
       "Features suggest impending respiratory failure: exhaustion, silent chest, altered mental status or very poor air entry.";
-    color =
-      "border-red-500/70 bg-red-500/15 text-red-50";
+    color = "border-red-500/70 bg-red-500/15 text-red-50";
     managementLines = [
       "Treat as time-critical; activate highest transport priority.",
       "Aggressive bronchodilator therapy as per CPG; consider additional agents if protocol allows.",
       "Provide high-concentration oxygen; support ventilation as needed.",
       "Prepare for possible assisted ventilation and early senior/airway support.",
-      "Minimise exertion and agitation; continuous monitoring during transport."
+      "Minimise exertion and agitation; continuous monitoring during transport.",
     ];
   }
+
+  // 🔹 Text that will be copied to clipboard
+  const summaryText =
+    highestLevel === "none"
+      ? "Asthma severity: no criteria selected."
+      : `Asthma – ${label}. Use with local asthma CPG and clinical judgement.`;
+
+  const handleCopySummary = async () => {
+    try {
+      if (!("clipboard" in navigator)) {
+        console.warn("Clipboard API not available");
+        return;
+      }
+      await navigator.clipboard.writeText(summaryText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy asthma summary:", err);
+    }
+  };
 
   const reset = () => {
     setSpeech("none");
@@ -101,52 +117,69 @@ export default function AsthmaSeverityPage() {
     setWheeze("none");
     setAccessory("none");
     setSpo2("none");
+    setCopied(false);
   };
 
   const speechOptions: Option[] = [
     { label: "Normal speech / full sentences", value: "mild" },
     { label: "Short phrases only", value: "moderate" },
     { label: "Single words only", value: "severe" },
-    { label: "Unable to speak / drowsy", value: "life" }
+    { label: "Unable to speak / drowsy", value: "life" },
   ];
 
   const respRateOptions: Option[] = [
     { label: "Normal for age / slightly ↑", value: "mild" },
     { label: "Moderately ↑ RR", value: "moderate" },
     { label: "Marked tachypnoea", value: "severe" },
-    { label: "Very slow RR / irregular", value: "life" }
+    { label: "Very slow RR / irregular", value: "life" },
   ];
 
   const wheezeOptions: Option[] = [
     { label: "Mild expiratory wheeze", value: "mild" },
     { label: "Loud bilateral wheeze", value: "moderate" },
     { label: "Very loud / tight wheeze", value: "severe" },
-    { label: "Silent chest / minimal air entry", value: "life" }
+    { label: "Silent chest / minimal air entry", value: "life" },
   ];
 
   const accessoryOptions: Option[] = [
     { label: "Minimal / no accessory muscle use", value: "mild" },
     { label: "Visible accessory muscle use", value: "moderate" },
     { label: "Severe recession / tracheal tug", value: "severe" },
-    { label: "Exhausted, little chest movement", value: "life" }
+    { label: "Exhausted, little chest movement", value: "life" },
   ];
 
   const spo2Options: Option[] = [
     { label: "SpO₂ ≥ 95%", value: "mild" },
     { label: "SpO₂ 92–94%", value: "moderate" },
     { label: "SpO₂ < 92%", value: "severe" },
-    { label: "Very poor sats despite O₂", value: "life" }
+    { label: "Very poor sats despite O₂", value: "life" },
   ];
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 space-y-6">
-        <Link
-          href="/dashboard"
-          className="text-xs font-medium text-slate-400 hover:text-emerald-400"
-        >
-          ← Back to dashboard
-        </Link>
+        {/* Top bar: back + copy summary */}
+        <div className="flex items-center justify-between gap-4">
+          <Link
+            href="/dashboard"
+            className="text-xs font-medium text-slate-400 hover:text-emerald-400"
+          >
+            ← Back to dashboard
+          </Link>
+
+          <button
+            type="button"
+            onClick={handleCopySummary}
+            className={classNames(
+              "rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5",
+              copied
+                ? "border-emerald-500 bg-emerald-500/15 text-emerald-100"
+                : "border-slate-700 bg-slate-900 text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80"
+            )}
+          >
+            {copied ? "Copied!" : "Copy summary"}
+          </button>
+        </div>
 
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400/80">
@@ -179,6 +212,14 @@ export default function AsthmaSeverityPage() {
           </div>
 
           <p className="mt-3 text-xs text-slate-100">{explain}</p>
+
+          <p className="mt-3 text-[11px] text-slate-300">
+            Copied summary format:{" "}
+            <span className="font-semibold">
+              {`"${summaryText}"`}
+            </span>
+            . Paste into your PRF or clinical notes.
+          </p>
 
           <div className="mt-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-300">

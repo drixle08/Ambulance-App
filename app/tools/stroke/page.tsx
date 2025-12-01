@@ -26,6 +26,7 @@ export default function StrokeBefastPage() {
   const [speech, setSpeech] = useState<"normal" | "abnormal" | "unknown">(
     "normal"
   );
+  const [copied, setCopied] = useState(false);
 
   const fields = { balance, eyes, face, arm, speech };
   const positives = Object.values(fields).filter(
@@ -43,7 +44,7 @@ export default function StrokeBefastPage() {
   let managementLines: string[] = [
     "Continue full neuro and medical assessment.",
     "Check blood glucose and vital signs.",
-    "Reassess if symptoms evolve or new deficits appear."
+    "Reassess if symptoms evolve or new deficits appear.",
   ];
 
   if (suspectedStroke && positives <= 2) {
@@ -56,7 +57,7 @@ export default function StrokeBefastPage() {
       "Establish exact time of symptom onset / last known well.",
       "Check blood glucose; correct hypoglycaemia if present.",
       "Monitor airway, breathing, circulation and vital signs.",
-      "Arrange timely transport to stroke-capable facility as per local pathway."
+      "Arrange timely transport to stroke-capable facility as per local pathway.",
     ];
   }
 
@@ -70,9 +71,57 @@ export default function StrokeBefastPage() {
       "High-priority activation of stroke pathway; pre-alert receiving hospital.",
       "Determine exact time of onset / last known well and bring any info/medication list.",
       "Check glucose, ECG and full vital signs; manage ABCs and oxygen if hypoxic.",
-      "Minimise on-scene time; aim for rapid transport to stroke centre as per local CPG."
+      "Minimise on-scene time; aim for rapid transport to stroke centre as per local CPG.",
     ];
   }
+
+  // Build a list of which components are abnormal/unknown for the summary
+  const positiveParts: string[] = [];
+  const unknownParts: string[] = [];
+
+  if (balance === "abnormal") positiveParts.push("B (Balance)");
+  else if (balance === "unknown") unknownParts.push("B (Balance)");
+
+  if (eyes === "abnormal") positiveParts.push("E (Eyes)");
+  else if (eyes === "unknown") unknownParts.push("E (Eyes)");
+
+  if (face === "abnormal") positiveParts.push("F (Face)");
+  else if (face === "unknown") unknownParts.push("F (Face)");
+
+  if (arm === "abnormal") positiveParts.push("A (Arm)");
+  else if (arm === "unknown") unknownParts.push("A (Arm)");
+
+  if (speech === "abnormal") positiveParts.push("S (Speech)");
+  else if (speech === "unknown") unknownParts.push("S (Speech)");
+
+  const positivesText = positiveParts.length
+    ? positiveParts.join(", ")
+    : "none";
+
+  const unknownText = unknownParts.length
+    ? unknownParts.join(", ")
+    : "";
+
+  // 🔹 Text that will be copied to clipboard
+  const summaryText = !suspectedStroke
+    ? "Stroke screen – BEFAST: no positive findings recorded. Continue full assessment and consider other causes."
+    : `Stroke screen – BEFAST positive in ${positives} component(s): ${positivesText}${
+        unknownText ? `. Unable/unknown in: ${unknownText}` : ""
+      }. Treat as possible acute stroke and follow local stroke pathway.`;
+
+  const handleCopySummary = async () => {
+    try {
+      if (!("clipboard" in navigator)) {
+        console.warn("Clipboard API not available");
+        return;
+      }
+      await navigator.clipboard.writeText(summaryText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy BEFAST summary:", err);
+    }
+  };
 
   const reset = () => {
     setBalance("normal");
@@ -80,23 +129,50 @@ export default function StrokeBefastPage() {
     setFace("normal");
     setArm("normal");
     setSpeech("normal");
+    setCopied(false);
   };
 
   const yesNoUnknown: Option[] = [
     { label: "Normal", value: "normal" },
     { label: "Abnormal", value: "abnormal" },
-    { label: "Unable / unknown", value: "unknown" }
+    { label: "Unable / unknown", value: "unknown" },
   ];
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 space-y-6">
-        <Link
-          href="/dashboard"
-          className="text-xs font-medium text-slate-400 hover:text-emerald-400"
-        >
-          ← Back to dashboard
-        </Link>
+        {/* Top bar: back + copy + reset */}
+        <div className="flex items-center justify-between gap-4">
+          <Link
+            href="/dashboard"
+            className="text-xs font-medium text-slate-400 hover:text-emerald-400"
+          >
+            ← Back to dashboard
+          </Link>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCopySummary}
+              className={classNames(
+                "rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5",
+                copied
+                  ? "border-emerald-500 bg-emerald-500/15 text-emerald-100"
+                  : "border-slate-700 bg-slate-900 text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80"
+              )}
+            >
+              {copied ? "Copied!" : "Copy summary"}
+            </button>
+
+            <button
+              type="button"
+              onClick={reset}
+              className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80 transition"
+            >
+              ⟳ Reset
+            </button>
+          </div>
+        </div>
 
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400/80">
@@ -135,6 +211,14 @@ export default function StrokeBefastPage() {
           </div>
 
           <p className="mt-3 text-xs text-slate-100">{flagExplain}</p>
+
+          <p className="mt-3 text-[11px] text-slate-300">
+            Copied summary format:{" "}
+            <span className="font-semibold">
+              {`"${summaryText}"`}
+            </span>{" "}
+            – paste into your PRF or clinical notes.
+          </p>
 
           <div className="mt-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-300">

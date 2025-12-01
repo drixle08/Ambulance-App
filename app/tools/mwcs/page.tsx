@@ -20,17 +20,9 @@ export default function MwcsPage() {
   const [stridor, setStridor] = useState<number>(0);
   const [airEntry, setAirEntry] = useState<number>(0);
   const [retractions, setRetractions] = useState<number>(0);
+  const [copied, setCopied] = useState(false);
 
   const total = loc + cyanosis + stridor + airEntry + retractions;
-
-  // 🔄 Reset all fields
-  const resetAll = () => {
-    setLoc(0);
-    setCyanosis(0);
-    setStridor(0);
-    setAirEntry(0);
-    setRetractions(0);
-  };
 
   // Severity based on total score (standard Westley bands)
   let severityLabel = "Mild (≤ 2)";
@@ -42,7 +34,7 @@ export default function MwcsPage() {
   let managementLines: string[] = [
     "Keep child calm, avoid unnecessary handling or agitation.",
     "Give corticosteroid (e.g. dexamethasone) as per CPG if not already given.",
-    "Monitor for progression; usually suitable for observation and possible discharge if stable and no red flags."
+    "Monitor for progression; usually suitable for observation and possible discharge if stable and no red flags.",
   ];
 
   if (total >= 3 && total <= 5) {
@@ -55,7 +47,7 @@ export default function MwcsPage() {
       "Administer corticosteroid as per CPG.",
       "Consider nebulised adrenaline if moderate distress or stridor at rest, as per CPG.",
       "Provide oxygen if hypoxic; continuously monitor SpO₂, RR, HR and work of breathing.",
-      "Transport to ED; consider higher transport priority if the child is tiring or worsening."
+      "Transport to ED; consider higher transport priority if the child is tiring or worsening.",
     ];
   } else if (total >= 6 && total <= 11) {
     severityLabel = "Severe (6–11)";
@@ -68,7 +60,7 @@ export default function MwcsPage() {
       "Give nebulised adrenaline as per CPG; repeat as allowed if deterioration recurs.",
       "Administer corticosteroid (if not already given).",
       "High-flow oxygen if tolerated; close monitoring of SpO₂, RR, HR, mental status.",
-      "Urgent transport to ED with high priority; pre-alert receiving facility."
+      "Urgent transport to ED with high priority; pre-alert receiving facility.",
     ];
   } else if (total >= 12) {
     severityLabel = "Impending respiratory failure (≥ 12)";
@@ -81,49 +73,95 @@ export default function MwcsPage() {
       "Support airway and breathing; provide high-flow oxygen and prepare for assisted ventilation if needed.",
       "Nebulised adrenaline as per CPG, repeat per protocol while preparing definitive airway.",
       "Ensure senior/airway-experienced clinician involvement as early as possible.",
-      "Avoid upsetting the child; allow parent presence if safe."
+      "Avoid upsetting the child; allow parent presence if safe.",
     ];
   }
 
+  // 🔹 Text that will be copied to clipboard
+  const summaryText =
+    total === 0
+      ? "MWCS 0 – no croup criteria selected."
+      : `MWCS ${total} – ${severityLabel}. Use with local croup CPG and clinical judgement.`;
+
+  const handleCopySummary = async () => {
+    try {
+      if (!("clipboard" in navigator)) {
+        console.warn("Clipboard API not available");
+        return;
+      }
+      await navigator.clipboard.writeText(summaryText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy MWCS summary:", err);
+    }
+  };
+
+  // 🔄 Reset all fields
+  const resetAll = () => {
+    setLoc(0);
+    setCyanosis(0);
+    setStridor(0);
+    setAirEntry(0);
+    setRetractions(0);
+    setCopied(false);
+  };
+
   const locOptions: Option[] = [
     { label: "Normal / alert", value: 0 },
-    { label: "Disoriented / agitated", value: 5 }
+    { label: "Disoriented / agitated", value: 5 },
   ];
 
   const cyanosisOptions: Option[] = [
     { label: "None", value: 0 },
     { label: "With agitation", value: 4 },
-    { label: "At rest", value: 5 }
+    { label: "At rest", value: 5 },
   ];
 
   const stridorOptions: Option[] = [
     { label: "None", value: 0 },
     { label: "With agitation", value: 1 },
-    { label: "At rest", value: 2 }
+    { label: "At rest", value: 2 },
   ];
 
   const airEntryOptions: Option[] = [
     { label: "Normal", value: 0 },
     { label: "Decreased", value: 1 },
-    { label: "Markedly decreased", value: 2 }
+    { label: "Markedly decreased", value: 2 },
   ];
 
   const retractionOptions: Option[] = [
     { label: "None", value: 0 },
     { label: "Mild", value: 1 },
     { label: "Moderate", value: 2 },
-    { label: "Severe", value: 3 }
+    { label: "Severe", value: 3 },
   ];
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 space-y-6">
-        <Link
-          href="/dashboard"
-          className="text-xs font-medium text-slate-400 hover:text-emerald-400"
-        >
-          ← Back to dashboard
-        </Link>
+        {/* Top bar: back + copy summary */}
+        <div className="flex items-center justify-between gap-4">
+          <Link
+            href="/dashboard"
+            className="text-xs font-medium text-slate-400 hover:text-emerald-400"
+          >
+            ← Back to dashboard
+          </Link>
+
+          <button
+            type="button"
+            onClick={handleCopySummary}
+            className={classNames(
+              "rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5",
+              copied
+                ? "border-emerald-500 bg-emerald-500/15 text-emerald-100"
+                : "border-slate-700 bg-slate-900 text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80"
+            )}
+          >
+            {copied ? "Copied!" : "Copy summary"}
+          </button>
+        </div>
 
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400/80">
@@ -162,6 +200,14 @@ export default function MwcsPage() {
           </div>
 
           <p className="mt-3 text-xs text-slate-200">{severityExplain}</p>
+
+          <p className="mt-3 text-[11px] text-slate-300">
+            Copied summary format:{" "}
+            <span className="font-semibold">
+              {`"${summaryText}"`}
+            </span>
+            . Paste into your PRF or clinical notes.
+          </p>
 
           <div className="mt-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-300">
@@ -249,7 +295,13 @@ type FieldGroupProps = {
   onChange: (v: number) => void;
 };
 
-function FieldGroup({ label, helper, options, value, onChange }: FieldGroupProps) {
+function FieldGroup({
+  label,
+  helper,
+  options,
+  value,
+  onChange,
+}: FieldGroupProps) {
   return (
     <div className="space-y-2">
       <div>

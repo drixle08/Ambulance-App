@@ -1,197 +1,198 @@
-import React from "react";
-import Link from "next/link";
+"use client";
 
-type CategoryId = "paeds" | "neuro" | "resp" | "reference";
+import Link from "next/link";
+import { useState } from "react";
+
+type Category = "all" | "paeds" | "resp" | "neuro" | "resus" | "reference";
 
 type Tool = {
-  id: string;
   name: string;
-  badge: string;
-  description: string;
-  tagline: string;
-  status: string;
   href: string;
-  category: CategoryId;
+  label: string;
+  description: string;
+  meta: string;
+  categories: Category[];
 };
 
-type Category = {
-  id: CategoryId;
-  title: string;
-  subtitle: string;
-};
+function classNames(...classes: (string | false | null | undefined)[]) {
+  return classes.filter(Boolean).join(" ");
+}
 
-const categories: Category[] = [
+const tools: Tool[] = [
   {
-    id: "paeds",
-    title: "Paediatric tools",
-    subtitle: "Age/weight-based calculators and paeds-specific assessments.",
+    name: "MWCS (Croup)",
+    href: "/tools/mwcs",
+    label: "Calculator",
+    description:
+      "Modified Westley Croup Score with automatic severity banding and suggested actions.",
+    meta: "Paediatrics • Respiratory",
+    categories: ["paeds", "resp"],
   },
   {
-    id: "neuro",
-    title: "Neurological tools",
-    subtitle: "Consciousness, stroke screening and neuro-focused assessments.",
+    name: "Asthma Severity",
+    href: "/tools/asthma",
+    label: "Assessment",
+    description:
+      "Field-focused asthma severity bands with prehospital management prompts.",
+    meta: "Respiratory • All ages",
+    categories: ["resp", "reference"],
   },
   {
-    id: "resp",
-    title: "Respiratory tools",
-    subtitle: "Airway and breathing severity tools for the field.",
+    name: "Paediatric Arrest (WAAFELSS)",
+    href: "/tools/peds-arrest",
+    label: "Calculator",
+    description:
+      "Age-based weight estimate, arrest drugs, defibrillation energy and target SBP.",
+    meta: "Paediatrics • Resuscitation",
+    categories: ["paeds", "resus"],
   },
   {
-    id: "reference",
-    title: "Reference",
-    subtitle: "Quick-look reference for vitals and general parameters.",
+    name: "Glasgow Coma Scale (GCS)",
+    href: "/tools/gcs",
+    label: "Assessment",
+    description:
+      "Eye, verbal and motor scoring with severity band and copy-to-notes summary.",
+    meta: "Neuro • Adult & Paeds",
+    categories: ["neuro", "reference"],
+  },
+  {
+    name: "Stroke BEFAST Screen",
+    href: "/tools/stroke-befast",
+    label: "Assessment",
+    description:
+      "Quick BEFAST screen with count of positive components and stroke pathway prompts.",
+    meta: "Neuro • Stroke",
+    categories: ["neuro"],
+  },
+  {
+    name: "Normal Vitals by Age",
+    href: "/tools/vitals",
+    label: "Reference",
+    description:
+      "Textbook-style HR, RR, SBP and SpO₂ bands from neonate to adult, with mini overview table.",
+    meta: "Reference • All ages",
+    categories: ["paeds", "reference"],
   },
 ];
 
-const tools: Tool[] = [
-  // Paeds
-  {
-    id: "mwcs",
-    name: "MWCS (Croup)",
-    badge: "Calculator",
-    description:
-      "Modified Westley Croup Score with automatic severity grading for prehospital use.",
-    tagline: "Respiratory • Paediatrics",
-    status: "Live",
-    href: "/tools/mwcs",
-    category: "paeds",
-  },
-  {
-    id: "peds-arrest",
-    name: "Pediatric Arrest Calculator",
-    badge: "Calculator",
-    description:
-      "Age → weight estimate with key arrest doses and parameters (WAAFELSS style).",
-    tagline: "Paediatrics • Resus",
-    status: "Live",
-    href: "/tools/peds-arrest",
-    category: "paeds",
-  },
-
-  // Neuro
-  {
-    id: "gcs",
-    name: "Glasgow Coma Scale (GCS)",
-    badge: "Assessment",
-    description:
-      "Eye, verbal and motor components with automatic total and severity band.",
-    tagline: "Neuro • Consciousness",
-    status: "Live",
-    href: "/tools/gcs",
-    category: "neuro",
-  },
-  {
-    id: "stroke",
-    name: "Stroke BEFAST",
-    badge: "Assessment",
-    description:
-      "Bedside BEFAST stroke screening with prompts and transport priority hints.",
-    tagline: "Neuro • Time critical",
-    status: "Live",
-    href: "/tools/stroke",
-    category: "neuro",
-  },
-
-  // Respiratory
-  {
-    id: "asthma",
-    name: "Asthma Severity",
-    badge: "Assessment",
-    description:
-      "Simple asthma severity tool tailored for ambulance assessment and treatment thresholds.",
-    tagline: "Respiratory",
-    status: "Live",
-    href: "/tools/asthma",
-    category: "resp",
-  },
-
-  // Reference
-  {
-    id: "vitals",
-    name: "Normal Vitals by Age",
-    badge: "Reference",
-    description:
-      "Age-based reference for HR, RR, BP, SpO₂ and more, optimised for quick look-up.",
-    tagline: "Reference • All ages",
-    status: "Live",
-    href: "/tools/vitals",
-    category: "reference",
-  },
+const categoryPills: { id: Category; label: string }[] = [
+  { id: "all", label: "All tools" },
+  { id: "paeds", label: "Paediatrics" },
+  { id: "resp", label: "Respiratory" },
+  { id: "neuro", label: "Neuro" },
+  { id: "resus", label: "Resuscitation" },
+  { id: "reference", label: "Reference" },
 ];
 
 export default function DashboardPage() {
+  const [activeCategory, setActiveCategory] = useState<Category>("all");
+
+  const filteredTools =
+    activeCategory === "all"
+      ? tools
+      : tools.filter((tool) => tool.categories.includes(activeCategory));
+
+  const activeLabel =
+    categoryPills.find((c) => c.id === activeCategory)?.label ?? "All tools";
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
-        {/* Global header */}
-        <header className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-[0.3em] text-emerald-400/80">
-            Ambulance Paramedic Toolkit
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8 space-y-6">
+        {/* Top bar: back to home */}
+        <div className="flex items-center justify-between gap-4">
+          <Link
+            href="/"
+            className="text-xs font-medium text-slate-400 hover:text-emerald-400"
+          >
+            ← Back to home
+          </Link>
+          <p className="text-[11px] text-slate-500">
+            {filteredTools.length} tool
+            {filteredTools.length !== 1 ? "s" : ""} shown
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Dashboard
+        </div>
+
+        {/* Header */}
+        <header className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400/80">
+            Tools
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Ambulance Paramedic Toolkit
           </h1>
           <p className="max-w-2xl text-sm text-slate-400">
-            Central hub for your ambulance tools, organised by system. Click a
-            card to open its calculator, assessment or reference page.
+            Quick-access calculators and assessment aids grouped by clinical
+            area. Choose a category or browse all tools. Always use in
+            conjunction with your ambulance service Clinical Practice Guidelines.
           </p>
         </header>
 
-        {/* Category sections */}
-        <div className="space-y-8">
-          {categories.map((cat) => {
-            const toolsInCategory = tools.filter(
-              (tool) => tool.category === cat.id
-            );
+        {/* Category filters */}
+        <section className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+            Filter by category
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {categoryPills.map((cat) => {
+              const isActive = cat.id === activeCategory;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={classNames(
+                    "rounded-full border px-3 py-1.5 text-[11px] font-medium transition",
+                    "border-slate-700 bg-slate-950 text-slate-200 hover:border-emerald-400/70 hover:text-emerald-300 hover:bg-slate-900",
+                    isActive &&
+                      "border-emerald-400 bg-emerald-500/10 text-emerald-100 shadow-sm"
+                  )}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-slate-500">
+            Showing: <span className="font-semibold text-slate-300">{activeLabel}</span>
+          </p>
+        </section>
 
-            if (toolsInCategory.length === 0) return null;
+        {/* Tools grid */}
+        <section className="grid gap-4 sm:grid-cols-2">
+          {filteredTools.map((tool) => (
+            <Link
+              key={tool.name}
+              href={tool.href}
+              className="group rounded-2xl border border-slate-800 bg-slate-900/80 p-4 transition hover:border-emerald-400/70 hover:bg-slate-900"
+            >
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-slate-50">
+                  {tool.name}
+                </p>
+                <span className="rounded-full border border-slate-700 bg-slate-950 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300 group-hover:border-emerald-400/80 group-hover:text-emerald-200">
+                  {tool.label}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">{tool.description}</p>
+              <p className="mt-3 text-[10px] font-medium text-slate-500">
+                {tool.meta}
+              </p>
+            </Link>
+          ))}
 
-            return (
-              <section key={cat.id} className="space-y-3">
-                <div className="space-y-1">
-                  <h2 className="text-lg font-semibold tracking-tight">
-                    {cat.title}
-                  </h2>
-                  <p className="text-xs text-slate-400">{cat.subtitle}</p>
-                </div>
+          {filteredTools.length === 0 && (
+            <div className="col-span-full rounded-2xl border border-slate-800 bg-slate-900/80 p-4 text-xs text-slate-400">
+              No tools match this category yet. This section will populate as
+              more calculators and references are added.
+            </div>
+          )}
+        </section>
 
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {toolsInCategory.map((tool) => (
-                    <Link
-                      key={tool.id}
-                      href={tool.href}
-                      className="group flex h-full flex-col justify-between rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-sm ring-1 ring-black/5 transition hover:border-emerald-400/70 hover:bg-slate-900 hover:shadow-lg"
-                    >
-                      <div>
-                        <div className="flex items-center justify-between gap-2">
-                          <h3 className="text-base font-semibold leading-tight">
-                            {tool.name}
-                          </h3>
-                          <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                            {tool.badge}
-                          </span>
-                        </div>
-
-                        <p className="mt-2 text-xs leading-relaxed text-slate-400">
-                          {tool.description}
-                        </p>
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-between text-[11px]">
-                        <span className="rounded-full bg-slate-800/80 px-2 py-0.5 text-slate-300">
-                          {tool.tagline}
-                        </span>
-                        <span className="text-slate-500 group-hover:text-emerald-400">
-                          {tool.status}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+        <p className="pt-2 text-[11px] text-slate-500">
+          This dashboard is for education and decision-support. It does not
+          replace Clinical Practice Guidelines, online medical control or
+          clinical judgement.
+        </p>
       </div>
     </main>
   );

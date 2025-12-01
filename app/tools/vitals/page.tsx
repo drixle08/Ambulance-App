@@ -102,18 +102,52 @@ const ageBands: AgeBand[] = [
 
 export default function VitalsByAgePage() {
   const [selectedId, setSelectedId] = useState<AgeBandId>("adult");
+  const [copied, setCopied] = useState(false);
 
   const selected = ageBands.find((b) => b.id === selectedId) ?? ageBands[0];
+
+  // 🔹 Text that will be copied to clipboard
+  const summaryText = `Normal vitals – ${selected.label} (${selected.range}): HR ${selected.hr}, RR ${selected.rr}, SBP ${selected.sbp}, SpO₂ ${selected.spo2}. Use with local CPG, patient baseline and overall clinical picture.`;
+
+  const handleCopySummary = async () => {
+    try {
+      if (!("clipboard" in navigator)) {
+        console.warn("Clipboard API not available");
+        return;
+      }
+      await navigator.clipboard.writeText(summaryText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy vitals summary:", err);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8 space-y-6">
-        <Link
-          href="/dashboard"
-          className="text-xs font-medium text-slate-400 hover:text-emerald-400"
-        >
-          ← Back to dashboard
-        </Link>
+        {/* Top bar: back + copy summary */}
+        <div className="flex items-center justify-between gap-4">
+          <Link
+            href="/dashboard"
+            className="text-xs font-medium text-slate-400 hover:text-emerald-400"
+          >
+            ← Back to dashboard
+          </Link>
+
+          <button
+            type="button"
+            onClick={handleCopySummary}
+            className={classNames(
+              "rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5",
+              copied
+                ? "border-emerald-500 bg-emerald-500/15 text-emerald-100"
+                : "border-slate-700 bg-slate-900 text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80"
+            )}
+          >
+            {copied ? "Copied!" : "Copy summary"}
+          </button>
+        </div>
 
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400/80">
@@ -205,6 +239,14 @@ export default function VitalsByAgePage() {
                 {selected.notes}
               </p>
             )}
+
+            <p className="mt-3 text-[11px] text-slate-300">
+              Copied summary format:{" "}
+              <span className="font-semibold">
+                {`"${summaryText}"`}
+              </span>
+              . Paste into your PRF or clinical notes.
+            </p>
           </div>
         </section>
 
@@ -233,7 +275,9 @@ export default function VitalsByAgePage() {
                   )}
                 >
                   <td className="py-2 pr-3 align-top">
-                    <div className="font-medium text-slate-100">{band.label}</div>
+                    <div className="font-medium text-slate-100">
+                      {band.label}
+                    </div>
                     <div className="text-[10px] text-slate-500">
                       {band.range}
                     </div>

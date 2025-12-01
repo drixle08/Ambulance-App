@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InstallHint } from "./_components/InstallHint";
 
 const featuredTools = [
   {
@@ -135,6 +136,7 @@ export default function HomePage() {
           </div>
         </footer>
       </div>
+      <InstallHint />
     </main>
   );
 }

@@ -14,10 +14,10 @@ function classNames(...classes: (string | false | null | undefined)[]) {
 }
 
 export default function GcsPage() {
-  // Start at a fully alert patient by default (E4 V5 M6 = 15)
   const [eye, setEye] = useState<number>(4);
   const [verbal, setVerbal] = useState<number>(5);
   const [motor, setMotor] = useState<number>(6);
+  const [copied, setCopied] = useState(false);
 
   const total = eye + verbal + motor;
 
@@ -42,39 +42,102 @@ export default function GcsPage() {
       "border-red-500/60 bg-red-500/12 text-red-50";
   }
 
-  const eyeOptions: GcsOption[] = [
-    { label: "4 – Spontaneous", value: 4, helper: "Opens eyes without stimulus." },
-    { label: "3 – To speech", value: 3, helper: "Opens eyes when spoken to." },
-    { label: "2 – To pain", value: 2, helper: "Opens eyes only to painful stimulus." },
-    { label: "1 – No eye opening", value: 1, helper: "No response." },
-  ];
+  // 🔹 Text that will be copied to clipboard
+  const summaryText = `GCS ${total} (E${eye} V${verbal} M${motor}) – ${severityLabel}`;
 
-  const verbalOptions: GcsOption[] = [
-    { label: "5 – Oriented", value: 5, helper: "Converses normally, oriented." },
-    { label: "4 – Confused", value: 4, helper: "Converses but disoriented or confused." },
-    { label: "3 – Inappropriate words", value: 3, helper: "Random or exclamatory speech." },
-    { label: "2 – Incomprehensible sounds", value: 2, helper: "Moans or groans only." },
-    { label: "1 – No verbal response", value: 1, helper: "No sounds." },
-  ];
-
-  const motorOptions: GcsOption[] = [
-    { label: "6 – Obeys commands", value: 6, helper: "Performs simple requested movements." },
-    { label: "5 – Localises pain", value: 5, helper: "Purposeful movement towards painful stimulus." },
-    { label: "4 – Withdraws from pain", value: 4, helper: "Pulls away from painful stimulus." },
-    { label: "3 – Abnormal flexion", value: 3, helper: "Decorticate posturing to pain." },
-    { label: "2 – Extension", value: 2, helper: "Decerebrate posturing to pain." },
-    { label: "1 – No motor response", value: 1, helper: "No movement." },
-  ];
+  const handleCopySummary = async () => {
+    try {
+      if (!("clipboard" in navigator)) {
+        console.warn("Clipboard API not available");
+        return;
+      }
+      await navigator.clipboard.writeText(summaryText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy GCS summary:", err);
+    }
+  };
 
   const resetAll = () => {
     setEye(4);
     setVerbal(5);
     setMotor(6);
+    setCopied(false);
   };
+
+  const eyeOptions: GcsOption[] = [
+    {
+      label: "4 – Spontaneous",
+      value: 4,
+      helper: "Opens eyes without stimulus.",
+    },
+    {
+      label: "3 – To speech",
+      value: 3,
+      helper: "Opens eyes when spoken to.",
+    },
+    {
+      label: "2 – To pain",
+      value: 2,
+      helper: "Opens eyes only to painful stimulus.",
+    },
+    { label: "1 – No eye opening", value: 1, helper: "No response." },
+  ];
+
+  const verbalOptions: GcsOption[] = [
+    { label: "5 – Oriented", value: 5, helper: "Converses normally, oriented." },
+    {
+      label: "4 – Confused",
+      value: 4,
+      helper: "Converses but disoriented or confused.",
+    },
+    {
+      label: "3 – Inappropriate words",
+      value: 3,
+      helper: "Random or exclamatory speech.",
+    },
+    {
+      label: "2 – Incomprehensible sounds",
+      value: 2,
+      helper: "Moans or groans only.",
+    },
+    { label: "1 – No verbal response", value: 1, helper: "No sounds." },
+  ];
+
+  const motorOptions: GcsOption[] = [
+    {
+      label: "6 – Obeys commands",
+      value: 6,
+      helper: "Performs simple requested movements.",
+    },
+    {
+      label: "5 – Localises pain",
+      value: 5,
+      helper: "Purposeful movement towards painful stimulus.",
+    },
+    {
+      label: "4 – Withdraws from pain",
+      value: 4,
+      helper: "Pulls away from painful stimulus.",
+    },
+    {
+      label: "3 – Abnormal flexion",
+      value: 3,
+      helper: "Decorticate posturing to pain.",
+    },
+    {
+      label: "2 – Extension",
+      value: 2,
+      helper: "Decerebrate posturing to pain.",
+    },
+    { label: "1 – No motor response", value: 1, helper: "No movement." },
+  ];
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8 space-y-6">
+        {/* Top bar: back + buttons */}
         <div className="flex items-center justify-between gap-4">
           <Link
             href="/dashboard"
@@ -83,22 +146,37 @@ export default function GcsPage() {
             ← Back to dashboard
           </Link>
 
-          <button
-            type="button"
-            onClick={resetAll}
-            className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80 transition flex items-center gap-1.5"
-          >
-            ⟳ Reset to 15
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCopySummary}
+              className={classNames(
+                "rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5",
+                copied
+                  ? "border-emerald-500 bg-emerald-500/15 text-emerald-100"
+                  : "border-slate-700 bg-slate-900 text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80"
+              )}
+            >
+              {copied ? "Copied!" : "Copy summary"}
+            </button>
+
+            <button
+              type="button"
+              onClick={resetAll}
+              className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80 transition flex items-center gap-1.5"
+            >
+              ⟳ Reset to 15
+            </button>
+          </div>
         </div>
 
         <header className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400/80">
             Assessment
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Glasgow Coma Scale (GCS)
-          </h1>
+             <h1 className="text-3xl font-semibold tracking-tight">
+            Glasgow Coma Scale (GCS) – TEST
+             </h1>
           <p className="text-sm text-slate-400">
             Select the most appropriate eye, verbal and motor responses. The tool
             will calculate the total GCS and show a severity band. Always
@@ -135,6 +213,14 @@ export default function GcsPage() {
           <p className="mt-3 text-xs text-slate-100">{severityExplain}</p>
 
           <p className="mt-3 text-[11px] text-slate-300">
+            Copied summary format:{" "}
+            <span className="font-semibold">
+              {`"${summaryText}"`}
+            </span>
+            . Paste into your PRF or clinical notes.
+          </p>
+
+          <p className="mt-2 text-[11px] text-slate-400">
             Consider repeating GCS over time and documenting trends, particularly
             in head injury or stroke. In intubated/sedated patients, record{" "}
             <span className="font-semibold">“T”</span> or relevant notation for the

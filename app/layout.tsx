@@ -17,9 +17,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-slate-950 text-slate-50">
-        {/* This will register the service worker once we add it */}
-        <ServiceWorkerRegister />
         {children}
+        {/* Only register the service worker in production (Vercel), not in dev */}
+        {process.env.NODE_ENV === "production" && <ServiceWorkerRegister />}
       </body>
     </html>
   );

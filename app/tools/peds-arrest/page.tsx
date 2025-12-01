@@ -9,33 +9,33 @@ function toFixed(value: number | null | undefined, dp: number = 1) {
   return value.toFixed(dp);
 }
 
-// Estimate weight if actual not provided
+// Estimate weight if actual not provided (aligned with CPG v2.4 formulas)
 function estimateWeightKg(ageYears: number, ageMonths: number): number | null {
   const totalMonths = ageYears * 12 + ageMonths;
 
   if (totalMonths <= 0) return null;
 
-  // <1 year: (months × 0.5) + 4
+  // 0–12 months: (months × 0.5) + 4
   if (ageYears === 0) {
     return totalMonths * 0.5 + 4;
   }
 
-  // 1–5 years: (age + 4) × 2
+  // 1–5 years: (age × 2) + 8
   if (ageYears >= 1 && ageYears <= 5) {
-    return (ageYears + 4) * 2;
+    return ageYears * 2 + 8;
   }
 
-  // 6–14 years: age × 3 + 7
+  // 6–14 years: (age × 3) + 7
   if (ageYears >= 6 && ageYears <= 14) {
     return ageYears * 3 + 7;
   }
 
-  // Outside range we support
+  // Outside range supported by the formula
   return null;
 }
 
 export default function PedsArrestPage() {
-  // 🔹 Age fields as strings so they can be truly blank
+  // Age fields as strings so they can be truly blank
   const [ageYears, setAgeYears] = useState<string>("");
   const [ageMonths, setAgeMonths] = useState<string>("");
   const [weightInput, setWeightInput] = useState<string>("");
@@ -51,15 +51,14 @@ export default function PedsArrestPage() {
   const weightUsed =
     !Number.isNaN(parsedWeight) && parsedWeight > 0 ? parsedWeight : estWeight;
 
-  // Calculations – generic textbook-style; must be checked against local CPG
+  // Core calculations (check against local CPG before clinical use)
   const adrenalineDoseMg =
     weightUsed != null ? 0.01 * weightUsed : null; // 0.01 mg/kg
   const adrenalineVolMl =
     weightUsed != null ? 0.1 * weightUsed : null; // 0.1 mL/kg of 1:10,000 (0.1 mg/mL)
 
   const fluids10 = weightUsed != null ? 10 * weightUsed : null;
-  const fluids20 = weightUsed != null ? 20 * weightUsed : null;
-  const fluidsMax = weightUsed != null ? 60 * weightUsed : null; // 3 × 20 mL/kg
+  const fluids20 = weightUsed != null ? 20 * weightUsed : null; // 2 × 10 mL/kg
 
   const amiodaroneDoseMg =
     weightUsed != null ? 5 * weightUsed : null; // 5 mg/kg
@@ -72,12 +71,9 @@ export default function PedsArrestPage() {
   const dextrose10Vol =
     weightUsed != null ? 2.5 * weightUsed : null; // 2.5 mL/kg of 10%
 
-  const computedAgeYears = hasAnyAge
-    ? yearsNum + monthsNum / 12
-    : null;
+  const computedAgeYears = hasAnyAge ? yearsNum + monthsNum / 12 : null;
 
-  const targetSBP =
-    hasAnyAge ? (yearsNum > 0 ? 70 + 2 * yearsNum : 70) : null;
+  const targetSBP = hasAnyAge ? (yearsNum > 0 ? 70 + 2 * yearsNum : 70) : null;
 
   const resetAll = () => {
     setAgeYears("");
@@ -104,13 +100,13 @@ export default function PedsArrestPage() {
         )} mL of 1:10,000). Amiodarone 5 mg/kg ≈ ${toFixed(
           amiodaroneDoseMg,
           1
-        )} mg. Fluids 20 mL/kg ≈ ${toFixed(
+        )} mg. Fluids 10 mL/kg ≈ ${toFixed(
+          fluids10,
+          0
+        )} mL; up to 20 mL/kg total ≈ ${toFixed(
           fluids20,
           0
-        )} mL (max ${toFixed(
-          fluidsMax,
-          0
-        )} mL). First shock 4 J/kg ≈ ${toFixed(
+        )} mL. First shock 4 J/kg ≈ ${toFixed(
           defib4,
           0
         )} J. Target SBP ≥ ${toFixed(
@@ -224,8 +220,9 @@ export default function PedsArrestPage() {
               </span>
             </p>
             <p className="text-[10px] text-slate-500">
-              Using: infants &lt;1 yr ≈ (months × 0.5) + 4; 1–10 yr ≈ (age + 4) ×
-              2. Confirm with your local guideline.
+              Using CPG v2.4 estimates: 0–12 months ≈ (months × 0.5) + 4; 1–5
+              years ≈ (age × 2) + 8; 6–14 years ≈ (age × 3) + 7. Always confirm
+              with your local CPG.
             </p>
           </div>
 
@@ -251,20 +248,42 @@ export default function PedsArrestPage() {
             title="Adrenaline (1:10,000)"
             subtitle="0.01 mg/kg = 0.1 mL/kg"
           >
-            <Row label="Dose (mg)" value={toFixed(adrenalineDoseMg, 3)} unit="mg" />
-            <Row label="Volume (mL)" value={toFixed(adrenalineVolMl, 1)} unit="mL" />
+            <Row
+              label="Dose (mg)"
+              value={toFixed(adrenalineDoseMg, 3)}
+              unit="mg"
+            />
+            <Row
+              label="Volume (mL)"
+              value={toFixed(adrenalineVolMl, 1)}
+              unit="mL"
+            />
           </DoseCard>
 
           {/* Amiodarone */}
           <DoseCard title="Amiodarone" subtitle="5 mg/kg (VF/pulseless VT)">
-            <Row label="Dose (mg)" value={toFixed(amiodaroneDoseMg, 1)} unit="mg" />
+            <Row
+              label="Dose (mg)"
+              value={toFixed(amiodaroneDoseMg, 1)}
+              unit="mg"
+            />
           </DoseCard>
 
           {/* Fluids */}
-          <DoseCard title="Fluids (Isotonic)" subtitle="10–20 mL/kg up to 3 boluses">
-            <Row label="10 mL/kg" value={toFixed(fluids10, 0)} unit="mL" />
-            <Row label="20 mL/kg" value={toFixed(fluids20, 0)} unit="mL" />
-            <Row label="Max (3 × 20 mL/kg)" value={toFixed(fluidsMax, 0)} unit="mL" />
+          <DoseCard
+            title="Fluids (Isotonic)"
+            subtitle="10 mL/kg × 2 (CPG WAAFELSS)"
+          >
+            <Row
+              label="10 mL/kg (1st bolus)"
+              value={toFixed(fluids10, 0)}
+              unit="mL"
+            />
+            <Row
+              label="Max 20 mL/kg (2 boluses)"
+              value={toFixed(fluids20, 0)}
+              unit="mL"
+            />
           </DoseCard>
 
           {/* Defibrillation energy */}
@@ -279,20 +298,35 @@ export default function PedsArrestPage() {
           </DoseCard>
 
           {/* Dextrose */}
-          <DoseCard title="Dextrose 10% (Hypoglycaemia)" subtitle="2.5 mL/kg IV">
-            <Row label="Volume" value={toFixed(dextrose10Vol, 1)} unit="mL" />
+          <DoseCard
+            title="Dextrose 10% (Hypoglycaemia)"
+            subtitle="2.5 mL/kg IV"
+          >
+            <Row
+              label="Volume"
+              value={toFixed(dextrose10Vol, 1)}
+              unit="mL"
+            />
           </DoseCard>
 
           {/* Target SBP */}
-          <DoseCard title="Target Systolic BP" subtitle="Age ≥1 yr: (age × 2) + 70">
-            <Row label="SBP ≥" value={toFixed(targetSBP ?? null, 0)} unit="mmHg" />
+          <DoseCard
+            title="Target Systolic BP"
+            subtitle="Age ≥1 yr: (age × 2) + 70"
+          >
+            <Row
+              label="SBP ≥"
+              value={toFixed(targetSBP ?? null, 0)}
+              unit="mmHg"
+            />
           </DoseCard>
         </section>
 
         <p className="pt-2 text-[11px] text-slate-500 max-w-4xl">
-          This tool is a quick-reference calculator for education and simulation.
-          All doses and parameters must be checked against your local Clinical
-          Practice Guidelines and clinical judgement before use in real patients.
+          This tool is a quick-reference calculator for education and
+          simulation. All doses and parameters must be checked against your
+          local Clinical Practice Guidelines and clinical judgement before use
+          in real patients.
         </p>
       </div>
     </main>

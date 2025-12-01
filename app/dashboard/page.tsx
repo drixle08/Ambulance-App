@@ -67,30 +67,51 @@ function classNames(...classes: (string | false | null | undefined)[]) {
 export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8 space-y-8">
-        {/* Top bar */}
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-emerald-400/80">
-              Tools Dashboard
-            </p>
-            <h1 className="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight">
-              Ambulance Paramedic Toolkit
-            </h1>
-            <p className="mt-1 text-xs sm:text-sm text-slate-400 max-w-xl">
-              Quick-access calculators, assessments and reference cards designed
-              around prehospital workflows. Optimised for dark environments and
-              offline use.
-            </p>
-          </div>
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8 space-y-8">
+        {/* Header with micro-badges */}
+        <header className="space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400/80">
+            Tools dashboard
+          </p>
 
-          <Link
-            href="/"
-            className="hidden sm:inline-flex items-center justify-center rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80 transition"
-          >
-            ⬅ Back to welcome
-          </Link>
-        </div>
+          <div className="flex items-start justify-between gap-4">
+            {/* Left: title + description + badges */}
+            <div className="space-y-2 max-w-2xl">
+              <h1 className="text-3xl font-semibold tracking-tight">
+                Ambulance Paramedic Toolkit
+              </h1>
+              <p className="text-sm text-slate-400">
+                Quick-access calculators, assessments and reference cards
+                designed around prehospital workflows. Optimised for dark
+                environments and offline use.
+              </p>
+
+              {/* Micro-badges */}
+              <div className="mt-1 flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-2.5 py-0.5 text-[10px] font-medium text-slate-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  v0.1.0 • Early access
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-2.5 py-0.5 text-[10px] font-medium text-slate-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  Offline-capable PWA
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-2.5 py-0.5 text-[10px] font-medium text-slate-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  Dark-environment friendly
+                </span>
+              </div>
+            </div>
+
+            {/* Right: back button */}
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80 transition"
+            >
+              ⬅ Back to welcome
+            </Link>
+          </div>
+        </header>
 
         {/* Paediatric tools */}
         <section className="space-y-3">
@@ -100,7 +121,8 @@ export default function DashboardPage() {
                 Paediatric resus & respiratory
               </h2>
               <p className="mt-1 text-[11px] text-slate-500">
-                Core paediatric tools you are likely to open frequently in the field.
+                Core paediatric tools you are likely to open frequently in the
+                field.
               </p>
             </div>
           </div>
@@ -177,9 +199,7 @@ function ToolCard({ tool }: { tool: ToolCard }) {
       )}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-sm font-semibold text-slate-50">
-          {tool.name}
-        </p>
+        <p className="text-sm font-semibold text-slate-50">{tool.name}</p>
         <span className="rounded-full border border-slate-700 bg-slate-950 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300 group-hover:border-emerald-400/80 group-hover:text-emerald-200">
           Open
         </span>

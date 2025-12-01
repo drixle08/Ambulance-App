@@ -28,6 +28,8 @@ function classNames(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
+// Approximate textbook / CPG-style ranges.
+// If your CPG updates, you only need to edit this array.
 const ageBands: AgeBand[] = [
   {
     id: "neonate",
@@ -106,13 +108,11 @@ export default function VitalsByAgePage() {
 
   const selected = ageBands.find((b) => b.id === selectedId) ?? ageBands[0];
 
-  // 🔹 Summary text for PRF / notes
-  const summaryText = `Normal vitals reference – ${selected.label} (${selected.range}): HR ${selected.hr}, RR ${selected.rr}, SBP ${selected.sbp}, SpO₂ ${selected.spo2}. Adapt to local CPG, patient baseline and full clinical picture.`;
+  const summaryText = `Normal vitals band – ${selected.label} (${selected.range}): HR ${selected.hr}, RR ${selected.rr}, SBP ${selected.sbp}, SpO₂ target ${selected.spo2}. Ranges adapted from CPG-style reference; interpret with trends, patient baseline and full clinical picture.`;
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8 space-y-6">
-        {/* Top bar: back + copy summary */}
         <div className="flex items-center justify-between gap-4">
           <Link
             href="/dashboard"
@@ -133,8 +133,9 @@ export default function VitalsByAgePage() {
           </h1>
           <p className="text-sm text-slate-400">
             Quick reference for typical heart rate, respiratory rate, systolic
-            blood pressure and SpO₂ by age band. Values are approximate textbook
-            ranges and must be adapted to your local CPG and patient context.
+            blood pressure and SpO₂ by age band. Values are approximate
+            CPG-style ranges and must be adapted to your local guideline and
+            patient context.
           </p>
         </header>
 
@@ -214,14 +215,6 @@ export default function VitalsByAgePage() {
                 {selected.notes}
               </p>
             )}
-
-            <p className="mt-3 text-[11px] text-slate-300">
-              Copied summary format:{" "}
-              <span className="font-semibold">
-                {`"${summaryText}"`}
-              </span>
-              . Paste into your PRF or clinical notes.
-            </p>
           </div>
         </section>
 
@@ -250,7 +243,9 @@ export default function VitalsByAgePage() {
                   )}
                 >
                   <td className="py-2 pr-3 align-top">
-                    <div className="font-medium text-slate-100">{band.label}</div>
+                    <div className="font-medium text-slate-100">
+                      {band.label}
+                    </div>
                     <div className="text-[10px] text-slate-500">
                       {band.range}
                     </div>
@@ -267,8 +262,9 @@ export default function VitalsByAgePage() {
 
         <p className="pt-2 text-[11px] text-slate-500">
           These ranges are approximate and for educational / decision-support
-          use only. Always refer to your ambulance service CPG and consider the
-          whole clinical picture, trends over time and patient baseline.
+          use only. Always refer to your ambulance service CPG (v2.4) and
+          consider the whole clinical picture, trends over time and patient
+          baseline.
         </p>
       </div>
     </main>

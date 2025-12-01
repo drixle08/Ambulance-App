@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ServiceWorkerRegister } from "./_components/ServiceWorkerRegister";
 
@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   title: "Ambulance Paramedic Toolkit",
   description: "Paramedic tools for ambulance crews",
   manifest: "/manifest.webmanifest",
+};
+
+// Next 16 style: move themeColor here
+export const viewport: Viewport = {
   themeColor: "#22c55e",
 };
 

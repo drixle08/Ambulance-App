@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CopySummaryButton } from "../../_components/CopySummaryButton";
 
 function toFixed(value: number | null | undefined, dp: number = 1) {
   if (value == null || Number.isNaN(value)) return "–";
@@ -14,12 +15,12 @@ function estimateWeightKg(ageYears: number, ageMonths: number): number | null {
 
   if (totalMonths <= 0) return null;
 
-  // <1 year: (months × 0.5) + 4  (same style as your previous calculator)
+  // <1 year: (months × 0.5) + 4
   if (ageYears === 0) {
     return totalMonths * 0.5 + 4;
   }
 
-  // 1–5 years: (age + 4) × 2  (APLS-style)
+  // 1–5 years: (age + 4) × 2
   if (ageYears >= 1 && ageYears <= 5) {
     return (ageYears + 4) * 2;
   }
@@ -38,7 +39,6 @@ export default function PedsArrestPage() {
   const [ageYears, setAgeYears] = useState<string>("");
   const [ageMonths, setAgeMonths] = useState<string>("");
   const [weightInput, setWeightInput] = useState<string>("");
-  const [copied, setCopied] = useState(false);
 
   // Convert to numbers for calculations
   const yearsNum = Math.min(14, Math.max(0, Number(ageYears || "0")));
@@ -79,60 +79,44 @@ export default function PedsArrestPage() {
   const targetSBP =
     hasAnyAge ? (yearsNum > 0 ? 70 + 2 * yearsNum : 70) : null;
 
-  // Build age label for summary
-  let ageLabel = "age not set";
-  if (hasAnyAge) {
-    if (yearsNum > 0 && monthsNum > 0) {
-      ageLabel = `${yearsNum}y ${monthsNum}m`;
-    } else if (yearsNum > 0) {
-      ageLabel = `${yearsNum}y`;
-    } else {
-      ageLabel = `${monthsNum}m`;
-    }
-  }
-
-  // 🔹 Text that will be copied to clipboard
-  const summaryText =
-    !weightUsed
-      ? "Paediatric arrest – set age or weight to generate doses."
-      : `Paediatric arrest – approx ${weightUsed.toFixed(
-          1
-        )} kg (${ageLabel}). Adrenaline ${adrenalineDoseMg!.toFixed(
-          3
-        )} mg (${adrenalineVolMl!.toFixed(
-          1
-        )} mL 1:10,000), Amiodarone ${amiodaroneDoseMg!.toFixed(
-          1
-        )} mg, Defib ${defib4!.toFixed(
-          0
-        )} J (4 J/kg), Fluids ${fluids20!.toFixed(
-          0
-        )} mL (20 mL/kg), Dextrose 10% ${dextrose10Vol!.toFixed(
-          1
-        )} mL, target SBP ≥ ${targetSBP?.toFixed(
-          0
-        )} mmHg. Use with local paediatric resus CPG.`;
-
-  const handleCopySummary = async () => {
-    try {
-      if (!("clipboard" in navigator)) {
-        console.warn("Clipboard API not available");
-        return;
-      }
-      await navigator.clipboard.writeText(summaryText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy paediatric arrest summary:", err);
-    }
-  };
-
   const resetAll = () => {
     setAgeYears("");
     setAgeMonths("");
     setWeightInput("");
-    setCopied(false);
   };
+
+  // 🔹 Summary text for PRF / notes
+  const summaryText =
+    weightUsed == null
+      ? "Paediatric arrest calculator – no valid age/weight entered. Complete age/weight to generate weight-based doses and confirm all values with local CPG."
+      : `Paediatric arrest: approx age ${toFixed(
+          computedAgeYears ?? null,
+          1
+        )} years, weight ~${toFixed(
+          weightUsed,
+          1
+        )} kg. Adrenaline 0.01 mg/kg ≈ ${toFixed(
+          adrenalineDoseMg,
+          3
+        )} mg (${toFixed(
+          adrenalineVolMl,
+          1
+        )} mL of 1:10,000). Amiodarone 5 mg/kg ≈ ${toFixed(
+          amiodaroneDoseMg,
+          1
+        )} mg. Fluids 20 mL/kg ≈ ${toFixed(
+          fluids20,
+          0
+        )} mL (max ${toFixed(
+          fluidsMax,
+          0
+        )} mL). First shock 4 J/kg ≈ ${toFixed(
+          defib4,
+          0
+        )} J. Target SBP ≥ ${toFixed(
+          targetSBP ?? null,
+          0
+        )} mmHg (confirm with local CPG).`;
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
@@ -146,17 +130,7 @@ export default function PedsArrestPage() {
           </Link>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleCopySummary}
-              className={`rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5 ${
-                copied
-                  ? "border-emerald-500 bg-emerald-500/15 text-emerald-100"
-                  : "border-slate-700 bg-slate-900 text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80"
-              }`}
-            >
-              {copied ? "Copied!" : "Copy summary"}
-            </button>
+            <CopySummaryButton summaryText={summaryText} />
 
             <button
               type="button"
@@ -180,14 +154,6 @@ export default function PedsArrestPage() {
             defibrillation energy, dextrose) and target systolic blood pressure.
             Values are generic and must be confirmed against your local Clinical
             Practice Guidelines before use on real patients.
-          </p>
-          <p className="text-[11px] text-slate-500">
-            Copied summary example:{" "}
-            <span className="font-semibold text-slate-300">
-              {weightUsed
-                ? summaryText
-                : "Paediatric arrest – set age or weight to generate doses."}
-            </span>
           </p>
         </header>
 
@@ -259,7 +225,7 @@ export default function PedsArrestPage() {
             </p>
             <p className="text-[10px] text-slate-500">
               Using: infants &lt;1 yr ≈ (months × 0.5) + 4; 1–10 yr ≈ (age + 4) ×
-              2; 6–14 yr ≈ (age × 3) + 7. Confirm with your local guideline.
+              2. Confirm with your local guideline.
             </p>
           </div>
 

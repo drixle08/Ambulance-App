@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CopySummaryButton } from "../../_components/CopySummaryButton";
 
 type SeverityLevel = "none" | "mild" | "moderate" | "severe" | "life";
 
@@ -21,7 +22,6 @@ export default function AsthmaSeverityPage() {
   const [wheeze, setWheeze] = useState<SeverityLevel>("none");
   const [accessory, setAccessory] = useState<SeverityLevel>("none");
   const [spo2, setSpo2] = useState<SeverityLevel>("none");
-  const [copied, setCopied] = useState(false);
 
   const features = [speech, respRate, wheeze, accessory, spo2];
 
@@ -91,34 +91,19 @@ export default function AsthmaSeverityPage() {
     ];
   }
 
-  // 🔹 Text that will be copied to clipboard
-  const summaryText =
-    highestLevel === "none"
-      ? "Asthma severity: no criteria selected."
-      : `Asthma – ${label}. Use with local asthma CPG and clinical judgement.`;
-
-  const handleCopySummary = async () => {
-    try {
-      if (!("clipboard" in navigator)) {
-        console.warn("Clipboard API not available");
-        return;
-      }
-      await navigator.clipboard.writeText(summaryText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy asthma summary:", err);
-    }
-  };
-
   const reset = () => {
     setSpeech("none");
     setRespRate("none");
     setWheeze("none");
     setAccessory("none");
     setSpo2("none");
-    setCopied(false);
   };
+
+  // 🔹 Text to be copied to clipboard
+  const summaryText =
+    highestLevel === "none"
+      ? "Asthma field assessment – no severity criteria selected. Complete full respiratory assessment and use local asthma CPG."
+      : `Asthma field assessment – highest band: ${label}. Use in conjunction with local asthma CPG, age-appropriate normal values and full clinical assessment.`;
 
   const speechOptions: Option[] = [
     { label: "Normal speech / full sentences", value: "mild" },
@@ -158,7 +143,7 @@ export default function AsthmaSeverityPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 space-y-6">
-        {/* Top bar: back + copy summary */}
+        {/* Top bar: back + copy + reset */}
         <div className="flex items-center justify-between gap-4">
           <Link
             href="/dashboard"
@@ -167,18 +152,17 @@ export default function AsthmaSeverityPage() {
             ← Back to dashboard
           </Link>
 
-          <button
-            type="button"
-            onClick={handleCopySummary}
-            className={classNames(
-              "rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5",
-              copied
-                ? "border-emerald-500 bg-emerald-500/15 text-emerald-100"
-                : "border-slate-700 bg-slate-900 text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80"
-            )}
-          >
-            {copied ? "Copied!" : "Copy summary"}
-          </button>
+          <div className="flex items-center gap-2">
+            <CopySummaryButton summaryText={summaryText} />
+
+            <button
+              type="button"
+              onClick={reset}
+              className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80 transition"
+            >
+              ⟳ Reset all
+            </button>
+          </div>
         </div>
 
         <header className="space-y-2">
@@ -213,14 +197,6 @@ export default function AsthmaSeverityPage() {
 
           <p className="mt-3 text-xs text-slate-100">{explain}</p>
 
-          <p className="mt-3 text-[11px] text-slate-300">
-            Copied summary format:{" "}
-            <span className="font-semibold">
-              {`"${summaryText}"`}
-            </span>
-            . Paste into your PRF or clinical notes.
-          </p>
-
           <div className="mt-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-300">
               Suggested Prehospital Actions (adapt to local CPG)
@@ -234,6 +210,14 @@ export default function AsthmaSeverityPage() {
               ))}
             </ul>
           </div>
+
+          <p className="mt-3 text-[11px] text-slate-300">
+            Copied summary format:{" "}
+            <span className="font-semibold">
+              {`"${summaryText}"`}
+            </span>
+            . Paste into your PRF or clinical notes.
+          </p>
         </section>
 
         {/* Inputs */}

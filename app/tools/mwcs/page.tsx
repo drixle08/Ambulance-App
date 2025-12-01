@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CopySummaryButton } from "../../_components/CopySummaryButton";
 
 type Option = {
   label: string;
@@ -20,9 +21,17 @@ export default function MwcsPage() {
   const [stridor, setStridor] = useState<number>(0);
   const [airEntry, setAirEntry] = useState<number>(0);
   const [retractions, setRetractions] = useState<number>(0);
-  const [copied, setCopied] = useState(false);
 
   const total = loc + cyanosis + stridor + airEntry + retractions;
+
+  // 🔄 Reset all fields
+  const resetAll = () => {
+    setLoc(0);
+    setCyanosis(0);
+    setStridor(0);
+    setAirEntry(0);
+    setRetractions(0);
+  };
 
   // Severity based on total score (standard Westley bands)
   let severityLabel = "Mild (≤ 2)";
@@ -77,35 +86,8 @@ export default function MwcsPage() {
     ];
   }
 
-  // 🔹 Text that will be copied to clipboard
-  const summaryText =
-    total === 0
-      ? "MWCS 0 – no croup criteria selected."
-      : `MWCS ${total} – ${severityLabel}. Use with local croup CPG and clinical judgement.`;
-
-  const handleCopySummary = async () => {
-    try {
-      if (!("clipboard" in navigator)) {
-        console.warn("Clipboard API not available");
-        return;
-      }
-      await navigator.clipboard.writeText(summaryText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy MWCS summary:", err);
-    }
-  };
-
-  // 🔄 Reset all fields
-  const resetAll = () => {
-    setLoc(0);
-    setCyanosis(0);
-    setStridor(0);
-    setAirEntry(0);
-    setRetractions(0);
-    setCopied(false);
-  };
+  // 🔹 Text to copy to clipboard
+  const summaryText = `MWCS ${total} – ${severityLabel}. Use with local croup CPG and full clinical assessment.`;
 
   const locOptions: Option[] = [
     { label: "Normal / alert", value: 0 },
@@ -140,7 +122,7 @@ export default function MwcsPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 space-y-6">
-        {/* Top bar: back + copy summary */}
+        {/* Top bar: back + copy + reset */}
         <div className="flex items-center justify-between gap-4">
           <Link
             href="/dashboard"
@@ -149,18 +131,17 @@ export default function MwcsPage() {
             ← Back to dashboard
           </Link>
 
-          <button
-            type="button"
-            onClick={handleCopySummary}
-            className={classNames(
-              "rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5",
-              copied
-                ? "border-emerald-500 bg-emerald-500/15 text-emerald-100"
-                : "border-slate-700 bg-slate-900 text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80"
-            )}
-          >
-            {copied ? "Copied!" : "Copy summary"}
-          </button>
+          <div className="flex items-center gap-2">
+            <CopySummaryButton summaryText={summaryText} />
+
+            <button
+              type="button"
+              onClick={resetAll}
+              className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80 transition flex items-center gap-1.5"
+            >
+              ⟳ Reset all
+            </button>
+          </div>
         </div>
 
         <header className="space-y-2">
@@ -201,14 +182,6 @@ export default function MwcsPage() {
 
           <p className="mt-3 text-xs text-slate-200">{severityExplain}</p>
 
-          <p className="mt-3 text-[11px] text-slate-300">
-            Copied summary format:{" "}
-            <span className="font-semibold">
-              {`"${summaryText}"`}
-            </span>
-            . Paste into your PRF or clinical notes.
-          </p>
-
           <div className="mt-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-300">
               Suggested Management (adapt to local CPG)
@@ -222,6 +195,14 @@ export default function MwcsPage() {
               ))}
             </ul>
           </div>
+
+          <p className="mt-3 text-[11px] text-slate-300">
+            Copied summary format:{" "}
+            <span className="font-semibold">
+              {`"${summaryText}"`}
+            </span>
+            . Paste into your PRF or clinical notes.
+          </p>
         </section>
 
         {/* Inputs */}
@@ -267,7 +248,7 @@ export default function MwcsPage() {
           />
         </section>
 
-        {/* Reset + disclaimer */}
+        {/* Reset + disclaimer (keep bottom reset too if you like) */}
         <div className="flex items-center justify-between pt-4">
           <button
             type="button"
@@ -295,13 +276,7 @@ type FieldGroupProps = {
   onChange: (v: number) => void;
 };
 
-function FieldGroup({
-  label,
-  helper,
-  options,
-  value,
-  onChange,
-}: FieldGroupProps) {
+function FieldGroup({ label, helper, options, value, onChange }: FieldGroupProps) {
   return (
     <div className="space-y-2">
       <div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CopySummaryButton } from "../../_components/CopySummaryButton";
 
 type GcsOption = {
   label: string;
@@ -17,7 +18,6 @@ export default function GcsPage() {
   const [eye, setEye] = useState<number>(4);
   const [verbal, setVerbal] = useState<number>(5);
   const [motor, setMotor] = useState<number>(6);
-  const [copied, setCopied] = useState(false);
 
   const total = eye + verbal + motor;
 
@@ -45,92 +45,33 @@ export default function GcsPage() {
   // 🔹 Text that will be copied to clipboard
   const summaryText = `GCS ${total} (E${eye} V${verbal} M${motor}) – ${severityLabel}`;
 
-  const handleCopySummary = async () => {
-    try {
-      if (!("clipboard" in navigator)) {
-        console.warn("Clipboard API not available");
-        return;
-      }
-      await navigator.clipboard.writeText(summaryText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy GCS summary:", err);
-    }
-  };
-
   const resetAll = () => {
     setEye(4);
     setVerbal(5);
     setMotor(6);
-    setCopied(false);
   };
 
   const eyeOptions: GcsOption[] = [
-    {
-      label: "4 – Spontaneous",
-      value: 4,
-      helper: "Opens eyes without stimulus.",
-    },
-    {
-      label: "3 – To speech",
-      value: 3,
-      helper: "Opens eyes when spoken to.",
-    },
-    {
-      label: "2 – To pain",
-      value: 2,
-      helper: "Opens eyes only to painful stimulus.",
-    },
+    { label: "4 – Spontaneous", value: 4, helper: "Opens eyes without stimulus." },
+    { label: "3 – To speech", value: 3, helper: "Opens eyes when spoken to." },
+    { label: "2 – To pain", value: 2, helper: "Opens eyes only to painful stimulus." },
     { label: "1 – No eye opening", value: 1, helper: "No response." },
   ];
 
   const verbalOptions: GcsOption[] = [
     { label: "5 – Oriented", value: 5, helper: "Converses normally, oriented." },
-    {
-      label: "4 – Confused",
-      value: 4,
-      helper: "Converses but disoriented or confused.",
-    },
-    {
-      label: "3 – Inappropriate words",
-      value: 3,
-      helper: "Random or exclamatory speech.",
-    },
-    {
-      label: "2 – Incomprehensible sounds",
-      value: 2,
-      helper: "Moans or groans only.",
-    },
+    { label: "4 – Confused", value: 4, helper: "Converses but disoriented or confused." },
+    { label: "3 – Inappropriate words", value: 3, helper: "Random or exclamatory speech." },
+    { label: "2 – Incomprehensible sounds", value: 2, helper: "Moans or groans only." },
     { label: "1 – No verbal response", value: 1, helper: "No sounds." },
   ];
 
   const motorOptions: GcsOption[] = [
-    {
-      label: "6 – Obeys commands",
-      value: 6,
-      helper: "Performs simple requested movements.",
-    },
-    {
-      label: "5 – Localises pain",
-      value: 5,
-      helper: "Purposeful movement towards painful stimulus.",
-    },
-    {
-      label: "4 – Withdraws from pain",
-      value: 4,
-      helper: "Pulls away from painful stimulus.",
-    },
-    {
-      label: "3 – Abnormal flexion",
-      value: 3,
-      helper: "Decorticate posturing to pain.",
-    },
-    {
-      label: "2 – Extension",
-      value: 2,
-      helper: "Decerebrate posturing to pain.",
-    },
+    { label: "6 – Obeys commands", value: 6, helper: "Performs simple requested movements." },
+    { label: "5 – Localises pain", value: 5, helper: "Purposeful movement towards painful stimulus." },
+    { label: "4 – Withdraws from pain", value: 4, helper: "Pulls away from painful stimulus." },
+    { label: "3 – Abnormal flexion", value: 3, helper: "Decorticate posturing to pain." },
+    { label: "2 – Extension", value: 2, helper: "Decerebrate posturing to pain." },
     { label: "1 – No motor response", value: 1, helper: "No movement." },
   ];
 
@@ -147,18 +88,7 @@ export default function GcsPage() {
           </Link>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleCopySummary}
-              className={classNames(
-                "rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5",
-                copied
-                  ? "border-emerald-500 bg-emerald-500/15 text-emerald-100"
-                  : "border-slate-700 bg-slate-900 text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80"
-              )}
-            >
-              {copied ? "Copied!" : "Copy summary"}
-            </button>
+            <CopySummaryButton summaryText={summaryText} />
 
             <button
               type="button"
@@ -174,9 +104,9 @@ export default function GcsPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400/80">
             Assessment
           </p>
-             <h1 className="text-3xl font-semibold tracking-tight">
-            Glasgow Coma Scale (GCS) – TEST
-             </h1>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Glasgow Coma Scale (GCS)
+          </h1>
           <p className="text-sm text-slate-400">
             Select the most appropriate eye, verbal and motor responses. The tool
             will calculate the total GCS and show a severity band. Always

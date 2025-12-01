@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CopySummaryButton } from "../../_components/CopySummaryButton";
 
 type Option = {
   label: string;
@@ -26,7 +27,6 @@ export default function StrokeBefastPage() {
   const [speech, setSpeech] = useState<"normal" | "abnormal" | "unknown">(
     "normal"
   );
-  const [copied, setCopied] = useState(false);
 
   const fields = { balance, eyes, face, arm, speech };
   const positives = Object.values(fields).filter(
@@ -75,61 +75,12 @@ export default function StrokeBefastPage() {
     ];
   }
 
-  // Build a list of which components are abnormal/unknown for the summary
-  const positiveParts: string[] = [];
-  const unknownParts: string[] = [];
-
-  if (balance === "abnormal") positiveParts.push("B (Balance)");
-  else if (balance === "unknown") unknownParts.push("B (Balance)");
-
-  if (eyes === "abnormal") positiveParts.push("E (Eyes)");
-  else if (eyes === "unknown") unknownParts.push("E (Eyes)");
-
-  if (face === "abnormal") positiveParts.push("F (Face)");
-  else if (face === "unknown") unknownParts.push("F (Face)");
-
-  if (arm === "abnormal") positiveParts.push("A (Arm)");
-  else if (arm === "unknown") unknownParts.push("A (Arm)");
-
-  if (speech === "abnormal") positiveParts.push("S (Speech)");
-  else if (speech === "unknown") unknownParts.push("S (Speech)");
-
-  const positivesText = positiveParts.length
-    ? positiveParts.join(", ")
-    : "none";
-
-  const unknownText = unknownParts.length
-    ? unknownParts.join(", ")
-    : "";
-
-  // 🔹 Text that will be copied to clipboard
-  const summaryText = !suspectedStroke
-    ? "Stroke screen – BEFAST: no positive findings recorded. Continue full assessment and consider other causes."
-    : `Stroke screen – BEFAST positive in ${positives} component(s): ${positivesText}${
-        unknownText ? `. Unable/unknown in: ${unknownText}` : ""
-      }. Treat as possible acute stroke and follow local stroke pathway.`;
-
-  const handleCopySummary = async () => {
-    try {
-      if (!("clipboard" in navigator)) {
-        console.warn("Clipboard API not available");
-        return;
-      }
-      await navigator.clipboard.writeText(summaryText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy BEFAST summary:", err);
-    }
-  };
-
   const reset = () => {
     setBalance("normal");
     setEyes("normal");
     setFace("normal");
     setArm("normal");
     setSpeech("normal");
-    setCopied(false);
   };
 
   const yesNoUnknown: Option[] = [
@@ -137,6 +88,30 @@ export default function StrokeBefastPage() {
     { label: "Abnormal", value: "abnormal" },
     { label: "Unable / unknown", value: "unknown" },
   ];
+
+  // 🔹 Build list of abnormal components for the summary
+  const abnormalParts: string[] = [];
+  if (balance === "abnormal") abnormalParts.push("Balance");
+  if (eyes === "abnormal") abnormalParts.push("Eyes");
+  if (face === "abnormal") abnormalParts.push("Face");
+  if (arm === "abnormal") abnormalParts.push("Arm");
+  if (speech === "abnormal") abnormalParts.push("Speech");
+
+  // 🔹 Summary text for PRF / notes
+  let summaryText: string;
+
+  if (!suspectedStroke) {
+    summaryText =
+      "BEFAST stroke screen: 0/5 features abnormal. No BEFAST positives. Continue full assessment, consider other causes and follow local stroke pathway.";
+  } else if (positives <= 2) {
+    summaryText = `BEFAST stroke screen positive (${positives}/5): ${abnormalParts.join(
+      ", "
+    )} abnormal. Possible stroke – follow local stroke pathway, determine last-known-well time and transport to stroke-capable facility.`;
+  } else {
+    summaryText = `BEFAST stroke screen high concern (${positives}/5): ${abnormalParts.join(
+      ", "
+    )} abnormal. Treat as time-critical stroke – activate pathway, pre-alert receiving hospital and minimise on-scene time as per CPG.`;
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
@@ -151,25 +126,13 @@ export default function StrokeBefastPage() {
           </Link>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleCopySummary}
-              className={classNames(
-                "rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5",
-                copied
-                  ? "border-emerald-500 bg-emerald-500/15 text-emerald-100"
-                  : "border-slate-700 bg-slate-900 text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80"
-              )}
-            >
-              {copied ? "Copied!" : "Copy summary"}
-            </button>
-
+            <CopySummaryButton summaryText={summaryText} />
             <button
               type="button"
               onClick={reset}
               className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80 transition"
             >
-              ⟳ Reset
+              ⟳ Reset all
             </button>
           </div>
         </div>
@@ -212,14 +175,6 @@ export default function StrokeBefastPage() {
 
           <p className="mt-3 text-xs text-slate-100">{flagExplain}</p>
 
-          <p className="mt-3 text-[11px] text-slate-300">
-            Copied summary format:{" "}
-            <span className="font-semibold">
-              {`"${summaryText}"`}
-            </span>{" "}
-            – paste into your PRF or clinical notes.
-          </p>
-
           <div className="mt-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-300">
               Suggested Prehospital Actions (adapt to local CPG)
@@ -233,6 +188,14 @@ export default function StrokeBefastPage() {
               ))}
             </ul>
           </div>
+
+          <p className="mt-3 text-[11px] text-slate-300">
+            Copied summary format:{" "}
+            <span className="font-semibold">
+              {`"${summaryText}"`}
+            </span>
+            . Paste into your PRF or clinical notes.
+          </p>
         </section>
 
         {/* Inputs */}
@@ -278,15 +241,7 @@ export default function StrokeBefastPage() {
           />
         </section>
 
-        <div className="flex items-center justify-between pt-4">
-          <button
-            type="button"
-            onClick={reset}
-            className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-2 text-xs font-medium text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80 transition"
-          >
-            Reset all fields
-          </button>
-
+        <div className="flex items-center justify-end pt-4">
           <p className="text-[11px] text-slate-500 text-right max-w-xs">
             This BEFAST tool is for education and decision-support only and
             must be used with your ambulance service stroke pathway and clinical

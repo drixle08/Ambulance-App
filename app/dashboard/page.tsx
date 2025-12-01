@@ -1,199 +1,193 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 
-type Category = "all" | "paeds" | "resp" | "neuro" | "resus" | "reference";
-
-type Tool = {
+type ToolCard = {
   name: string;
   href: string;
-  label: string;
   description: string;
-  meta: string;
-  categories: Category[];
+  tag: string;
 };
+
+const paedsTools: ToolCard[] = [
+  {
+    name: "MWCS (Croup)",
+    href: "/tools/mwcs",
+    description:
+      "Modified Westley Croup Score with automatic severity banding and management suggestions.",
+    tag: "Paediatrics • Respiratory",
+  },
+  {
+    name: "Paediatric Arrest (WAAFELSS)",
+    href: "/tools/peds-arrest",
+    description:
+      "Age-based weight estimate, arrest drug doses, fluids, defibrillation energy and target SBP.",
+    tag: "Paediatrics • Resuscitation",
+  },
+];
+
+const assessmentTools: ToolCard[] = [
+  {
+    name: "Asthma Severity",
+    href: "/tools/asthma",
+    description:
+      "Field severity bands (mild to life-threatening) with suggested prehospital actions.",
+    tag: "Adult & Paeds • Respiratory",
+  },
+  {
+    name: "Glasgow Coma Scale (GCS)",
+    href: "/tools/gcs",
+    description:
+      "Eye, verbal and motor scoring with severity band and copyable GCS summary.",
+    tag: "Neuro • Adult & Paeds",
+  },
+  {
+    name: "Stroke BEFAST",
+    href: "/tools/stroke",
+    description:
+      "Balance, Eyes, Face, Arm, Speech screen with quick stroke flag and PRF summary.",
+    tag: "Neuro • Time-critical",
+  },
+];
+
+const referenceTools: ToolCard[] = [
+  {
+    name: "Normal Vitals by Age",
+    href: "/tools/vitals",
+    description:
+      "Textbook-style HR, RR, SBP and SpO₂ ranges from neonates to adults, with quick PRF copy.",
+    tag: "Reference • All ages",
+  },
+];
 
 function classNames(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-const tools: Tool[] = [
-  {
-    name: "MWCS (Croup)",
-    href: "/tools/mwcs",
-    label: "Calculator",
-    description:
-      "Modified Westley Croup Score with automatic severity banding and suggested actions.",
-    meta: "Paediatrics • Respiratory",
-    categories: ["paeds", "resp"],
-  },
-  {
-    name: "Asthma Severity",
-    href: "/tools/asthma",
-    label: "Assessment",
-    description:
-      "Field-focused asthma severity bands with prehospital management prompts.",
-    meta: "Respiratory • All ages",
-    categories: ["resp", "reference"],
-  },
-  {
-    name: "Paediatric Arrest (WAAFELSS)",
-    href: "/tools/peds-arrest",
-    label: "Calculator",
-    description:
-      "Age-based weight estimate, arrest drugs, defibrillation energy and target SBP.",
-    meta: "Paediatrics • Resuscitation",
-    categories: ["paeds", "resus"],
-  },
-  {
-    name: "Glasgow Coma Scale (GCS)",
-    href: "/tools/gcs",
-    label: "Assessment",
-    description:
-      "Eye, verbal and motor scoring with severity band and copy-to-notes summary.",
-    meta: "Neuro • Adult & Paeds",
-    categories: ["neuro", "reference"],
-  },
-  {
-    name: "Stroke BEFAST Screen",
-    href: "/tools/stroke-befast",
-    label: "Assessment",
-    description:
-      "Quick BEFAST screen with count of positive components and stroke pathway prompts.",
-    meta: "Neuro • Stroke",
-    categories: ["neuro"],
-  },
-  {
-    name: "Normal Vitals by Age",
-    href: "/tools/vitals",
-    label: "Reference",
-    description:
-      "Textbook-style HR, RR, SBP and SpO₂ bands from neonate to adult, with mini overview table.",
-    meta: "Reference • All ages",
-    categories: ["paeds", "reference"],
-  },
-];
-
-const categoryPills: { id: Category; label: string }[] = [
-  { id: "all", label: "All tools" },
-  { id: "paeds", label: "Paediatrics" },
-  { id: "resp", label: "Respiratory" },
-  { id: "neuro", label: "Neuro" },
-  { id: "resus", label: "Resuscitation" },
-  { id: "reference", label: "Reference" },
-];
-
 export default function DashboardPage() {
-  const [activeCategory, setActiveCategory] = useState<Category>("all");
-
-  const filteredTools =
-    activeCategory === "all"
-      ? tools
-      : tools.filter((tool) => tool.categories.includes(activeCategory));
-
-  const activeLabel =
-    categoryPills.find((c) => c.id === activeCategory)?.label ?? "All tools";
-
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8 space-y-6">
-        {/* Top bar: back to home */}
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8 space-y-8">
+        {/* Top bar */}
         <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-emerald-400/80">
+              Tools Dashboard
+            </p>
+            <h1 className="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight">
+              Ambulance Paramedic Toolkit
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm text-slate-400 max-w-xl">
+              Quick-access calculators, assessments and reference cards designed
+              around prehospital workflows. Optimised for dark environments and
+              offline use.
+            </p>
+          </div>
+
           <Link
             href="/"
-            className="text-xs font-medium text-slate-400 hover:text-emerald-400"
+            className="hidden sm:inline-flex items-center justify-center rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80 transition"
           >
-            ← Back to home
+            ⬅ Back to welcome
           </Link>
-          <p className="text-[11px] text-slate-500">
-            {filteredTools.length} tool
-            {filteredTools.length !== 1 ? "s" : ""} shown
-          </p>
         </div>
 
-        {/* Header */}
-        <header className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400/80">
-            Tools
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Ambulance Paramedic Toolkit
-          </h1>
-          <p className="max-w-2xl text-sm text-slate-400">
-            Quick-access calculators and assessment aids grouped by clinical
-            area. Choose a category or browse all tools. Always use in
-            conjunction with your ambulance service Clinical Practice Guidelines.
-          </p>
-        </header>
-
-        {/* Category filters */}
-        <section className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-            Filter by category
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {categoryPills.map((cat) => {
-              const isActive = cat.id === activeCategory;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={classNames(
-                    "rounded-full border px-3 py-1.5 text-[11px] font-medium transition",
-                    "border-slate-700 bg-slate-950 text-slate-200 hover:border-emerald-400/70 hover:text-emerald-300 hover:bg-slate-900",
-                    isActive &&
-                      "border-emerald-400 bg-emerald-500/10 text-emerald-100 shadow-sm"
-                  )}
-                >
-                  {cat.label}
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-[11px] text-slate-500">
-            Showing: <span className="font-semibold text-slate-300">{activeLabel}</span>
-          </p>
-        </section>
-
-        {/* Tools grid */}
-        <section className="grid gap-4 sm:grid-cols-2">
-          {filteredTools.map((tool) => (
-            <Link
-              key={tool.name}
-              href={tool.href}
-              className="group rounded-2xl border border-slate-800 bg-slate-900/80 p-4 transition hover:border-emerald-400/70 hover:bg-slate-900"
-            >
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-slate-50">
-                  {tool.name}
-                </p>
-                <span className="rounded-full border border-slate-700 bg-slate-950 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300 group-hover:border-emerald-400/80 group-hover:text-emerald-200">
-                  {tool.label}
-                </span>
-              </div>
-              <p className="text-xs text-slate-400">{tool.description}</p>
-              <p className="mt-3 text-[10px] font-medium text-slate-500">
-                {tool.meta}
+        {/* Paediatric tools */}
+        <section className="space-y-3">
+          <div className="flex items-baseline justify-between gap-2">
+            <div>
+              <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
+                Paediatric resus & respiratory
+              </h2>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Core paediatric tools you are likely to open frequently in the field.
               </p>
-            </Link>
-          ))}
-
-          {filteredTools.length === 0 && (
-            <div className="col-span-full rounded-2xl border border-slate-800 bg-slate-900/80 p-4 text-xs text-slate-400">
-              No tools match this category yet. This section will populate as
-              more calculators and references are added.
             </div>
-          )}
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {paedsTools.map((tool) => (
+              <ToolCard key={tool.name} tool={tool} />
+            ))}
+          </div>
         </section>
 
-        <p className="pt-2 text-[11px] text-slate-500">
-          This dashboard is for education and decision-support. It does not
-          replace Clinical Practice Guidelines, online medical control or
-          clinical judgement.
-        </p>
+        {/* Assessment tools */}
+        <section className="space-y-3">
+          <div className="flex items-baseline justify-between gap-2">
+            <div>
+              <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
+                Assessment & screening
+              </h2>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Simple, repeatable assessments with severity bands and copyable
+                summaries for documentation.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            {assessmentTools.map((tool) => (
+              <ToolCard key={tool.name} tool={tool} />
+            ))}
+          </div>
+        </section>
+
+        {/* Reference tools */}
+        <section className="space-y-3">
+          <div className="flex items-baseline justify-between gap-2">
+            <div>
+              <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
+                Reference
+              </h2>
+              <p className="mt-1 text-[11px] text-slate-500">
+                Quick lookup tables to support decision-making and trending.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {referenceTools.map((tool) => (
+              <ToolCard key={tool.name} tool={tool} />
+            ))}
+          </div>
+        </section>
+
+        {/* Footer note */}
+        <footer className="pt-4 border-t border-slate-900/70">
+          <p className="text-[10px] text-slate-500 max-w-2xl">
+            This toolkit is for education and decision-support only. It does not
+            replace your ambulance service Clinical Practice Guidelines or
+            clinical judgement. Always follow local CPG, policies and online
+            medical control.
+          </p>
+        </footer>
       </div>
     </main>
+  );
+}
+
+function ToolCard({ tool }: { tool: ToolCard }) {
+  return (
+    <Link
+      href={tool.href}
+      className={classNames(
+        "group rounded-2xl border border-slate-800 bg-slate-900/70 p-4 transition",
+        "hover:border-emerald-400/80 hover:bg-slate-900"
+      )}
+    >
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-slate-50">
+          {tool.name}
+        </p>
+        <span className="rounded-full border border-slate-700 bg-slate-950 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300 group-hover:border-emerald-400/80 group-hover:text-emerald-200">
+          Open
+        </span>
+      </div>
+      <p className="text-xs text-slate-400">{tool.description}</p>
+      <p className="mt-3 text-[10px] font-medium text-slate-500">
+        {tool.tag}
+      </p>
+    </Link>
   );
 }

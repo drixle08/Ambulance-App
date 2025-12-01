@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CopySummaryButton } from "../../_components/CopySummaryButton";
 
 type AgeBandId =
   | "neonate"
@@ -102,26 +103,11 @@ const ageBands: AgeBand[] = [
 
 export default function VitalsByAgePage() {
   const [selectedId, setSelectedId] = useState<AgeBandId>("adult");
-  const [copied, setCopied] = useState(false);
 
   const selected = ageBands.find((b) => b.id === selectedId) ?? ageBands[0];
 
-  // 🔹 Text that will be copied to clipboard
-  const summaryText = `Normal vitals – ${selected.label} (${selected.range}): HR ${selected.hr}, RR ${selected.rr}, SBP ${selected.sbp}, SpO₂ ${selected.spo2}. Use with local CPG, patient baseline and overall clinical picture.`;
-
-  const handleCopySummary = async () => {
-    try {
-      if (!("clipboard" in navigator)) {
-        console.warn("Clipboard API not available");
-        return;
-      }
-      await navigator.clipboard.writeText(summaryText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy vitals summary:", err);
-    }
-  };
+  // 🔹 Summary text for PRF / notes
+  const summaryText = `Normal vitals reference – ${selected.label} (${selected.range}): HR ${selected.hr}, RR ${selected.rr}, SBP ${selected.sbp}, SpO₂ ${selected.spo2}. Adapt to local CPG, patient baseline and full clinical picture.`;
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
@@ -135,18 +121,7 @@ export default function VitalsByAgePage() {
             ← Back to dashboard
           </Link>
 
-          <button
-            type="button"
-            onClick={handleCopySummary}
-            className={classNames(
-              "rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5",
-              copied
-                ? "border-emerald-500 bg-emerald-500/15 text-emerald-100"
-                : "border-slate-700 bg-slate-900 text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80"
-            )}
-          >
-            {copied ? "Copied!" : "Copy summary"}
-          </button>
+          <CopySummaryButton summaryText={summaryText} />
         </div>
 
         <header className="space-y-2">
@@ -275,9 +250,7 @@ export default function VitalsByAgePage() {
                   )}
                 >
                   <td className="py-2 pr-3 align-top">
-                    <div className="font-medium text-slate-100">
-                      {band.label}
-                    </div>
+                    <div className="font-medium text-slate-100">{band.label}</div>
                     <div className="text-[10px] text-slate-500">
                       {band.range}
                     </div>

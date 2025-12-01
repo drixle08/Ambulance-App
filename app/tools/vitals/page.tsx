@@ -267,7 +267,7 @@ export default function VitalsByAgePage() {
                 <ul className="mt-3 space-y-1.5 text-xs text-slate-300">
                   {selectedBand.notes.map((note, idx) => (
                     <li key={idx} className="flex gap-2">
-                      <span className="mt-[0.3rem] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-400/70" />
+                      <span className="mt-[0.3rem] h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400/70" />
                       <span>{note}</span>
                     </li>
                   ))}

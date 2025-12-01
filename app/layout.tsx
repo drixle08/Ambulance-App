@@ -3,7 +3,7 @@ import "./globals.css";
 import { ServiceWorkerRegister } from "./_components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
-  title: "MWCS Toolkit",
+  title: "Ambulance Paramedic Toolkit",
   description: "Paramedic tools for ambulance crews",
   manifest: "/manifest.webmanifest",
   themeColor: "#22c55e",

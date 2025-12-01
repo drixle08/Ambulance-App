@@ -126,7 +126,7 @@ export default function DashboardPage() {
         {/* Global header */}
         <header className="space-y-2">
           <p className="text-xs font-medium uppercase tracking-[0.3em] text-emerald-400/80">
-            MWCS • Paramedic Toolkit
+            Ambulance Paramedic Toolkit
           </p>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
             Dashboard

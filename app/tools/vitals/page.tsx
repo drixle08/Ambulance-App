@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { CopySummaryButton } from "../../_components/CopySummaryButton";
+import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 
 type AgeBandId =
   | "neonate"
@@ -16,257 +15,334 @@ type AgeBandId =
 type AgeBand = {
   id: AgeBandId;
   label: string;
-  range: string;
-  hr: string;
-  rr: string;
-  sbp: string;
-  spo2: string;
-  notes?: string;
+  ageRange: string;
+  weightRange?: string;
+  hrRange: string;
+  rrRange: string;
+  sbpRange: string;
+  dbpRange: string;
+  spo2Target: string;
+  notes: string[];
 };
 
-function classNames(...classes: (string | false | null | undefined)[]) {
-  return classes.filter(Boolean).join(" ");
-}
-
-// Approximate textbook / CPG-style ranges.
-// If your CPG updates, you only need to edit this array.
-const ageBands: AgeBand[] = [
+const AGE_BANDS: AgeBand[] = [
   {
     id: "neonate",
-    label: "Neonate",
-    range: "0–3 months",
-    hr: "100–180 bpm",
-    rr: "30–60 breaths/min",
-    sbp: "60–90 mmHg",
-    spo2: "≥ 94% (if no chronic lung disease)",
-    notes: "Higher baseline HR and RR are normal. Watch for apnoeas and poor feeding.",
+    label: "Neonate (term – 2 months)",
+    ageRange: "0–2 months (term newborn)",
+    weightRange: "≈3–4 kg",
+    hrRange: "110–160 bpm",
+    rrRange: "35–55 /min",
+    sbpRange: "65–85 mmHg",
+    dbpRange: "45–55 mmHg",
+    spo2Target: "≥94% (low <94%)",
+    notes: [
+      "Based on the 'Term–2 months' row in the paediatric normal vital signs table.",
+      "Preterm reference (≈2 kg): HR 110–170, RR 40–70, SBP 55–75, DBP 35–45 – check CPG table if needed for very preterm neonates."
+    ]
   },
   {
     id: "infant",
-    label: "Infant",
-    range: "3–12 months",
-    hr: "100–160 bpm",
-    rr: "30–60 breaths/min",
-    sbp: "80–100 mmHg",
-    spo2: "≥ 94%",
-    notes: "Crying or fever can transiently increase HR and RR.",
+    label: "Infant (3–12 months)",
+    ageRange: "3–12 months",
+    weightRange: "≈5–11 kg",
+    // Union of 3–7 and 8–12 months rows
+    hrRange: "90–160 bpm",
+    rrRange: "22–45 /min",
+    sbpRange: "70–100 mmHg",
+    dbpRange: "50–65 mmHg",
+    spo2Target: "≥94% (low <94%)",
+    notes: [
+      "Ranges merged from 3–7 months and 8–12 months rows (min–max across both).",
+      "Treat persistent values outside these ranges as abnormal for age and reassess."
+    ]
   },
   {
     id: "toddler",
-    label: "Toddler",
-    range: "1–3 years",
-    hr: "90–150 bpm",
-    rr: "24–40 breaths/min",
-    sbp: "80–110 mmHg",
-    spo2: "≥ 94%",
-    notes: "Assess work of breathing, accessory muscle use and behaviour.",
+    label: "Toddler (1–3 years)",
+    ageRange: "1–3 years",
+    weightRange: "≈12–15 kg",
+    hrRange: "80–150 bpm",
+    rrRange: "22–30 /min",
+    sbpRange: "90–105 mmHg",
+    dbpRange: "55–70 mmHg",
+    spo2Target: "≥94% (low <94%)",
+    notes: [
+      "Directly from the '1–3 years' row of the paediatric normal vital signs table.",
+      "Remember age-based hypotension threshold for shock is SBP < (age × 2) + 70."
+    ]
   },
   {
     id: "preschool",
-    label: "Preschool",
-    range: "3–5 years",
-    hr: "80–140 bpm",
-    rr: "22–34 breaths/min",
-    sbp: "80–110 mmHg",
-    spo2: "≥ 94%",
-    notes: "Trend vitals over time; consider pain, fever and anxiety.",
+    label: "Preschool (4–5 years)",
+    ageRange: "4–5 years",
+    weightRange: "≈16–21 kg",
+    hrRange: "70–120 bpm",
+    rrRange: "20–24 /min",
+    sbpRange: "95–110 mmHg",
+    dbpRange: "60–75 mmHg",
+    spo2Target: "≥94% (low <94%)",
+    notes: [
+      "Directly from the '4–5 years' row of the paediatric normal vital signs table.",
+      "Persistently high RR or HR for age should trigger a search for sepsis, respiratory distress, or shock."
+    ]
   },
   {
     id: "school",
-    label: "School-age",
-    range: "6–12 years",
-    hr: "70–120 bpm",
-    rr: "18–30 breaths/min",
-    sbp: "80–120 mmHg",
-    spo2: "≥ 94%",
-    notes: "Tachycardia and tachypnoea can be early signs of shock or sepsis.",
+    label: "School-age (6–11 years)",
+    ageRange: "6–11 years",
+    weightRange: "≈22–40 kg",
+    // Union of 6–7, 8–9, 10–11 years rows
+    hrRange: "60–120 bpm",
+    rrRange: "16–24 /min",
+    sbpRange: "95–120 mmHg",
+    dbpRange: "60–75 mmHg",
+    spo2Target: "≥94% (low <94%)",
+    notes: [
+      "Ranges merged from 6–7, 8–9 and 10–11 years rows.",
+      "In sepsis screening, RR and HR outside the normal age band plus low SBP or SpO₂ <94% elevate risk."
+    ]
   },
   {
     id: "adolescent",
-    label: "Adolescent",
-    range: "13–17 years",
-    hr: "60–100 bpm",
-    rr: "12–20 breaths/min",
-    sbp: "90–130 mmHg",
-    spo2: "≥ 94%",
-    notes: "Values begin to approximate adult ranges; interpret with clinical context.",
+    label: "Adolescent (12–15 years)",
+    ageRange: "12–15 years",
+    weightRange: "≈41–50 kg",
+    // 12–13 and ≥14 rows share the same range
+    hrRange: "60–100 bpm",
+    rrRange: "12–20 /min",
+    sbpRange: "110–135 mmHg",
+    dbpRange: "65–85 mmHg",
+    spo2Target: "≥94% (low <94%)",
+    notes: [
+      "Uses the 12–13 and ≥14 years rows from the paediatric normal vital signs table.",
+      "Physiology is approaching adult; treat persistent tachycardia, tachypnoea or borderline SBP as red flags."
+    ]
   },
   {
     id: "adult",
-    label: "Adult",
-    range: "≥ 18 years",
-    hr: "60–100 bpm",
-    rr: "12–20 breaths/min",
-    sbp: "100–140 mmHg",
-    spo2: "≥ 94% (or patient baseline, e.g. COPD)",
-    notes: "Always compare to patient baseline and medications (e.g. beta-blockers).",
-  },
+    label: "Adult (≥16 years)",
+    ageRange: "≥16 years",
+    hrRange: "50–99 bpm",
+    rrRange: "12–20 /min",
+    sbpRange: "110–140 mmHg",
+    dbpRange: "60–90 mmHg",
+    spo2Target: "≥94% (88–92% if COPD)",
+    notes: [
+      "Adult normal ranges from the 'NORMAL VITAL SIGNS RANGE FOR ADULTS' table.",
+      "In most adults and APO, aim for SpO₂ ≥94%. In COPD exacerbations, target SpO₂ 88–92% as per COPD CPG.",
+      "Hypotension for sepsis/qSOFA is SBP ≤100 mmHg; also consider MAP and clinical context."
+    ]
+  }
 ];
+
+function classNames(...classes: Array<string | boolean | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
 
 export default function VitalsByAgePage() {
   const [selectedId, setSelectedId] = useState<AgeBandId>("adult");
 
-  const selected = ageBands.find((b) => b.id === selectedId) ?? ageBands[0];
+  const selectedBand = AGE_BANDS.find((band) => band.id === selectedId) ?? AGE_BANDS[0];
 
-  const summaryText = `Normal vitals band – ${selected.label} (${selected.range}): HR ${selected.hr}, RR ${selected.rr}, SBP ${selected.sbp}, SpO₂ target ${selected.spo2}. Ranges adapted from CPG-style reference; interpret with trends, patient baseline and full clinical picture.`;
+  const summaryText = `Normal vitals for ${selectedBand.label} (${selectedBand.ageRange}): HR ${selectedBand.hrRange}, RR ${selectedBand.rrRange}, SBP ${selectedBand.sbpRange}, SpO₂ ${selectedBand.spo2Target}.`;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8 space-y-6">
-        <div className="flex items-center justify-between gap-4">
-          <Link
-            href="/dashboard"
-            className="text-xs font-medium text-slate-400 hover:text-emerald-400"
-          >
-            ← Back to dashboard
-          </Link>
+    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+      <header className="space-y-2">
+        <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
+          Reference
+        </p>
+        <h1 className="text-2xl md:text-3xl font-semibold text-slate-50">
+          Normal Vitals by Age
+        </h1>
+        <p className="text-sm text-slate-400 max-w-2xl">
+          Age-specific heart rate, respiratory rate, and blood pressure ranges
+          based on the HMCAS CPG normal vital sign tables. Use alongside your primary
+          assessment, sepsis screening, and perfusion status tools.
+        </p>
+      </header>
 
-          <CopySummaryButton summaryText={summaryText} />
-        </div>
-
-        <header className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400/80">
-            Reference
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Normal Vitals by Age
-          </h1>
-          <p className="text-sm text-slate-400">
-            Quick reference for typical heart rate, respiratory rate, systolic
-            blood pressure and SpO₂ by age band. Values are approximate
-            CPG-style ranges and must be adapted to your local guideline and
-            patient context.
-          </p>
-        </header>
-
-        {/* Age band selector + summary */}
-        <section className="grid gap-4 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)]">
-          {/* Selector */}
+      <section className="grid gap-6 md:grid-cols-3">
+        {/* Age band selector */}
+        <div className="md:col-span-1">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">
-              Choose age band
+            <p className="text-xs font-semibold tracking-[0.3em] text-slate-400 uppercase">
+              Age bands
             </p>
-            <div className="flex flex-wrap gap-2">
-              {ageBands.map((band) => {
-                const isActive = band.id === selected.id;
+            <p className="text-xs text-slate-400">
+              Tap a band to see the CPG-based normal ranges for that age group.
+            </p>
+            <div className="mt-3 space-y-2">
+              {AGE_BANDS.map((band) => {
+                const isActive = band.id === selectedId;
                 return (
                   <button
                     key={band.id}
                     type="button"
                     onClick={() => setSelectedId(band.id)}
                     className={classNames(
-                      "rounded-xl border px-3 py-2 text-xs text-left transition",
-                      "border-slate-700 bg-slate-950 hover:border-emerald-400/70 hover:bg-slate-900",
-                      isActive &&
-                        "border-emerald-400 bg-emerald-500/10 text-emerald-100 shadow-sm"
+                      "w-full rounded-xl px-3 py-2 text-left text-sm border transition",
+                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
+                      isActive
+                        ? "border-emerald-500/80 bg-emerald-500/10 text-emerald-100"
+                        : "border-slate-800 bg-slate-900/70 text-slate-200 hover:border-slate-700 hover:bg-slate-900"
                     )}
                   >
-                    <span className="block font-medium">{band.label}</span>
-                    <span className="block text-[10px] text-slate-400">
-                      {band.range}
-                    </span>
+                    <div className="font-medium">{band.label}</div>
+                    <div className="text-xs text-slate-400">{band.ageRange}</div>
                   </button>
                 );
               })}
             </div>
           </div>
+        </div>
 
-          {/* Summary card */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 text-sm shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400/80">
-              Selected band
-            </p>
-            <h2 className="mt-1 text-xl font-semibold">
-              {selected.label}{" "}
-              <span className="text-sm font-normal text-slate-400">
-                ({selected.range})
-              </span>
-            </h2>
+        {/* Selected band detail */}
+        <div className="md:col-span-2">
+          <div className="h-full rounded-2xl border border-slate-800 bg-slate-900/70 p-4 md:p-5 flex flex-col gap-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
+                  Selected band
+                </p>
+                <h2 className="mt-1 text-lg md:text-xl font-semibold text-slate-50">
+                  {selectedBand.label}
+                </h2>
+                <p className="text-xs text-slate-400">
+                  {selectedBand.ageRange}
+                  {selectedBand.weightRange ? ` • ${selectedBand.weightRange}` : null}
+                </p>
+              </div>
+              <CopySummaryButton summaryText={summaryText} />
+            </div>
 
-            <dl className="mt-4 space-y-2 text-sm">
-              <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-slate-400 text-xs uppercase tracking-[0.18em]">
-                  Heart rate
+            <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mt-2">
+              <div className="rounded-xl bg-slate-900/80 border border-slate-800 p-3">
+                <dt className="text-[0.65rem] tracking-[0.2em] uppercase text-slate-400">
+                  Heart Rate
                 </dt>
-                <dd className="font-medium">{selected.hr}</dd>
+                <dd className="mt-1 text-sm font-semibold text-slate-50">
+                  {selectedBand.hrRange}
+                </dd>
               </div>
-              <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-slate-400 text-xs uppercase tracking-[0.18em]">
-                  Respiratory rate
+              <div className="rounded-xl bg-slate-900/80 border border-slate-800 p-3">
+                <dt className="text-[0.65rem] tracking-[0.2em] uppercase text-slate-400">
+                  Respiratory Rate
                 </dt>
-                <dd className="font-medium">{selected.rr}</dd>
+                <dd className="mt-1 text-sm font-semibold text-slate-50">
+                  {selectedBand.rrRange}
+                </dd>
               </div>
-              <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-slate-400 text-xs uppercase tracking-[0.18em]">
+              <div className="rounded-xl bg-slate-900/80 border border-slate-800 p-3">
+                <dt className="text-[0.65rem] tracking-[0.2em] uppercase text-slate-400">
                   Systolic BP
                 </dt>
-                <dd className="font-medium">{selected.sbp}</dd>
+                <dd className="mt-1 text-sm font-semibold text-slate-50">
+                  {selectedBand.sbpRange}
+                </dd>
               </div>
-              <div className="flex items-baseline justify-between gap-4">
-                <dt className="text-slate-400 text-xs uppercase tracking-[0.18em]">
-                  SpO₂ target
+              <div className="rounded-xl bg-slate-900/80 border border-slate-800 p-3">
+                <dt className="text-[0.65rem] tracking-[0.2em] uppercase text-slate-400">
+                  Diastolic BP
                 </dt>
-                <dd className="font-medium">{selected.spo2}</dd>
+                <dd className="mt-1 text-sm font-semibold text-slate-50">
+                  {selectedBand.dbpRange}
+                </dd>
               </div>
             </dl>
 
-            {selected.notes && (
-              <p className="mt-3 text-[11px] text-slate-400">
-                {selected.notes}
-              </p>
-            )}
+            <div className="mt-3 rounded-xl bg-slate-900/80 border border-slate-800 p-3 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-[0.65rem] tracking-[0.2em] uppercase text-slate-400">
+                    Oxygen Saturation Target
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-50">
+                    {selectedBand.spo2Target}
+                  </p>
+                </div>
+              </div>
+              {selectedBand.notes.length > 0 && (
+                <ul className="mt-3 space-y-1.5 text-xs text-slate-300">
+                  {selectedBand.notes.map((note, idx) => (
+                    <li key={idx} className="flex gap-2">
+                      <span className="mt-[0.3rem] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-400/70" />
+                      <span>{note}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Mini table of all ranges */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 text-xs overflow-x-auto">
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
-            Full age band overview
+      {/* Compact all-bands table */}
+      <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 md:p-5 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs font-semibold tracking-[0.3em] text-slate-400 uppercase">
+            All age bands overview
           </p>
-          <table className="min-w-full border-collapse text-left">
+          <p className="text-[0.65rem] text-slate-500">
+            Values from CPG normal vital sign tables (adult & paediatric).
+          </p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-xs md:text-sm border-separate border-spacing-y-1">
             <thead>
-              <tr className="border-b border-slate-800 text-[11px] text-slate-400">
-                <th className="py-2 pr-3 font-medium">Age band</th>
-                <th className="py-2 pr-3 font-medium">HR (bpm)</th>
-                <th className="py-2 pr-3 font-medium">RR (breaths/min)</th>
-                <th className="py-2 pr-3 font-medium">Systolic BP (mmHg)</th>
-                <th className="py-2 pr-3 font-medium">SpO₂ target</th>
+              <tr className="text-[0.65rem] uppercase tracking-[0.18em] text-slate-400">
+                <th className="text-left px-2 py-2">Age band</th>
+                <th className="text-left px-2 py-2">Age range</th>
+                <th className="text-left px-2 py-2">HR (bpm)</th>
+                <th className="text-left px-2 py-2">RR (/min)</th>
+                <th className="text-left px-2 py-2">SBP (mmHg)</th>
+                <th className="text-left px-2 py-2">DBP (mmHg)</th>
+                <th className="text-left px-2 py-2">SpO₂ target</th>
               </tr>
             </thead>
             <tbody>
-              {ageBands.map((band) => (
+              {AGE_BANDS.map((band) => (
                 <tr
                   key={band.id}
                   className={classNames(
-                    "border-b border-slate-900/80",
-                    band.id === selected.id && "bg-slate-900"
+                    "rounded-xl",
+                    band.id === selectedId ? "bg-emerald-500/5" : "bg-slate-900/80"
                   )}
                 >
-                  <td className="py-2 pr-3 align-top">
-                    <div className="font-medium text-slate-100">
-                      {band.label}
-                    </div>
-                    <div className="text-[10px] text-slate-500">
-                      {band.range}
-                    </div>
+                  <td className="px-2 py-2 rounded-l-xl align-top">
+                    <div className="font-medium text-slate-50">{band.label}</div>
                   </td>
-                  <td className="py-2 pr-3 align-top">{band.hr}</td>
-                  <td className="py-2 pr-3 align-top">{band.rr}</td>
-                  <td className="py-2 pr-3 align-top">{band.sbp}</td>
-                  <td className="py-2 pr-3 align-top">{band.spo2}</td>
+                  <td className="px-2 py-2 align-top text-slate-300">
+                    {band.ageRange}
+                  </td>
+                  <td className="px-2 py-2 align-top text-slate-200">
+                    {band.hrRange}
+                  </td>
+                  <td className="px-2 py-2 align-top text-slate-200">
+                    {band.rrRange}
+                  </td>
+                  <td className="px-2 py-2 align-top text-slate-200">
+                    {band.sbpRange}
+                  </td>
+                  <td className="px-2 py-2 align-top text-slate-200">
+                    {band.dbpRange}
+                  </td>
+                  <td className="px-2 py-2 rounded-r-xl align-top text-slate-200">
+                    {band.spo2Target}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </section>
+        </div>
 
-        <p className="pt-2 text-[11px] text-slate-500">
-          These ranges are approximate and for educational / decision-support
-          use only. Always refer to your ambulance service CPG (v2.4) and
-          consider the whole clinical picture, trends over time and patient
-          baseline.
+        <p className="text-[0.7rem] text-slate-500">
+          Always interpret vital signs in context (perfusion, mental status, temperature, sepsis screening,
+          and specific CPGs such as respiratory, shock, and cardiac guidelines).
         </p>
-      </div>
-    </main>
+      </section>
+    </div>
   );
 }

@@ -362,6 +362,9 @@ export default function StrokeBEFASTPage() {
                 <p className="text-xs text-slate-400">
                   {abnormalCount}/5 signs abnormal • Onset: {onsetText}
                 </p>
+                  <p className="text-[0.7rem] text-slate-500 mt-1">
+                   {classificationExplanation}
+                </p>
               </div>
               <CopySummaryButton summaryText={summaryText} />
             </div>

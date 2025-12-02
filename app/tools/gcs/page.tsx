@@ -21,14 +21,23 @@ export default function GcsPage() {
 
   const total = eye + verbal + motor;
 
-  let severity = "Mild";
-  if (total <= 8) severity = "Severe";
-  else if (total <= 12) severity = "Moderate";
+  // Severity band (for colour / quick label)
+  let severityBand: "Mild" | "Moderate" | "Severe" = "Mild";
+  if (total <= 8) severityBand = "Severe";
+  else if (total <= 12) severityBand = "Moderate";
+
+  // Descriptive severity label with ranges
+  const severityLabel =
+    total >= 13
+      ? "Mild impairment (GCS 13–15)"
+      : total >= 9
+      ? "Moderate impairment (GCS 9–12)"
+      : "Severe impairment (GCS 3–8)";
 
   const severityColor =
-    severity === "Severe"
+    severityBand === "Severe"
       ? "text-red-500"
-      : severity === "Moderate"
+      : severityBand === "Moderate"
       ? "text-yellow-500"
       : "text-emerald-500";
 
@@ -50,7 +59,8 @@ export default function GcsPage() {
     { score: 1, label: "No response" },
   ];
 
-  const verbalOptions = mode === "adult" ? adultVerbalOptions : paedsVerbalOptions;
+  const verbalOptions =
+    mode === "adult" ? adultVerbalOptions : paedsVerbalOptions;
 
   const eyeLabel =
     eye === 4
@@ -74,7 +84,7 @@ export default function GcsPage() {
       ? "Abnormal extension (decerebrate)"
       : "No motor response";
 
-  const summaryText = `GCS ${total} (E${eye} V${verbal} M${motor}) – ${severity} (${mode === "adult" ? "Adult" : "Paediatric"}).`;
+  const summaryText = `GCS ${total} (E${eye} V${verbal} M${motor}) – ${severityLabel}. Aligned with HMCAS CPG 1.4 Glasgow Coma Scale. Document baseline, trend over time, and note any sedation, intubation, or language barriers affecting the score.`;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
@@ -86,9 +96,11 @@ export default function GcsPage() {
           Glasgow Coma Scale (GCS)
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-          Adult and paediatric GCS calculator with PRF-ready summary. Use in
-          conjunction with your primary clinical approach and trending of
-          neurological status.
+          The Glasgow Coma Scale is used to assess and trend level of
+          consciousness in trauma and medical patients. This tool mirrors the
+          HMCAS CPG 1.4 Glasgow Coma Scale layout for adults and paediatrics,
+          and is intended for documentation and trend monitoring rather than
+          diagnosis on its own.
         </p>
       </header>
 
@@ -127,8 +139,14 @@ export default function GcsPage() {
               })}
             </div>
             <p className="text-[0.7rem] text-slate-500 dark:text-slate-500 mt-1">
-              Adult verbal scale is used for older children who can give age-appropriate
-              responses. Paediatric scale is used for pre-verbal children.
+              Adult verbal scale is used for older children who can give
+              age-appropriate responses. Paediatric scale is used for
+              pre-verbal children.
+            </p>
+            <p className="text-[0.7rem] text-slate-600 dark:text-slate-500">
+              Score each component (E, V, M) once. Total GCS is E + V + M.
+              Wording and values follow HMCAS CPG 1.4 Glasgow Coma Scale (adult
+              and paediatric variants).
             </p>
           </div>
 
@@ -265,9 +283,10 @@ export default function GcsPage() {
                   </span>
                 </p>
                 <p className={classNames("text-xs font-semibold", severityColor)}>
-                  {severity} (3–8 severe • 9–12 moderate • 13–15 mild)
+                  {severityLabel}
                 </p>
                 <p className="text-[0.7rem] text-slate-600 dark:text-slate-500">
+                  3–8 severe • 9–12 moderate • 13–15 mild.{" "}
                   {mode === "adult"
                     ? "Adult / verbal child verbal scale."
                     : "Paediatric pre-verbal verbal scale."}
@@ -281,16 +300,21 @@ export default function GcsPage() {
                 Documentation hint
               </p>
               <p>
-                Record as <span className="font-mono">GCS {total} (E{eye} V{verbal} M{motor})</span>{" "}
-                and trend over time. Always interpret in context of airway, breathing,
-                circulation, and underlying cause.
+                Record as{" "}
+                <span className="font-mono">
+                  GCS {total} (E{eye} V{verbal} M{motor})
+                </span>{" "}
+                and trend over time. Note any factors affecting the score
+                (sedation, intubation, language barrier) and interpret alongside
+                airway, breathing, circulation and underlying cause.
               </p>
             </div>
 
             <p className="text-[0.7rem] text-slate-600 dark:text-slate-500 mt-auto">
-              GCS is one component of neurological assessment. Consider pupils, limb
-              strength, seizures, and relevant CPGs (e.g. head injury, stroke, status
-              epilepticus).
+              This tool supports documentation and trending in line with HMCAS
+              CPG 1.4 Glasgow Coma Scale. It does not replace full neurological
+              assessment, head injury / stroke guidelines, or Clinical
+              Coordination advice.
             </p>
           </div>
         </div>

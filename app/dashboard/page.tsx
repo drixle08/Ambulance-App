@@ -22,14 +22,14 @@ const TOOL_GROUPS: ToolGroup[] = [
   {
     title: "Paediatric resus & respiratory",
     description:
-      "Weight-based resuscitation, croup scoring, and asthma severity tools aligned with CPG v2.4.",
+      "Weight-based paediatric arrest, croup scoring and asthma severity tools aligned with HMCAS CPG v2.4.",
     tools: [
       {
         name: "Paediatric Arrest (WAAFELSS)",
         href: "/tools/peds-arrest",
         tagline:
-          "Age/weight-based drug doses, shocks, and fluids for paediatric arrest.",
-        meta: "WAAFELSS-style • CPG 2.x",
+          "Age/weight-based drug doses, shocks, and fluids for paediatric cardiac arrest.",
+        meta: "WAAFELSS-style • CPG v2.4",
       },
       {
         name: "Asthma Severity (Adult + Paeds)",
@@ -42,7 +42,7 @@ const TOOL_GROUPS: ToolGroup[] = [
         name: "MWCS – Croup",
         href: "/tools/mwcs",
         tagline:
-          "Modified Westley Croup Score with severity banding and management hints.",
+          "Modified Westley Croup Score with severity banding and prehospital management hints.",
         meta: "CPG 5.3 Croup",
       },
     ],
@@ -50,13 +50,13 @@ const TOOL_GROUPS: ToolGroup[] = [
   {
     title: "Assessment & screening",
     description:
-      "Quick bedside screening tools to support your primary clinical approach and early decision-making.",
+      "Quick bedside screening tools to support your primary clinical approach, stroke recognition and neurological assessment.",
     tools: [
       {
         name: "Stroke BEFAST",
         href: "/tools/stroke",
         tagline:
-          "BEFAST stroke screen with onset banding and transport priority guidance.",
+          "BEFAST stroke screen with onset banding and transport priority guidance to CT-capable facilities.",
         meta: "CPG 3.1 Stroke",
       },
       {
@@ -77,8 +77,8 @@ const TOOL_GROUPS: ToolGroup[] = [
         name: "Normal Vitals by Age",
         href: "/tools/vitals",
         tagline:
-          "Age-banded HR, RR, BP and SpO₂ ranges for neonates, paediatrics, adolescents, and adults.",
-        meta: "Adult + paeds tables",
+          "Age-banded HR, RR, BP and SpO₂ ranges for neonates, children, adolescents, and adults based on CPG tables.",
+        meta: "Adult + paeds tables • CPG v2.4",
       },
       // Easy slot for future reference tools (e.g. QEWS, sepsis flags, shock index etc.)
     ],

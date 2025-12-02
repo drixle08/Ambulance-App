@@ -56,12 +56,12 @@ export default function HomePage() {
           <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
             Decision-support tools for ambulance crews.
           </h1>
-          <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 max-w-xl">
-            A small, offline-capable PWA built around{" "}
-            <span className="font-semibold">HMCAS CPG v2.4 (2025)</span> – focused on
-            quick taps, clear summaries, and workflows that make sense in the back of
-            the truck.
-          </p>
+          <p className="mt-3 text-sm text-slate-600 dark:text-slate-400 max-w-xl">
+           A small collection of decision-support tools for ambulance crews working under
+           HMCAS Clinical Practice Guideline v2.4 (2025). Built for time-critical care,
+           dark environments, and offline use on the road.
+         </p>
+
 
           {/* CTAs */}
           <div className="flex flex-wrap gap-3 pt-2">
@@ -185,12 +185,14 @@ export default function HomePage() {
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           About this app
         </h2>
-        <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-          The Ambulance Paramedic Toolkit is an informal side project designed to
-          complement, not replace, your HMCAS Clinical Practice Guidelines.
-          Calculators and reference ranges are aligned with CPG v2.4 (2025) where
-          possible. When in doubt, the CPG and Clinical Coordination take priority.
-        </p>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+         This app is a teaching and decision-support aid for HMCAS-style ambulance
+         practice. It mirrors wording, thresholds and patterns from HMCAS CPG v2.4
+         where possible, but it does not replace the official guidelines, local
+         protocols, or Clinical Coordination. Always confirm doses, ranges and pathways
+         against the current CPG.
+       </p>
+
       </section>
 
       {/* Install hint – bottom-right */}

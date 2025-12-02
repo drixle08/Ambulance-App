@@ -1,142 +1,202 @@
 import Link from "next/link";
-import { InstallHint } from "./_components/InstallHint";
+import { ThemeToggle } from "@/app/_components/ThemeToggle";
+import { InstallHint } from "@/app/_components/InstallHint";
 
-const featuredTools = [
-  {
-    name: "MWCS (Croup)",
-    href: "/tools/mwcs",
-    label: "Calculator",
-    description: "Modified Westley Croup Score with automatic severity banding.",
-    tag: "Paediatrics • Respiratory",
-  },
+function classNames(...classes: Array<string | boolean | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
+
+const FEATURED_TOOLS = [
   {
     name: "Paediatric Arrest (WAAFELSS)",
     href: "/tools/peds-arrest",
-    label: "Calculator",
-    description: "Age-based weight estimate, drug doses and defib energy in one view.",
-    tag: "Paediatrics • Resuscitation",
+    description:
+      "Age/weight-based drugs, shocks, and fluid doses for paediatric cardiac arrest.",
+    tag: "Paeds resus",
   },
   {
-    name: "Glasgow Coma Scale (GCS)",
-    href: "/tools/gcs",
-    label: "Assessment",
-    description: "Eye, verbal and motor scoring with severity band and copy summary.",
-    tag: "Neuro • Adult & Paeds",
+    name: "Asthma Severity (Adult + Paeds)",
+    href: "/tools/asthma",
+    description:
+      "Unified asthma severity assessment that auto-selects adult vs paediatric thresholds.",
+    tag: "Respiratory",
   },
   {
-    name: "Normal Vitals by Age",
-    href: "/tools/vitals",
-    label: "Reference",
-    description: "Quick reference for HR, RR, BP and SpO₂ across age bands.",
-    tag: "Reference • All ages",
+    name: "MWCS – Croup",
+    href: "/tools/mwcs",
+    description:
+      "Modified Westley Croup Score with CPG-aligned severity bands and management hints.",
+    tag: "Paeds respiratory",
+  },
+  {
+    name: "Stroke BEFAST",
+    href: "/tools/stroke",
+    description:
+      "BEFAST stroke screen with onset bands and transport priority guidance.",
+    tag: "Neurological",
   },
 ];
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50">
-      {/* Subtle background glow */}
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute inset-x-0 top-0 mx-auto h-64 max-w-xl rounded-full bg-emerald-500/10 blur-3xl" />
+    <div className="relative max-w-6xl mx-auto px-4 py-8 md:py-12 space-y-10">
+      {/* Top bar with theme toggle */}
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <div className="flex flex-col">
+          <span className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-emerald-500">
+            Ambulance • Toolkit
+          </span>
+        </div>
+        <ThemeToggle />
       </div>
 
-      <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-10 sm:px-6 lg:px-8">
-        {/* Hero */}
-        <header className="space-y-6 pb-10 pt-6">
-          <div className="inline-flex items-center gap-3 rounded-full border border-emerald-500/20 bg-slate-900/80 px-3 py-1 text-[11px] font-medium text-emerald-300">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/15 text-base">
-              🚑
-            </span>
-            <span className="uppercase tracking-[0.25em] text-emerald-300/90">
-              Ambulance Paramedic Toolkit
-            </span>
-          </div>
+      {/* Hero */}
+      <section className="grid gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)] items-start">
+        <div className="space-y-5">
+          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+            Decision-support tools for ambulance crews.
+          </h1>
+          <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 max-w-xl">
+            A small, offline-capable PWA built around{" "}
+            <span className="font-semibold">HMCAS CPG v2.4 (2025)</span> – focused on
+            quick taps, clear summaries, and workflows that make sense in the back of
+            the truck.
+          </p>
 
-          <div className="space-y-3">
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Decision-support tools for ambulance crews.
-            </h1>
-            <p className="max-w-2xl text-sm text-slate-400">
-              Quick-access calculators and assessment aids built around your
-              prehospital workflow. Optimised for dark environments and offline
-              use. Always interpret results in context and follow your local CPG.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
+          {/* CTAs */}
+          <div className="flex flex-wrap gap-3 pt-2">
             <Link
               href="/dashboard"
-              className="inline-flex items-center justify-center rounded-full bg-emerald-500 px-5 py-2 text-sm font-medium text-slate-950 shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+              className={classNames(
+                "inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium",
+                "bg-emerald-500 text-white shadow-sm hover:bg-emerald-600",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500",
+                "dark:ring-offset-slate-950"
+              )}
             >
               Open tools dashboard
+              <span className="ml-1.5 text-xs opacity-80">→</span>
             </Link>
-            <p className="text-[11px] text-slate-500">
-              v0.1.0 • Early access build
-            </p>
-          </div>
-        </header>
 
-        {/* Featured tools */}
-        <section className="space-y-3 pb-10">
-          <div className="flex items-baseline justify-between gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">
-              Featured tools
-            </h2>
             <Link
-              href="/dashboard"
-              className="text-[11px] font-medium text-emerald-300 hover:text-emerald-200"
+              href="#about"
+              className="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium border border-slate-300 bg-slate-50 text-slate-800 hover:border-emerald-500 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-500 dark:hover:text-emerald-300"
             >
-              View full dashboard →
+              About this app
             </Link>
           </div>
+        </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {featuredTools.map((tool) => (
-              <Link
-                key={tool.name}
-                href={tool.href}
-                className="group rounded-2xl border border-slate-800 bg-slate-900/70 p-4 transition hover:border-emerald-400/70 hover:bg-slate-900"
-              >
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-slate-50">
-                    {tool.name}
-                  </p>
-                  <span className="rounded-full border border-slate-700 bg-slate-900 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300 group-hover:border-emerald-400/80 group-hover:text-emerald-200">
-                    {tool.label}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400">{tool.description}</p>
-                <p className="mt-3 text-[10px] font-medium text-slate-500">
+        {/* Highlight / “cardy” right-side panel */}
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 md:p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950/60 space-y-3">
+          <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
+            Built for the back of the truck
+          </p>
+          <ul className="space-y-2 text-xs md:text-sm text-slate-700 dark:text-slate-300">
+            <li className="flex gap-2">
+              <span className="mt-[0.3rem] h-1.5 w-1.5 rounded-full bg-emerald-400/80 shrink-0" />
+              <span>
+                <span className="font-semibold">Quick calculators</span> for paediatric
+                arrest, asthma, and croup – with single-line summaries ready to paste
+                into your PRF / ePCR.
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="mt-[0.3rem] h-1.5 w-1.5 rounded-full bg-emerald-400/80 shrink-0" />
+              <span>
+                <span className="font-semibold">Assessment aids</span> like BEFAST and
+                GCS that match HMCAS CPG wording, thresholds, and transport priorities.
+              </span>
+            </li>
+            <li className="flex gap-2">
+              <span className="mt-[0.3rem] h-1.5 w-1.5 rounded-full bg-emerald-400/80 shrink-0" />
+              <span>
+                <span className="font-semibold">Low-clutter UI</span> optimised for
+                dark cabs, gloved hands, and patchy mobile data.
+              </span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      {/* Featured tools */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            Featured tools
+          </h2>
+          <Link
+            href="/dashboard"
+            className="text-[0.75rem] text-emerald-700 hover:text-emerald-600 dark:text-emerald-300 dark:hover:text-emerald-200"
+          >
+            View all tools →
+          </Link>
+        </div>
+        <div className="grid gap-3 md:grid-cols-4">
+          {FEATURED_TOOLS.map((tool) => (
+            <Link
+              key={tool.href}
+              href={tool.href}
+              className={classNames(
+                "group rounded-2xl border border-slate-200 bg-slate-50 p-4 flex flex-col justify-between",
+                "hover:border-emerald-500/80 hover:bg-slate-100 transition-colors",
+                "dark:border-slate-800 dark:bg-slate-900/70 dark:hover:bg-slate-900"
+              )}
+            >
+              <div className="space-y-1.5">
+                <p className="text-[0.65rem] font-semibold tracking-[0.2em] uppercase text-slate-500 dark:text-slate-400">
                   {tool.tag}
                 </p>
-              </Link>
-            ))}
-          </div>
-        </section>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                  {tool.name}
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  {tool.description}
+                </p>
+              </div>
+              <span className="mt-3 text-[0.7rem] text-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity dark:text-emerald-400">
+                Open tool →
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
 
-        {/* Spacer to push footer down a bit */}
-        <div className="flex-1" />
+      {/* Meta badges moved here */}
+      <section className="pt-2">
+        <div className="flex flex-wrap gap-2">
+          <span className="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 text-[0.7rem] text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+            v0.1.0 • Early access
+          </span>
+          <span className="inline-flex items-center rounded-full border border-emerald-500/60 bg-emerald-100/70 px-2.5 py-1 text-[0.7rem] text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-100">
+            Offline-capable PWA
+          </span>
+          <span className="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 text-[0.7rem] text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+            Dark-environment friendly
+          </span>
+          <span className="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 text-[0.7rem] text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+            Aligned with CPG v2.4 (2025)
+          </span>
+        </div>
+      </section>
 
-        {/* Disclaimer / footer card */}
-        <footer className="pb-4 pt-4">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-3 text-[11px] text-slate-400">
-            <p className="font-semibold text-slate-300">
-              Clinical use &amp; disclaimer
-            </p>
-            <p className="mt-1">
-              This toolkit is intended for education and decision-support only.
-              It does not replace ambulance service Clinical Practice Guidelines
-              or clinical judgement. Always follow your local CPG, policies and
-              online medical control.
-            </p>
-            <p className="mt-2 text-[10px] text-slate-500">
-              For training / feedback only. Update notes and additional tools
-              will be added in future versions.
-            </p>
-          </div>
-        </footer>
+      {/* About section (anchor target for secondary CTA) */}
+      <section id="about" className="space-y-3 pt-4">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          About this app
+        </h2>
+        <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+          The Ambulance Paramedic Toolkit is an informal side project designed to
+          complement, not replace, your HMCAS Clinical Practice Guidelines.
+          Calculators and reference ranges are aligned with CPG v2.4 (2025) where
+          possible. When in doubt, the CPG and Clinical Coordination take priority.
+        </p>
+      </section>
+
+      {/* Install hint – bottom-right */}
+      <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6">
+        <InstallHint />
       </div>
-      <InstallHint />
-    </main>
+    </div>
   );
 }

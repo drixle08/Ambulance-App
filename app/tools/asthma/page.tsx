@@ -229,9 +229,9 @@ export default function AsthmaPage() {
               Asthma Severity (Adult + Paediatric)
             </h1>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-              Severity bands (mild, moderate, severe) based on HMCAS CPG asthma
-              severity table for adults and paediatrics. Use with CPG dosing and
-              escalation guidance.
+             Asthma is characterised by chronic airway inflammation and hyperresponsive 
+             airways. Exacerbations range from mild to life-threatening and are time-sensitive 
+              emergencies requiring prompt assessment and treatment as per CPG 5.1 Asthma.
             </p>
           </div>
           <button

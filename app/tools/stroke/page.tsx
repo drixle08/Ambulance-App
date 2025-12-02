@@ -49,11 +49,11 @@ export default function StrokeBefastPage() {
   } else if (abnormalCount >= 1 && abnormalCount <= 2) {
     classificationLabel = "BEFAST positive ▮ possible stroke";
     classificationExplanation =
-      "One or two abnormal BEFAST findings. Treat as suspected stroke and apply CPG 3.1 Stroke, including time of onset, glucose check, and transport to CT-capable facility.";
+      "One or two abnormal BEFAST findings. Treat as suspected acute stroke and apply CPG 3.1 Stroke, including last-known-well time, glucose check, and rapid transport to a CT-capable HMC facility with prenotification.";
   } else {
     classificationLabel = "BEFAST positive ▮ high concern";
     classificationExplanation =
-      "Multiple abnormal BEFAST findings. High suspicion for acute stroke; time-critical management and rapid transport to CT-capable facility required as per CPG 3.1 Stroke.";
+      "Multiple abnormal BEFAST findings. High suspicion for acute stroke – time-critical management and rapid transport to a CT-capable HMC facility (stroke pathway) as per CPG 3.1 Stroke.";
   }
 
   const onsetText =
@@ -137,10 +137,11 @@ export default function StrokeBefastPage() {
               Stroke BEFAST Screen
             </h1>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-              Quick BEFAST screen (Balance, Eyes, Face, Arm, Speech) with onset banding
-              and transport priority hints. Aligns with HMCAS CPG 3.1 Stroke — this
-              tool supports, but does not replace, your clinical judgement or the CPG.
-            </p>
+             Stroke is a time-sensitive emergency requiring prompt recognition. This BEFAST 
+             screen supports early identification, triage and transport to an appropriate 
+             CT-capable facility, in line with HMCAS CPG 3.1 Stroke.
+           </p>
+
           </div>
           <button
             type="button"

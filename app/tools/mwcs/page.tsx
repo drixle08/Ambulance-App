@@ -207,11 +207,11 @@ export default function MwcsPage() {
               MWCS – Modified Westley Croup Score
             </h1>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-              Calculates the Modified Westley Croup Score from level of
-              consciousness, cyanosis, stridor, air entry, and chest
-              retractions. Severity bands (mild, moderate, severe, impending
-              respiratory failure) are aligned with common CPG croup practice.
+             Croup is a common viral infection affecting the subglottic airway. The severity 
+             is determined using the Modified Westley Croup Score as per CPG 5.3 Croup, which 
+             guides treatment for mild, moderate and severe croup.
             </p>
+
           </div>
           <button
             type="button"
@@ -519,11 +519,12 @@ export default function MwcsPage() {
               </ul>
             </div>
 
-            <p className="text-[0.7rem] text-slate-600 dark:text-slate-500 mt-auto">
-              The MWCS is a decision-support score only. Always correlate with full
-              paediatric assessment and follow the HMCAS CPG Croup guideline and
-              Clinical Coordination for final decisions on treatment and transport.
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+             Total possible score 0–17. CPG 5.3 defines: Mild croup ≤2, Moderate 3–7, 
+             Severe ≥8. This tool adds a teaching band for “impending respiratory failure” 
+             at very high scores – always follow CPG 5.3 for management decisions.
             </p>
+
           </div>
         </div>
       </section>

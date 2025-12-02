@@ -3,43 +3,57 @@
 import { useState } from "react";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 
-type FieldState = "normal" | "abnormal" | "unknown";
+type BEFASTState = "normal" | "abnormal" | "unknown";
 type OnsetBand = "lt15" | "gt15" | "unknown";
 
 function classNames(...classes: Array<string | boolean | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function StrokeBEFASTPage() {
-  const [balance, setBalance] = useState<FieldState>("normal");
-  const [eyes, setEyes] = useState<FieldState>("normal");
-  const [face, setFace] = useState<FieldState>("normal");
-  const [arms, setArms] = useState<FieldState>("normal");
-  const [speech, setSpeech] = useState<FieldState>("normal");
+export default function StrokeBefastPage() {
+  const [ageYears, setAgeYears] = useState<string>("70");
   const [onset, setOnset] = useState<OnsetBand>("lt15");
 
-  const befastStates: { key: string; label: string; value: FieldState }[] = [
-    { key: "balance", label: "Balance", value: balance },
-    { key: "eyes", label: "Eyes", value: eyes },
-    { key: "face", label: "Face", value: face },
-    { key: "arms", label: "Arms", value: arms },
-    { key: "speech", label: "Speech", value: speech },
-  ];
+  const [balance, setBalance] = useState<BEFASTState>("normal");
+  const [eyes, setEyes] = useState<BEFASTState>("normal");
+  const [face, setFace] = useState<BEFASTState>("normal");
+  const [arm, setArm] = useState<BEFASTState>("normal");
+  const [speech, setSpeech] = useState<BEFASTState>("normal");
 
-  const abnormalCount = befastStates.filter((f) => f.value === "abnormal").length;
+  const befastStates: Record<string, BEFASTState> = {
+    Balance: balance,
+    Eyes: eyes,
+    Face: face,
+    Arm: arm,
+    Speech: speech,
+  };
 
-  let classificationLabel = "No BEFAST signs";
-  let classificationExplanation =
-    "No focal deficits on BEFAST. Stroke is still possible — correlate with history, vitals, and other neurological findings.";
+  const abnormalEntries = Object.entries(befastStates).filter(
+    ([, v]) => v === "abnormal"
+  );
+  const abnormalCount = abnormalEntries.length;
+  const abnormalLabels = abnormalEntries.map(([k]) => k);
 
-  if (abnormalCount >= 1 && abnormalCount <= 2) {
-    classificationLabel = "BEFAST positive – possible stroke";
+  const unknownCount = Object.values(befastStates).filter(
+    (v) => v === "unknown"
+  ).length;
+
+  // Classification logic
+  let classificationLabel: string;
+  let classificationExplanation: string;
+
+  if (abnormalCount === 0) {
+    classificationLabel = "No BEFAST deficits";
     classificationExplanation =
-      "One or two abnormal BEFAST findings. Treat as suspected stroke and apply CPG 3.1 Stroke.";
-  } else if (abnormalCount >= 3) {
-    classificationLabel = "BEFAST positive – high concern";
+      "No focal deficits on BEFAST. Stroke is still possible — correlate with history, vitals, glucose, and full neurological exam as per CPG 3.1 Stroke.";
+  } else if (abnormalCount >= 1 && abnormalCount <= 2) {
+    classificationLabel = "BEFAST positive ▮ possible stroke";
     classificationExplanation =
-      "Multiple abnormal BEFAST findings. High suspicion for acute stroke; time-critical management required.";
+      "One or two abnormal BEFAST findings. Treat as suspected stroke and apply CPG 3.1 Stroke, including time of onset, glucose check, and transport to CT-capable facility.";
+  } else {
+    classificationLabel = "BEFAST positive ▮ high concern";
+    classificationExplanation =
+      "Multiple abnormal BEFAST findings. High suspicion for acute stroke; time-critical management and rapid transport to CT-capable facility required as per CPG 3.1 Stroke.";
   }
 
   const onsetText =
@@ -49,321 +63,267 @@ export default function StrokeBEFASTPage() {
       ? "> 15 hours since onset"
       : "Onset time unknown";
 
-  const abnormalLabels = befastStates
-    .filter((f) => f.value === "abnormal")
-    .map((f) => f.label);
+  const timeCriticalNote =
+    abnormalCount >= 1 && onset === "lt15"
+      ? "Onset < 15 hours or wake-up stroke with BEFAST positivity — consider stroke code / hyperacute pathway as per CPG 3.1 Stroke."
+      : abnormalCount >= 1 && onset === "gt15"
+      ? "Onset > 15 hours with BEFAST positivity — outside standard thrombolysis window but still requires urgent stroke assessment and imaging as per CPG 3.1 Stroke."
+      : "Document last known well time clearly and liaise with Clinical Coordination / receiving ED as per CPG 3.1 Stroke.";
 
-  const abnormalFeaturesText =
-    abnormalLabels.length > 0 ? abnormalLabels.join(", ") : "None";
+  const severityColor =
+    abnormalCount === 0
+      ? "text-slate-500"
+      : abnormalCount <= 2
+      ? "text-yellow-500"
+      : "text-red-500";
 
-  // Management hints based on CPG 3.1
-  const management: string[] = [];
+  const actions: string[] = [];
 
   if (abnormalCount === 0) {
-    management.push(
-      "Continue full neurological assessment and monitor vitals. Stroke still possible despite a negative BEFAST.",
-      "Actively rule out stroke mimics (intoxication, hypoxia, hypo/hyperglycaemia, post-ictal state, infections, migraine, electrolyte disturbance, intracranial lesions).",
-      "If clinical suspicion remains high, manage as suspected stroke and transport to HGH ED with prenotification."
+    actions.push(
+      "Continue full neurological assessment (GCS, pupils, limb strength, speech, gait) and consider mimics such as hypoglycaemia, seizure, migraine, or sepsis.",
+      "Check blood glucose and vital signs; manage any ABC issues and consult CPG 3.1 Stroke if concern persists despite negative BEFAST."
+    );
+  } else if (abnormalCount >= 1 && abnormalCount <= 2) {
+    actions.push(
+      "Treat as suspected stroke: obtain precise last-known-well time, check blood glucose, and perform full neurological assessment as per CPG 3.1 Stroke.",
+      "Prioritise transport to CT-capable facility; prenotify ED with BEFAST findings and onset band.",
+      timeCriticalNote
     );
   } else {
-    if (onset === "lt15") {
-      management.push(
-        "Positive BEFAST < 15 hours or wake-up stroke: treat as time-critical stroke.",
-        "Transport Priority 1 to HGH ED with prenotification via CC: Emergency."
-      );
-    } else if (onset === "gt15") {
-      management.push(
-        "Positive BEFAST > 15 hours since onset: stroke still time-sensitive.",
-        "Transport Priority 2 to HGH ED with prenotification."
-      );
-    } else {
-      management.push(
-        "Positive BEFAST with uncertain onset time: treat as suspected acute stroke.",
-        "Discuss with CC: Emergency and consider Priority 1 transport to HGH ED with prenotification."
-      );
-    }
-
-    management.push(
-      "Position patient lateral or semi-Fowler if reduced LOC; protect airway.",
-      "Administer oxygen only if indicated (hypoxia). Avoid hypoxia and hypercapnia.",
-      "Rule out reversible/mimicking causes: consider glucose, seizure/post-ictal state, intoxication, infection, migraine, electrolyte disturbance, intracranial lesions.",
-      "APs do not routinely require CCP unless there is airway or haemodynamic compromise. Do not delay transport waiting for CCP.",
-      "Do NOT attempt to reduce blood pressure with nitrates in hypertensive stroke patients."
+    actions.push(
+      "Treat as time-critical stroke: multiple BEFAST positives with high suspicion for acute stroke.",
+      "Secure ABCs, check blood glucose, avoid hypotension/hypoxia, and transport urgently to CT-capable facility with prenotification (stroke code if applicable).",
+      timeCriticalNote
     );
   }
 
-  const summaryText = `Stroke screen: ${classificationLabel} (${abnormalCount}/5 BEFAST positive). Onset: ${onsetText}. Abnormal: ${abnormalFeaturesText}. Plan: ${management[0]}`;
+  const ageNum = Number(ageYears);
+
+  const summaryPieces: string[] = [];
+  summaryPieces.push(
+    `BEFAST: ${abnormalCount}/5 positive${
+      abnormalLabels.length ? ` (${abnormalLabels.join(", ")})` : ""
+    }`
+  );
+  if (!Number.isNaN(ageNum)) {
+    summaryPieces.push(`age ~${ageNum}y`);
+  }
+  summaryPieces.push(`onset: ${onsetText}`, `classification: ${classificationLabel}`);
+
+  const summaryText =
+    summaryPieces.join("; ") +
+    `. Primary actions: ${actions[0] ?? "Apply CPG 3.1 Stroke and consult Clinical Coordination."}`;
+
+  function handleReset() {
+    setAgeYears("70");
+    setOnset("lt15");
+    setBalance("normal");
+    setEyes("normal");
+    setFace("normal");
+    setArm("normal");
+    setSpeech("normal");
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
       <header className="space-y-2">
-        <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
-          Neurological
-        </p>
-        <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 dark:text-slate-50">
-          Stroke BEFAST Screen
-        </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-          BEFAST stroke assessment aligned with HMCAS CPG v2.4 (CPG 3.1 Stroke).
-          Any abnormal BEFAST finding = suspected stroke; use onset time to guide
-          transport priority and prenotification.
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
+              Neurological
+            </p>
+            <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 dark:text-slate-50">
+              Stroke BEFAST Screen
+            </h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+              Quick BEFAST screen (Balance, Eyes, Face, Arm, Speech) with onset banding
+              and transport priority hints. Aligns with HMCAS CPG 3.1 Stroke — this
+              tool supports, but does not replace, your clinical judgement or the CPG.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="h-9 px-3 rounded-lg border border-slate-300 bg-slate-50 text-xs font-medium text-slate-700 shadow-sm hover:border-emerald-500 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-500 dark:hover:text-emerald-300"
+          >
+            Reset
+          </button>
+        </div>
       </header>
 
       <section className="grid gap-6 md:grid-cols-3">
-        {/* Left: BEFAST inputs */}
+        {/* Left: inputs */}
         <div className="md:col-span-2 space-y-4">
-          {/* Balance */}
+          {/* Patient / onset */}
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
-                  B – Balance
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  Sudden loss of balance, unsteadiness, or dizziness?
-                </p>
-              </div>
+            <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
+              Patient & onset
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="text-xs text-slate-600 dark:text-slate-400">
+                Age (years)
+              </label>
+              <input
+                type="number"
+                min={0}
+                inputMode="decimal"
+                value={ageYears}
+                onChange={(e) => setAgeYears(e.target.value)}
+                className="w-24 rounded-lg border border-slate-300 bg-slate-50 px-2 py-1.5 text-xs text-slate-900 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50"
+              />
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                Older age & comorbidities increase risk of stroke.
+              </span>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {([
-                { id: "normal", label: "No acute balance issue" },
-                { id: "abnormal", label: "Acute loss of balance / ataxia" },
-                { id: "unknown", label: "Unable to assess / uncertain" },
-              ] as const).map((opt) => {
-                const active = balance === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setBalance(opt.id)}
-                    className={classNames(
-                      "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition",
-                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
-                      active
-                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
-                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
+
+            <div className="space-y-2 pt-2">
+              <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                Time of symptom onset / last known well
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {([
+                  {
+                    id: "lt15",
+                    label: "< 15 hours / wake-up stroke",
+                    desc: "Potentially within hyperacute pathway windows.",
+                  },
+                  {
+                    id: "gt15",
+                    label: "> 15 hours since onset",
+                    desc: "Outside standard thrombolysis window; still urgent.",
+                  },
+                  {
+                    id: "unknown",
+                    label: "Onset time unclear / unknown",
+                    desc: "Document best estimate and liaise with ED/Coordination.",
+                  },
+                ] as const).map((opt) => {
+                  const active = onset === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setOnset(opt.id)}
+                      className={classNames(
+                        "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition text-left flex-1 min-w-40",
+                        "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
+                        active
+                          ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
+                          : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
+                      )}
+                    >
+                      <span className="block">{opt.label}</span>
+                      <span className="block text-[0.65rem] text-slate-500 dark:text-slate-400">
+                        {opt.desc}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Eyes */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
-                  E – Eyes
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  Sudden loss of vision in one or both eyes, or new visual blurring?
-                </p>
+          {/* BEFAST items */}
+          {([
+            {
+              key: "Balance",
+              value: balance,
+              setter: setBalance,
+              help: "Sudden loss of balance, unsteady gait, leaning to one side, or difficulty walking.",
+            },
+            {
+              key: "Eyes",
+              value: eyes,
+              setter: setEyes,
+              help: "Sudden change in vision: loss in one eye, double vision, or field defect.",
+            },
+            {
+              key: "Face",
+              value: face,
+              setter: setFace,
+              help: "Facial asymmetry: droop when smiling, flattened nasolabial fold, or unequal grimace.",
+            },
+            {
+              key: "Arm",
+              value: arm,
+              setter: setArm,
+              help: "Arm drift or weakness: unable to hold both arms up equally for 10 seconds.",
+            },
+            {
+              key: "Speech",
+              value: speech,
+              setter: setSpeech,
+              help: "Slurred speech, word-finding difficulty, inappropriate words, or comprehension problems.",
+            },
+          ] as const).map((item) => (
+            <div
+              key={item.key}
+              className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
+                    {item.key}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-500">
+                    {item.help}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {([
+                  { id: "normal", label: "Normal / no deficit" },
+                  { id: "abnormal", label: "Abnormal BEFAST finding" },
+                  { id: "unknown", label: "Unable to assess / unclear" },
+                ] as const).map((opt) => {
+                  const active = item.value === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => item.setter(opt.id as BEFASTState)}
+                      className={classNames(
+                        "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition text-left",
+                        "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
+                        active
+                          ? opt.id === "abnormal"
+                            ? "border-red-500 bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-200"
+                            : "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
+                          : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {([
-                { id: "normal", label: "No acute visual change" },
-                { id: "abnormal", label: "New visual loss / field cut / blurring" },
-                { id: "unknown", label: "Unable to assess / uncertain" },
-              ] as const).map((opt) => {
-                const active = eyes === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setEyes(opt.id)}
-                    className={classNames(
-                      "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition",
-                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
-                      active
-                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
-                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Face */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
-                  F – Face
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  Ask the patient to smile. Is one side of the face drooping?
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {([
-                { id: "normal", label: "Symmetrical" },
-                { id: "abnormal", label: "Facial droop / asymmetry" },
-                { id: "unknown", label: "Unable to assess / uncertain" },
-              ] as const).map((opt) => {
-                const active = face === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setFace(opt.id)}
-                    className={classNames(
-                      "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition",
-                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
-                      active
-                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
-                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Arms */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
-                  A – Arms
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  Ask the patient to lift both arms or squeeze your fingers. Any weakness?
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {([
-                { id: "normal", label: "Equal strength" },
-                { id: "abnormal", label: "Weakness / drift in one arm" },
-                { id: "unknown", label: "Unable to assess / uncertain" },
-              ] as const).map((opt) => {
-                const active = arms === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setArms(opt.id)}
-                    className={classNames(
-                      "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition",
-                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
-                      active
-                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
-                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Speech */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
-                  S – Speech
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  Ask the patient to speak. Is speech slurred, confused, or unable to speak?
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {([
-                { id: "normal", label: "Clear, normal speech" },
-                { id: "abnormal", label: "Slurred / aphasia / unable to speak" },
-                { id: "unknown", label: "Unable to assess / uncertain" },
-              ] as const).map((opt) => {
-                const active = speech === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setSpeech(opt.id)}
-                    className={classNames(
-                      "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition",
-                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
-                      active
-                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
-                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Onset time */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
-                  T – Time last seen normal
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  Use best available history: exact onset or last known well time.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {([
-                { id: "lt15", label: "< 15 hours / wake-up stroke" },
-                { id: "gt15", label: "> 15 hours since onset" },
-                { id: "unknown", label: "Onset time unknown / unclear" },
-              ] as const).map((opt) => {
-                const active = onset === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setOnset(opt.id)}
-                    className={classNames(
-                      "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition",
-                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
-                      active
-                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
-                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Right: Result & management */}
+        {/* Right: Summary */}
         <div className="md:col-span-1">
           <div className="h-full rounded-2xl border border-slate-200 bg-slate-50 p-4 flex flex-col gap-3 dark:border-slate-800 dark:bg-slate-950/60">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
-                  BEFAST summary
+                  BEFAST classification
                 </p>
-                <h2 className="mt-1 text-lg md:text-xl font-semibold text-slate-900 dark:text-slate-50">
+                <p
+                  className={classNames(
+                    "mt-1 text-lg md:text-xl font-semibold",
+                    severityColor
+                  )}
+                >
                   {classificationLabel}
-                </h2>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  {abnormalCount}/5 signs abnormal • Onset: {onsetText}
                 </p>
-                <p className="text-[0.7rem] text-slate-500 dark:text-slate-500 mt-1">
-                  {classificationExplanation}
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  {abnormalCount} of 5 domains abnormal
+                  {abnormalLabels.length
+                    ? `: ${abnormalLabels.join(", ")}`
+                    : ""}{" "}
+                  {unknownCount > 0 && `( + ${unknownCount} unknown )`}
                 </p>
               </div>
               <CopySummaryButton summaryText={summaryText} />
@@ -371,29 +331,29 @@ export default function StrokeBEFASTPage() {
 
             <div className="rounded-xl bg-slate-100 border border-slate-200 p-3 text-xs text-slate-700 dark:bg-slate-900/80 dark:border-slate-800 dark:text-slate-300">
               <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                Abnormal components
+                Interpretation
               </p>
-              <p>{abnormalFeaturesText}</p>
+              <p>{classificationExplanation}</p>
             </div>
 
             <div className="rounded-xl bg-slate-100 border border-slate-200 p-3 text-xs text-slate-700 dark:bg-slate-900/80 dark:border-slate-800 dark:text-slate-300">
               <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                Suggested prehospital actions (summary – see CPG 3.1 for full protocol)
+                Suggested prehospital actions (summary)
               </p>
               <ul className="mt-1 space-y-1.5">
-                {management.map((m, idx) => (
+                {actions.map((a, idx) => (
                   <li key={idx} className="flex gap-2">
                     <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400/70 shrink-0" />
-                    <span>{m}</span>
+                    <span>{a}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
             <p className="text-[0.7rem] text-slate-600 dark:text-slate-500 mt-auto">
-              Any suspected stroke with new onset symptoms, regardless of time of onset,
-              should be transported to HGH Emergency Department with prenotification as
-              per CPG 3.1 Stroke.
+              This BEFAST screen assists with early stroke recognition and transport
+              priority. Final decisions on thrombolysis/thrombectomy pathways and
+              imaging must follow HMCAS CPG 3.1 Stroke and the receiving stroke team.
             </p>
           </div>
         </div>

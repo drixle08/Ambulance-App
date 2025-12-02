@@ -1,230 +1,300 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { CopySummaryButton } from "../../_components/CopySummaryButton";
+import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 
-type GcsOption = {
-  label: string;
-  value: number;
-  helper?: string;
-};
+type Mode = "adult" | "paeds";
 
-function classNames(...classes: (string | false | null | undefined)[]) {
+type EyeScore = 1 | 2 | 3 | 4;
+type VerbalScore = 1 | 2 | 3 | 4 | 5;
+type MotorScore = 1 | 2 | 3 | 4 | 5 | 6;
+
+function classNames(...classes: Array<string | boolean | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
 export default function GcsPage() {
-  const [eye, setEye] = useState<number>(4);
-  const [verbal, setVerbal] = useState<number>(5);
-  const [motor, setMotor] = useState<number>(6);
+  const [mode, setMode] = useState<Mode>("adult");
+  const [eye, setEye] = useState<EyeScore>(4);
+  const [verbal, setVerbal] = useState<VerbalScore>(5);
+  const [motor, setMotor] = useState<MotorScore>(6);
 
   const total = eye + verbal + motor;
 
-  // Severity bands: 13–15 mild, 9–12 moderate, 3–8 severe
-  let severityLabel = "Mild (13–15)";
-  let severityExplain =
-    "Consistent with a mild head injury or normal consciousness. Continue full assessment and monitoring.";
-  let severityColor =
-    "border-emerald-500/40 bg-emerald-500/10 text-emerald-50";
+  let severity = "Mild";
+  if (total <= 8) severity = "Severe";
+  else if (total <= 12) severity = "Moderate";
 
-  if (total >= 9 && total <= 12) {
-    severityLabel = "Moderate (9–12)";
-    severityExplain =
-      "Moderate impairment of consciousness. Requires close observation, airway vigilance and urgent transport.";
-    severityColor =
-      "border-amber-500/40 bg-amber-500/10 text-amber-50";
-  } else if (total <= 8) {
-    severityLabel = "Severe (3–8)";
-    severityExplain =
-      "Severe impairment of consciousness. Treat as time-critical; airway protection and rapid transport are priorities.";
-    severityColor =
-      "border-red-500/60 bg-red-500/12 text-red-50";
-  }
+  const severityColor =
+    severity === "Severe"
+      ? "text-red-500"
+      : severity === "Moderate"
+      ? "text-yellow-500"
+      : "text-emerald-500";
 
-  // 🔹 Text that will be copied to clipboard
-  const summaryText = `GCS ${total} (E${eye} V${verbal} M${motor}) – ${severityLabel}`;
-
-  const resetAll = () => {
-    setEye(4);
-    setVerbal(5);
-    setMotor(6);
-  };
-
-  const eyeOptions: GcsOption[] = [
-    { label: "4 – Spontaneous", value: 4, helper: "Opens eyes without stimulus." },
-    { label: "3 – To speech", value: 3, helper: "Opens eyes when spoken to." },
-    { label: "2 – To pain", value: 2, helper: "Opens eyes only to painful stimulus." },
-    { label: "1 – No eye opening", value: 1, helper: "No response." },
+  // Adult verbal descriptors
+  const adultVerbalOptions: { score: VerbalScore; label: string }[] = [
+    { score: 5, label: "Oriented" },
+    { score: 4, label: "Confused conversation" },
+    { score: 3, label: "Inappropriate words" },
+    { score: 2, label: "Incomprehensible sounds" },
+    { score: 1, label: "No verbal response" },
   ];
 
-  const verbalOptions: GcsOption[] = [
-    { label: "5 – Oriented", value: 5, helper: "Converses normally, oriented." },
-    { label: "4 – Confused", value: 4, helper: "Converses but disoriented or confused." },
-    { label: "3 – Inappropriate words", value: 3, helper: "Random or exclamatory speech." },
-    { label: "2 – Incomprehensible sounds", value: 2, helper: "Moans or groans only." },
-    { label: "1 – No verbal response", value: 1, helper: "No sounds." },
+  // Paediatric verbal options (pre-verbal child)
+  const paedsVerbalOptions: { score: VerbalScore; label: string }[] = [
+    { score: 5, label: "Coos / babbles / appropriate words" },
+    { score: 4, label: "Irritable cry / consolable" },
+    { score: 3, label: "Persistent inappropriate crying / screaming" },
+    { score: 2, label: "Moans / grunts to pain" },
+    { score: 1, label: "No response" },
   ];
 
-  const motorOptions: GcsOption[] = [
-    { label: "6 – Obeys commands", value: 6, helper: "Performs simple requested movements." },
-    { label: "5 – Localises pain", value: 5, helper: "Purposeful movement towards painful stimulus." },
-    { label: "4 – Withdraws from pain", value: 4, helper: "Pulls away from painful stimulus." },
-    { label: "3 – Abnormal flexion", value: 3, helper: "Decorticate posturing to pain." },
-    { label: "2 – Extension", value: 2, helper: "Decerebrate posturing to pain." },
-    { label: "1 – No motor response", value: 1, helper: "No movement." },
-  ];
+  const verbalOptions = mode === "adult" ? adultVerbalOptions : paedsVerbalOptions;
+
+  const eyeLabel =
+    eye === 4
+      ? "Spontaneous"
+      : eye === 3
+      ? "To speech"
+      : eye === 2
+      ? "To pain"
+      : "No eye opening";
+
+  const motorLabel =
+    motor === 6
+      ? "Obeys commands"
+      : motor === 5
+      ? "Localises pain"
+      : motor === 4
+      ? "Withdraws from pain"
+      : motor === 3
+      ? "Abnormal flexion (decorticate)"
+      : motor === 2
+      ? "Abnormal extension (decerebrate)"
+      : "No motor response";
+
+  const summaryText = `GCS ${total} (E${eye} V${verbal} M${motor}) – ${severity} (${mode === "adult" ? "Adult" : "Paediatric"}).`;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8 space-y-6">
-        {/* Top bar: back + buttons */}
-        <div className="flex items-center justify-between gap-4">
-          <Link
-            href="/dashboard"
-            className="text-xs font-medium text-slate-400 hover:text-emerald-400"
-          >
-            ← Back to dashboard
-          </Link>
+    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+      <header className="space-y-2">
+        <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
+          Neurological
+        </p>
+        <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 dark:text-slate-50">
+          Glasgow Coma Scale (GCS)
+        </h1>
+        <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+          Adult and paediatric GCS calculator with PRF-ready summary. Use in
+          conjunction with your primary clinical approach and trending of
+          neurological status.
+        </p>
+      </header>
 
-          <div className="flex items-center gap-2">
-            <CopySummaryButton summaryText={summaryText} />
+      <section className="grid gap-6 md:grid-cols-3">
+        {/* Left: inputs */}
+        <div className="md:col-span-2 space-y-4">
+          {/* Mode switch */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
+                Patient type
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: "adult", label: "Adult / verbal child" },
+                { id: "paeds", label: "Paediatric (pre-verbal)" },
+              ].map((opt) => {
+                const active = mode === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setMode(opt.id as Mode)}
+                    className={classNames(
+                      "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition",
+                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
+                      active
+                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
+                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[0.7rem] text-slate-500 dark:text-slate-500 mt-1">
+              Adult verbal scale is used for older children who can give age-appropriate
+              responses. Paediatric scale is used for pre-verbal children.
+            </p>
+          </div>
 
-            <button
-              type="button"
-              onClick={resetAll}
-              className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] font-medium text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80 transition flex items-center gap-1.5"
-            >
-              ⟳ Reset to 15
-            </button>
+          {/* Eye opening */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
+                  Eye opening (E)
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-500">
+                  Score {eye} – {eyeLabel}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { score: 4 as EyeScore, label: "4 – Spontaneous" },
+                { score: 3 as EyeScore, label: "3 – To speech" },
+                { score: 2 as EyeScore, label: "2 – To pain" },
+                { score: 1 as EyeScore, label: "1 – No response" },
+              ].map((opt) => {
+                const active = eye === opt.score;
+                return (
+                  <button
+                    key={opt.score}
+                    type="button"
+                    onClick={() => setEye(opt.score)}
+                    className={classNames(
+                      "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition",
+                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
+                      active
+                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
+                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Verbal response */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
+                  Verbal response (V)
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-500">
+                  Score {verbal}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {verbalOptions.map((opt) => {
+                const active = verbal === opt.score;
+                return (
+                  <button
+                    key={opt.score}
+                    type="button"
+                    onClick={() => setVerbal(opt.score)}
+                    className={classNames(
+                      "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition text-left",
+                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
+                      active
+                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
+                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Motor response */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
+                  Motor response (M)
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-500">
+                  Score {motor} – {motorLabel}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { score: 6 as MotorScore, label: "6 – Obeys commands" },
+                { score: 5 as MotorScore, label: "5 – Localises pain" },
+                { score: 4 as MotorScore, label: "4 – Withdraws from pain" },
+                { score: 3 as MotorScore, label: "3 – Abnormal flexion" },
+                { score: 2 as MotorScore, label: "2 – Abnormal extension" },
+                { score: 1 as MotorScore, label: "1 – No response" },
+              ].map((opt) => {
+                const active = motor === opt.score;
+                return (
+                  <button
+                    key={opt.score}
+                    type="button"
+                    onClick={() => setMotor(opt.score)}
+                    className={classNames(
+                      "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition text-left",
+                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
+                      active
+                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
+                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        <header className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400/80">
-            Assessment
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Glasgow Coma Scale (GCS)
-          </h1>
-          <p className="text-sm text-slate-400">
-            Select the most appropriate eye, verbal and motor responses. The tool
-            will calculate the total GCS and show a severity band. Always
-            interpret in context (e.g. intoxication, sedation, intubation) and
-            follow your local CPG.
-          </p>
-        </header>
+        {/* Right: result */}
+        <div className="md:col-span-1">
+          <div className="h-full rounded-2xl border border-slate-200 bg-slate-50 p-4 flex flex-col gap-3 dark:border-slate-800 dark:bg-slate-950/60">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
+                  GCS result
+                </p>
+                <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-50">
+                  {total}
+                  <span className="ml-2 text-sm font-semibold">
+                    (E{eye} V{verbal} M{motor})
+                  </span>
+                </p>
+                <p className={classNames("text-xs font-semibold", severityColor)}>
+                  {severity} (3–8 severe • 9–12 moderate • 13–15 mild)
+                </p>
+                <p className="text-[0.7rem] text-slate-600 dark:text-slate-500">
+                  {mode === "adult"
+                    ? "Adult / verbal child verbal scale."
+                    : "Paediatric pre-verbal verbal scale."}
+                </p>
+              </div>
+              <CopySummaryButton summaryText={summaryText} />
+            </div>
 
-        {/* Summary card */}
-        <section
-          className={classNames(
-            "rounded-2xl border px-5 py-4 text-sm shadow-sm",
-            severityColor
-          )}
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-400/80">
-                Total GCS
+            <div className="rounded-xl bg-slate-100 border border-slate-200 p-3 text-xs text-slate-700 dark:bg-slate-900/80 dark:border-slate-800 dark:text-slate-300">
+              <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                Documentation hint
               </p>
-              <p className="mt-1 text-3xl font-semibold">{total}</p>
-              <p className="mt-1 text-xs text-slate-100">
-                E{eye} V{verbal} M{motor}
+              <p>
+                Record as <span className="font-mono">GCS {total} (E{eye} V{verbal} M{motor})</span>{" "}
+                and trend over time. Always interpret in context of airway, breathing,
+                circulation, and underlying cause.
               </p>
             </div>
-            <div className="text-right">
-              <p className="text-xs uppercase tracking-[0.25em] text-slate-400/80">
-                Severity band
-              </p>
-              <p className="mt-1 text-base font-semibold">{severityLabel}</p>
-            </div>
+
+            <p className="text-[0.7rem] text-slate-600 dark:text-slate-500 mt-auto">
+              GCS is one component of neurological assessment. Consider pupils, limb
+              strength, seizures, and relevant CPGs (e.g. head injury, stroke, status
+              epilepticus).
+            </p>
           </div>
-
-          <p className="mt-3 text-xs text-slate-100">{severityExplain}</p>
-
-          <p className="mt-3 text-[11px] text-slate-300">
-            Copied summary format:{" "}
-            <span className="font-semibold">
-              {`"${summaryText}"`}
-            </span>
-            . Paste into your PRF or clinical notes.
-          </p>
-
-          <p className="mt-2 text-[11px] text-slate-400">
-            Consider repeating GCS over time and documenting trends, particularly
-            in head injury or stroke. In intubated/sedated patients, record{" "}
-            <span className="font-semibold">“T”</span> or relevant notation for the
-            verbal component as per your documentation standard.
-          </p>
-        </section>
-
-        {/* Inputs */}
-        <section className="grid gap-4 md:grid-cols-3">
-          <GcsFieldGroup
-            title="Eye opening (E)"
-            options={eyeOptions}
-            value={eye}
-            onChange={setEye}
-          />
-          <GcsFieldGroup
-            title="Verbal response (V)"
-            options={verbalOptions}
-            value={verbal}
-            onChange={setVerbal}
-          />
-          <GcsFieldGroup
-            title="Motor response (M)"
-            options={motorOptions}
-            value={motor}
-            onChange={setMotor}
-          />
-        </section>
-
-        <p className="pt-2 text-[11px] text-slate-500">
-          This GCS tool is for education and decision-support only and must be
-          used with your ambulance service guidelines and clinical judgement.
-        </p>
-      </div>
-    </main>
-  );
-}
-
-type GcsFieldGroupProps = {
-  title: string;
-  options: GcsOption[];
-  value: number;
-  onChange: (v: number) => void;
-};
-
-function GcsFieldGroup({ title, options, value, onChange }: GcsFieldGroupProps) {
-  return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 space-y-3">
-      <p className="text-sm font-semibold text-slate-50">{title}</p>
-      <div className="flex flex-col gap-2">
-        {options.map((opt) => {
-          const isActive = value === opt.value;
-          return (
-            <button
-              key={opt.label}
-              type="button"
-              onClick={() => onChange(opt.value)}
-              className={classNames(
-                "w-full rounded-xl border px-3 py-2 text-xs text-left transition",
-                "border-slate-700 bg-slate-950 hover:border-emerald-400/70 hover:bg-slate-900",
-                isActive &&
-                  "border-emerald-400 bg-emerald-500/10 text-emerald-100 shadow-sm"
-              )}
-            >
-              <span className="block font-medium">{opt.label}</span>
-              {opt.helper && (
-                <span className="mt-0.5 block text-[10px] text-slate-400">
-                  {opt.helper}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+        </div>
+      </section>
     </div>
   );
 }

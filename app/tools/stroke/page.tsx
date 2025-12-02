@@ -62,19 +62,19 @@ export default function StrokeBEFASTPage() {
   if (abnormalCount === 0) {
     management.push(
       "Continue full neurological assessment and monitor vitals. Stroke still possible despite a negative BEFAST.",
-      "Actively rule out stroke mimics (intoxication, hypoxia, hypo/hyperglycaemia, post-ictal state, infections, migraine, electrolyte disturbance, intracranial lesions) as per CPG 3.1.",
+      "Actively rule out stroke mimics (intoxication, hypoxia, hypo/hyperglycaemia, post-ictal state, infections, migraine, electrolyte disturbance, intracranial lesions).",
       "If clinical suspicion remains high, manage as suspected stroke and transport to HGH ED with prenotification."
     );
   } else {
     if (onset === "lt15") {
       management.push(
         "Positive BEFAST < 15 hours or wake-up stroke: treat as time-critical stroke.",
-        "Transport Priority 1 to the appropriate facility (HGH ED) and provide prenotification via CC: Emergency."
+        "Transport Priority 1 to HGH ED with prenotification via CC: Emergency."
       );
     } else if (onset === "gt15") {
       management.push(
         "Positive BEFAST > 15 hours since onset: stroke still time-sensitive.",
-        "Transport Priority 2 to the appropriate facility (HGH ED) and provide prenotification."
+        "Transport Priority 2 to HGH ED with prenotification."
       );
     } else {
       management.push(
@@ -84,10 +84,10 @@ export default function StrokeBEFASTPage() {
     }
 
     management.push(
-      "Position patient lateral or semi-Fowler if reduced level of consciousness; protect airway.",
+      "Position patient lateral or semi-Fowler if reduced LOC; protect airway.",
       "Administer oxygen only if indicated (hypoxia). Avoid hypoxia and hypercapnia.",
       "Rule out reversible/mimicking causes: consider glucose, seizure/post-ictal state, intoxication, infection, migraine, electrolyte disturbance, intracranial lesions.",
-      "APs do not routinely require CCP unless there is airway or haemodynamic compromise. Do not delay transport waiting for CCP; meet en route if needed.",
+      "APs do not routinely require CCP unless there is airway or haemodynamic compromise. Do not delay transport waiting for CCP.",
       "Do NOT attempt to reduce blood pressure with nitrates in hypertensive stroke patients."
     );
   }
@@ -100,13 +100,13 @@ export default function StrokeBEFASTPage() {
         <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
           Neurological
         </p>
-        <h1 className="text-2xl md:text-3xl font-semibold text-slate-50">
+        <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 dark:text-slate-50">
           Stroke BEFAST Screen
         </h1>
-        <p className="text-sm text-slate-400 max-w-2xl">
-          BEFAST stroke assessment aligned with HMCAS CPG v2.4 (CPG 3.1 Stroke). Any
-          abnormal BEFAST finding = suspected stroke; use onset time to guide transport
-          priority and prenotification.
+        <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+          BEFAST stroke assessment aligned with HMCAS CPG v2.4 (CPG 3.1 Stroke).
+          Any abnormal BEFAST finding = suspected stroke; use onset time to guide
+          transport priority and prenotification.
         </p>
       </header>
 
@@ -114,13 +114,13 @@ export default function StrokeBEFASTPage() {
         {/* Left: BEFAST inputs */}
         <div className="md:col-span-2 space-y-4">
           {/* Balance */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-slate-400 uppercase">
+                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
                   B – Balance
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-500">
                   Sudden loss of balance, unsteadiness, or dizziness?
                 </p>
               </div>
@@ -141,8 +141,8 @@ export default function StrokeBEFASTPage() {
                       "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition",
                       "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
                       active
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-100"
-                        : "border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-500"
+                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
+                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
                     )}
                   >
                     {opt.label}
@@ -153,13 +153,13 @@ export default function StrokeBEFASTPage() {
           </div>
 
           {/* Eyes */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-slate-400 uppercase">
+                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
                   E – Eyes
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-500">
                   Sudden loss of vision in one or both eyes, or new visual blurring?
                 </p>
               </div>
@@ -180,8 +180,8 @@ export default function StrokeBEFASTPage() {
                       "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition",
                       "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
                       active
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-100"
-                        : "border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-500"
+                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
+                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
                     )}
                   >
                     {opt.label}
@@ -192,13 +192,13 @@ export default function StrokeBEFASTPage() {
           </div>
 
           {/* Face */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-slate-400 uppercase">
+                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
                   F – Face
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-500">
                   Ask the patient to smile. Is one side of the face drooping?
                 </p>
               </div>
@@ -219,8 +219,8 @@ export default function StrokeBEFASTPage() {
                       "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition",
                       "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
                       active
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-100"
-                        : "border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-500"
+                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
+                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
                     )}
                   >
                     {opt.label}
@@ -231,14 +231,14 @@ export default function StrokeBEFASTPage() {
           </div>
 
           {/* Arms */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-slate-400 uppercase">
+                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
                   A – Arms
                 </p>
-                <p className="text-xs text-slate-500">
-                  Ask the patient to lift both arms or squeeze your fingers. Is one arm weaker?
+                <p className="text-xs text-slate-500 dark:text-slate-500">
+                  Ask the patient to lift both arms or squeeze your fingers. Any weakness?
                 </p>
               </div>
             </div>
@@ -258,8 +258,8 @@ export default function StrokeBEFASTPage() {
                       "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition",
                       "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
                       active
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-100"
-                        : "border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-500"
+                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
+                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
                     )}
                   >
                     {opt.label}
@@ -270,14 +270,14 @@ export default function StrokeBEFASTPage() {
           </div>
 
           {/* Speech */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-slate-400 uppercase">
+                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
                   S – Speech
                 </p>
-                <p className="text-xs text-slate-500">
-                  Ask the patient to speak. Is their speech slurred, confused, or unable to speak?
+                <p className="text-xs text-slate-500 dark:text-slate-500">
+                  Ask the patient to speak. Is speech slurred, confused, or unable to speak?
                 </p>
               </div>
             </div>
@@ -297,8 +297,8 @@ export default function StrokeBEFASTPage() {
                       "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition",
                       "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
                       active
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-100"
-                        : "border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-500"
+                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
+                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
                     )}
                   >
                     {opt.label}
@@ -309,13 +309,13 @@ export default function StrokeBEFASTPage() {
           </div>
 
           {/* Onset time */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
                   T – Time last seen normal
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-500">
                   Use best available history: exact onset or last known well time.
                 </p>
               </div>
@@ -336,8 +336,8 @@ export default function StrokeBEFASTPage() {
                       "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition",
                       "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
                       active
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-100"
-                        : "border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-500"
+                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
+                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
                     )}
                   >
                     {opt.label}
@@ -350,33 +350,35 @@ export default function StrokeBEFASTPage() {
 
         {/* Right: Result & management */}
         <div className="md:col-span-1">
-          <div className="h-full rounded-2xl border border-slate-800 bg-slate-900/70 p-4 flex flex-col gap-3">
+          <div className="h-full rounded-2xl border border-slate-200 bg-slate-50 p-4 flex flex-col gap-3 dark:border-slate-800 dark:bg-slate-950/60">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
                   BEFAST summary
                 </p>
-                <h2 className="mt-1 text-lg md:text-xl font-semibold text-slate-50">
+                <h2 className="mt-1 text-lg md:text-xl font-semibold text-slate-900 dark:text-slate-50">
                   {classificationLabel}
                 </h2>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   {abnormalCount}/5 signs abnormal • Onset: {onsetText}
                 </p>
-                  <p className="text-[0.7rem] text-slate-500 mt-1">
-                   {classificationExplanation}
+                <p className="text-[0.7rem] text-slate-500 dark:text-slate-500 mt-1">
+                  {classificationExplanation}
                 </p>
               </div>
               <CopySummaryButton summaryText={summaryText} />
             </div>
 
-            <div className="rounded-xl bg-slate-900/80 border border-slate-800 p-3 text-xs text-slate-300">
-              <p className="font-semibold text-slate-100 mb-1">Abnormal components</p>
+            <div className="rounded-xl bg-slate-100 border border-slate-200 p-3 text-xs text-slate-700 dark:bg-slate-900/80 dark:border-slate-800 dark:text-slate-300">
+              <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                Abnormal components
+              </p>
               <p>{abnormalFeaturesText}</p>
             </div>
 
-            <div className="rounded-xl bg-slate-900/80 border border-slate-800 p-3 text-xs text-slate-300">
-              <p className="font-semibold text-slate-100 mb-1">
-                Suggested prehospital actions (see CPG 3.1 for full protocol)
+            <div className="rounded-xl bg-slate-100 border border-slate-200 p-3 text-xs text-slate-700 dark:bg-slate-900/80 dark:border-slate-800 dark:text-slate-300">
+              <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1">
+                Suggested prehospital actions (summary – see CPG 3.1 for full protocol)
               </p>
               <ul className="mt-1 space-y-1.5">
                 {management.map((m, idx) => (
@@ -388,9 +390,10 @@ export default function StrokeBEFASTPage() {
               </ul>
             </div>
 
-            <p className="text-[0.65rem] text-slate-500 mt-auto">
-              Any suspected stroke with new onset symptoms, regardless of time of onset, should be
-              transported to HGH Emergency Department with prenotification as per CPG 3.1 Stroke.
+            <p className="text-[0.7rem] text-slate-600 dark:text-slate-500 mt-auto">
+              Any suspected stroke with new onset symptoms, regardless of time of onset,
+              should be transported to HGH Emergency Department with prenotification as
+              per CPG 3.1 Stroke.
             </p>
           </div>
         </div>

@@ -64,27 +64,15 @@ export default function HomePage() {
 
 
           {/* CTAs */}
-          <div className="flex flex-wrap gap-3 pt-2">
-            <Link
-              href="/dashboard"
-              className={classNames(
-                "inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium",
-                "bg-emerald-500 text-white shadow-sm hover:bg-emerald-600",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500",
-                "dark:ring-offset-slate-950"
-              )}
+           <div className="mt-6 flex flex-wrap gap-3">
+           <Link
+           href="/dashboard"
+           className="inline-flex items-center rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-sm hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
-              Open tools dashboard
-              <span className="ml-1.5 text-xs opacity-80">→</span>
-            </Link>
+           Open tools dashboard →
+          </Link>
+        </div>
 
-            <Link
-              href="#about"
-              className="inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium border border-slate-300 bg-slate-50 text-slate-800 hover:border-emerald-500 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-500 dark:hover:text-emerald-300"
-            >
-              About this app
-            </Link>
-          </div>
         </div>
 
         {/* Highlight / “cardy” right-side panel */}

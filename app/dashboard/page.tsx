@@ -19,40 +19,47 @@ type ToolGroup = {
 
 const TOOL_GROUPS: ToolGroup[] = [
   {
-  title: "Resuscitation",
-  description:
-    "Adult and paediatric cardiac arrest tools aligned with the updated single-shock arrest algorithms. This group will also host ROSC management and ECMO criteria references.",
-  tools: [
-    {
-      name: "Adult Cardiac Arrest (Unwitnessed)",
-      href: "/tools/adult-arrest",
-      tagline:
-        "Updated single-shock algorithm for adult unwitnessed cardiac arrest in the field.",
-      meta: "CPG 2.x Adult arrest",
-    },
-    {
-      name: "Adult Cardiac Arrest – Witnessed",
-      href: "/tools/witnessed-adult-arrest",
-      tagline:
-        "Witnessed arrest during transport/care with AP pads; crew configuration flow lanes.",
-      meta: "CPG 2.x Adult arrest",
-    },
-    {
-      name: "Paediatric Arrest Algorithm",
-      href: "/tools/peds-arrest-algorithm",
-      tagline:
-        "Diagram-style paediatric arrest algorithm with 2-minute CPR cycles and single 4 J/kg shocks.",
-      meta: "CPG 2.x Paeds arrest",
-    },
-    {
-      name: "Paediatric Arrest (WAAFELSS)",
-      href: "/tools/peds-arrest",
-      tagline:
-        "Age/weight-based drugs, shocks, and fluid doses for paediatric cardiac arrest.",
-      meta: "WAAFELSS-style • CPG 2.x",
-    },
-  ],
-},
+    title: "Resuscitation",
+    description:
+      "Adult and paediatric cardiac arrest tools aligned with the updated single-shock arrest algorithms. This group also includes ROSC management references.",
+    tools: [
+      {
+        name: "Adult Cardiac Arrest (Unwitnessed)",
+        href: "/tools/adult-arrest",
+        tagline:
+          "Updated single-shock algorithm for adult unwitnessed cardiac arrest in the field.",
+        meta: "CPG 2.x Adult arrest",
+      },
+      {
+        name: "Adult Cardiac Arrest – Witnessed",
+        href: "/tools/witnessed-adult-arrest",
+        tagline:
+          "Witnessed arrest during transport/care with AP pads; crew configuration flow lanes.",
+        meta: "CPG 2.x Adult arrest",
+      },
+      {
+        name: "Paediatric Arrest Algorithm",
+        href: "/tools/peds-arrest-algorithm",
+        tagline:
+          "Diagram-style paediatric arrest algorithm with 2-minute CPR cycles and single 4 J/kg shocks.",
+        meta: "CPG 2.x Paeds arrest",
+      },
+      {
+        name: "Paediatric Arrest (WAAFELSS)",
+        href: "/tools/peds-arrest",
+        tagline:
+          "Age/weight-based drugs, shocks, and fluid doses for paediatric cardiac arrest.",
+        meta: "WAAFELSS-style • CPG 2.x",
+      },
+      {
+        name: "Post Cardiac Arrest (ROSC) Care",
+        href: "/tools/rosc",
+        tagline:
+          "Structured post-resuscitation reference based on CPG 2.6. Covers airway, oxygenation, MAP targets, fluids, vasopressors, and transport priorities.",
+        meta: "Resus • ROSC • CPG 2.6",
+      },
+    ],
+  },
 
   {
     title: "Respiratory & paediatric airway",

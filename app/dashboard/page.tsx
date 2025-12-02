@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ThemeToggle } from "@/app/_components/ThemeToggle";
 
 function classNames(...classes: Array<string | boolean | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -20,17 +19,46 @@ type ToolGroup = {
 
 const TOOL_GROUPS: ToolGroup[] = [
   {
-    title: "Paediatric resus & respiratory",
+  title: "Resuscitation",
+  description:
+    "Adult and paediatric cardiac arrest tools aligned with the updated single-shock arrest algorithms. This group will also host ROSC management and ECMO criteria references.",
+  tools: [
+    {
+      name: "Adult Cardiac Arrest (Unwitnessed)",
+      href: "/tools/adult-arrest",
+      tagline:
+        "Updated single-shock algorithm for adult unwitnessed cardiac arrest in the field.",
+      meta: "CPG 2.x Adult arrest",
+    },
+    {
+      name: "Adult Cardiac Arrest – Witnessed",
+      href: "/tools/witnessed-adult-arrest",
+      tagline:
+        "Witnessed arrest during transport/care with AP pads; crew configuration flow lanes.",
+      meta: "CPG 2.x Adult arrest",
+    },
+    {
+      name: "Paediatric Arrest Algorithm",
+      href: "/tools/peds-arrest-algorithm",
+      tagline:
+        "Diagram-style paediatric arrest algorithm with 2-minute CPR cycles and single 4 J/kg shocks.",
+      meta: "CPG 2.x Paeds arrest",
+    },
+    {
+      name: "Paediatric Arrest (WAAFELSS)",
+      href: "/tools/peds-arrest",
+      tagline:
+        "Age/weight-based drugs, shocks, and fluid doses for paediatric cardiac arrest.",
+      meta: "WAAFELSS-style • CPG 2.x",
+    },
+  ],
+},
+
+  {
+    title: "Respiratory & paediatric airway",
     description:
-      "Weight-based paediatric arrest, croup scoring and asthma severity tools aligned with HMCAS CPG v2.4.",
+      "Asthma and croup tools aligned with paediatric respiratory CPGs and MWCS banding.",
     tools: [
-      {
-        name: "Paediatric Arrest (WAAFELSS)",
-        href: "/tools/peds-arrest",
-        tagline:
-          "Age/weight-based drug doses, shocks, and fluids for paediatric cardiac arrest.",
-        meta: "WAAFELSS-style • CPG v2.4",
-      },
       {
         name: "Asthma Severity (Adult + Paeds)",
         href: "/tools/asthma",
@@ -42,7 +70,7 @@ const TOOL_GROUPS: ToolGroup[] = [
         name: "MWCS – Croup",
         href: "/tools/mwcs",
         tagline:
-          "Modified Westley Croup Score with severity banding and prehospital management hints.",
+          "Modified Westley Croup Score with CPG-aligned severity bands and management hints.",
         meta: "CPG 5.3 Croup",
       },
     ],
@@ -50,13 +78,13 @@ const TOOL_GROUPS: ToolGroup[] = [
   {
     title: "Assessment & screening",
     description:
-      "Quick bedside screening tools to support your primary clinical approach, stroke recognition and neurological assessment.",
+      "Quick bedside screening tools to support your primary clinical approach and early decision-making.",
     tools: [
       {
         name: "Stroke BEFAST",
         href: "/tools/stroke",
         tagline:
-          "BEFAST stroke screen with onset banding and transport priority guidance to CT-capable facilities.",
+          "BEFAST stroke screen with onset banding and transport priority guidance.",
         meta: "CPG 3.1 Stroke",
       },
       {
@@ -77,10 +105,10 @@ const TOOL_GROUPS: ToolGroup[] = [
         name: "Normal Vitals by Age",
         href: "/tools/vitals",
         tagline:
-          "Age-banded HR, RR, BP and SpO₂ ranges for neonates, children, adolescents, and adults based on CPG tables.",
-        meta: "Adult + paeds tables • CPG v2.4",
+          "Age-banded HR, RR, BP and SpO₂ ranges for neonates, paediatrics, adolescents, and adults.",
+        meta: "Adult + paeds tables",
       },
-      // Easy slot for future reference tools (e.g. QEWS, sepsis flags, shock index etc.)
+      // Future: ROSC management card, ECMO eligibility quick ref, QEWS/sepsis/shock index, etc.
     ],
   },
 ];
@@ -90,36 +118,30 @@ export default function DashboardPage() {
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
       {/* Header */}
       <header className="space-y-3">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
-              Tools dashboard
-            </p>
-            <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 dark:text-slate-50">
-              Ambulance Paramedic Toolkit
-            </h1>
-          </div>
-          <ThemeToggle />
-        </div>
-
-        <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+        <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
+          Tools dashboard
+        </p>
+        <h1 className="text-2xl md:text-3xl font-semibold text-slate-50">
+          Ambulance Paramedic Toolkit
+        </h1>
+        <p className="text-sm text-slate-400 max-w-2xl">
           A small collection of decision-support tools built around HMCAS CPG
-          v2.4. Designed for dark environments, quick taps, and offline use on
-          the road.
+          v2.4 (2025). Designed for time-critical care, dark environments, and
+          offline use on the road.
         </p>
 
         {/* Micro-badges */}
         <div className="flex flex-wrap gap-2 pt-1">
-          <span className="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+          <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs text-slate-200">
             v0.1.0 • Early access
           </span>
-          <span className="inline-flex items-center rounded-full border border-emerald-500/60 bg-emerald-100/70 px-2.5 py-1 text-xs text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-100">
+          <span className="inline-flex items-center rounded-full border border-emerald-500/60 bg-emerald-500/10 px-2.5 py-1 text-xs text-emerald-100">
             Offline-capable PWA
           </span>
-          <span className="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+          <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs text-slate-200">
             Dark-environment friendly
           </span>
-          <span className="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+          <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs text-slate-300">
             Aligned with CPG v2.4 (2025)
           </span>
         </div>
@@ -130,14 +152,14 @@ export default function DashboardPage() {
         {TOOL_GROUPS.map((group) => (
           <section
             key={group.title}
-            className="rounded-2xl border border-slate-200 bg-slate-50 p-4 md:p-5 space-y-4 dark:border-slate-800 dark:bg-slate-950/60"
+            className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 md:p-5 space-y-4"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <h2 className="text-sm font-semibold text-slate-100">
                   {group.title}
                 </h2>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                <p className="text-xs text-slate-400 mt-1">
                   {group.description}
                 </p>
               </div>
@@ -149,26 +171,23 @@ export default function DashboardPage() {
                   key={tool.href}
                   href={tool.href}
                   className={classNames(
-                    "group rounded-2xl border border-slate-200 bg-slate-50 p-4 flex flex-col justify-between",
-                    "hover:border-emerald-500/80 hover:bg-slate-100 transition-colors",
-                    "dark:border-slate-800 dark:bg-slate-900/70 dark:hover:bg-slate-900"
+                    "group rounded-2xl border border-slate-800 bg-slate-900/70 p-4 flex flex-col justify-between",
+                    "hover:border-emerald-500/80 hover:bg-slate-900 transition-colors"
                   )}
                 >
                   <div className="space-y-1.5">
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                    <h3 className="text-sm font-semibold text-slate-50">
                       {tool.name}
                     </h3>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
-                      {tool.tagline}
-                    </p>
+                    <p className="text-xs text-slate-400">{tool.tagline}</p>
                   </div>
                   <div className="mt-3 flex items-center justify-between">
                     {tool.meta && (
-                      <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[0.65rem] uppercase tracking-[0.18em] text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-400">
+                      <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-950/60 px-2 py-0.5 text-[0.65rem] uppercase tracking-[0.18em] text-slate-400">
                         {tool.meta}
                       </span>
                     )}
-                    <span className="ml-auto text-[0.7rem] text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity dark:text-emerald-400">
+                    <span className="ml-auto text-[0.7rem] text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
                       Open tool →
                     </span>
                   </div>

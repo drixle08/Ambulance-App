@@ -122,7 +122,34 @@ const TOOL_GROUPS: ToolGroup[] = [
           "Age-banded HR, RR, BP and SpO₂ ranges for neonates, paediatrics, adolescents, and adults.",
         meta: "Adult + paeds tables",
       },
+            {
+        name: "Sepsis & QEWS quick reference",
+        href: "/tools/sepsis",
+        tagline:
+          "Adult qSOFA, paediatric sepsis criteria and QEWS triggers, aligned to CPG 1.8 and 6.6.",
+        meta: "CPG 1.8, 6.6 Sepsis",
+      },
+      {
+         name: "Shock Index & MAP",
+         href: "/tools/shock-index",
+         tagline:
+            "Quick calculation of Shock Index and MAP to support early recognition of occult shock.",
+         meta: "Shock / sepsis / trauma",
+      },
       // Future: ROSC management card, ECMO eligibility quick ref, QEWS/sepsis/shock index, etc.
+    ],
+  },
+  {
+    title: "Trauma",
+    description: "Major trauma triage and bypass criteria for trauma centre referral.",
+    tools: [
+      {
+        name: "Trauma bypass criteria",
+        href: "/tools/trauma-bypass",
+        tagline:
+          "Physiological, anatomical and mechanism criteria to guide trauma centre bypass.",
+        meta: "CPG 4.x Major trauma",
+      },
     ],
   },
 ];

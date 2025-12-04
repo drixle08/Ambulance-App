@@ -42,6 +42,8 @@ export default function HomePage() {
     <div className="relative max-w-6xl mx-auto px-4 py-8 md:py-12 space-y-10">
       {/* Top bar with theme toggle */}
       <div className="flex items-center justify-between gap-4 mb-4">
+              {/* DEBUG: Dark mode test box */}
+
         <div className="flex flex-col">
           <span className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-emerald-500">
             Ambulance • Toolkit

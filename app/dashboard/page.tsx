@@ -58,6 +58,13 @@ const TOOL_GROUPS: ToolGroup[] = [
           "Structured post-resuscitation reference based on CPG 2.6. Covers airway, oxygenation, MAP targets, fluids, vasopressors, and transport priorities.",
         meta: "Resus • ROSC • CPG 2.6",
       },
+      {
+        name: "ECMO CPR (e-CPR) Criteria",
+        href: "/tools/ecmo-criteria",
+        tagline:
+          "Checklist for ECMO CPR inclusion criteria in adult medical cardiac arrest.",
+        meta: "CPG 2.9 ECMO CPR",
+      },
     ],
   },
 

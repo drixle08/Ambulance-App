@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/app/_components/ThemeProvider";
 import { ServiceWorkerRegister } from "./_components/ServiceWorkerRegister";
@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "Ambulance Paramedic Toolkit",
   description: "Paramedic tools for ambulance crews",
   manifest: "/manifest.webmanifest",
+};
+
+export const viewport: Viewport = {
   themeColor: "#22c55e",
 };
 

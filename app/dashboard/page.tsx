@@ -1,243 +1,286 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
+import { ThemeToggle } from "@/app/_components/ThemeToggle";
+import {
+  Menu,
+  ActivitySquare,
+  HeartPulse,
+  Brain,
+  Wind,
+  Baby,
+  Stethoscope,
+} from "lucide-react";
 
 function classNames(...classes: Array<string | boolean | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-type Tool = {
+type QuickAction = {
+  label: string;
+  description: string;
+  href: string;
+  icon: React.ElementType;
+};
+
+type ToolMeta = {
   name: string;
   href: string;
-  tagline: string;
-  meta?: string;
-};
-
-type ToolGroup = {
-  title: string;
   description: string;
-  tools: Tool[];
+  category: string;
 };
 
-const TOOL_GROUPS: ToolGroup[] = [
+const QUICK_ACTIONS: QuickAction[] = [
   {
-    title: "Resuscitation",
-    description:
-      "Adult and paediatric cardiac arrest tools aligned with the updated single-shock arrest algorithms. This group also includes ROSC management references.",
-    tools: [
-      {
-        name: "Adult Cardiac Arrest (Unwitnessed)",
-        href: "/tools/adult-arrest",
-        tagline:
-          "Updated single-shock algorithm for adult unwitnessed cardiac arrest in the field.",
-        meta: "CPG 2.x Adult arrest",
-      },
-      {
-        name: "Adult Cardiac Arrest – Witnessed",
-        href: "/tools/witnessed-adult-arrest",
-        tagline:
-          "Witnessed arrest during transport/care with AP pads; crew configuration flow lanes.",
-        meta: "CPG 2.x Adult arrest",
-      },
-      {
-        name: "Paediatric Arrest Algorithm",
-        href: "/tools/peds-arrest-algorithm",
-        tagline:
-          "Diagram-style paediatric arrest algorithm with 2-minute CPR cycles and single 4 J/kg shocks.",
-        meta: "CPG 2.x Paeds arrest",
-      },
-      {
-        name: "Paediatric Arrest (WAAFELSS)",
-        href: "/tools/peds-arrest",
-        tagline:
-          "Age/weight-based drugs, shocks, and fluid doses for paediatric cardiac arrest.",
-        meta: "WAAFELSS-style • CPG 2.x",
-      },
-      {
-        name: "Post Cardiac Arrest (ROSC) Care",
-        href: "/tools/rosc",
-        tagline:
-          "Structured post-resuscitation reference based on CPG 2.6. Covers airway, oxygenation, MAP targets, fluids, vasopressors, and transport priorities.",
-        meta: "Resus • ROSC • CPG 2.6",
-      },
-      {
-        name: "ECMO CPR (e-CPR) Criteria",
-        href: "/tools/ecmo-criteria",
-        tagline:
-          "Checklist for ECMO CPR inclusion criteria in adult medical cardiac arrest.",
-        meta: "CPG 2.9 ECMO CPR",
-      },
-    ],
-  },
-
-  {
-    title: "Respiratory & paediatric airway",
-    description:
-      "Asthma and croup tools aligned with paediatric respiratory CPGs and MWCS banding.",
-    tools: [
-      {
-        name: "Asthma Severity (Adult + Paeds)",
-        href: "/tools/asthma",
-        tagline:
-          "Unified asthma severity assessment that auto-selects adult vs paediatric thresholds.",
-        meta: "CPG 5.1 Asthma",
-      },
-      {
-        name: "MWCS – Croup",
-        href: "/tools/mwcs",
-        tagline:
-          "Modified Westley Croup Score with CPG-aligned severity bands and management hints.",
-        meta: "CPG 5.3 Croup",
-      },
-    ],
+    label: "Start resuscitation timer",
+    description: "2-min cycles with CPR metronome",
+    href: "/tools/resus-timer",
+    icon: HeartPulse,
   },
   {
-    title: "Assessment & screening",
-    description:
-      "Quick bedside screening tools to support your primary clinical approach and early decision-making.",
-    tools: [
-      {
-        name: "Stroke BEFAST",
-        href: "/tools/stroke",
-        tagline:
-          "BEFAST stroke screen with onset banding and transport priority guidance.",
-        meta: "CPG 3.1 Stroke",
-      },
-      {
-        name: "Glasgow Coma Scale (GCS)",
-        href: "/tools/gcs",
-        tagline:
-          "Adult + paediatric GCS with PRF-ready summary for trending neurological status.",
-        meta: "CPG 1.4 GCS",
-      },
-    ],
+    label: "Open Paediatric Arrest",
+    description: "WAAFELSS doses & shocks",
+    href: "/tools/peds-arrest",
+    icon: Baby,
   },
   {
-    title: "Reference",
-    description:
-      "Low-friction reference cards you can glance at between calls or in the back of the truck.",
-    tools: [
-      {
-        name: "Normal Vitals by Age",
-        href: "/tools/vitals",
-        tagline:
-          "Age-banded HR, RR, BP and SpO₂ ranges for neonates, paediatrics, adolescents, and adults.",
-        meta: "Adult + paeds tables",
-      },
-            {
-        name: "Sepsis & QEWS quick reference",
-        href: "/tools/sepsis",
-        tagline:
-          "Adult qSOFA, paediatric sepsis criteria and QEWS triggers, aligned to CPG 1.8 and 6.6.",
-        meta: "CPG 1.8, 6.6 Sepsis",
-      },
-      {
-         name: "Shock Index & MAP",
-         href: "/tools/shock-index",
-         tagline:
-            "Quick calculation of Shock Index and MAP to support early recognition of occult shock.",
-         meta: "Shock / sepsis / trauma",
-      },
-      // Future: ROSC management card, ECMO eligibility quick ref, QEWS/sepsis/shock index, etc.
-    ],
+    label: "Open Stroke BEFAST",
+    description: "Onset bands & transport priority",
+    href: "/tools/stroke",
+    icon: Brain,
   },
   {
-    title: "Trauma",
-    description: "Major trauma triage and bypass criteria for trauma centre referral.",
-    tools: [
-      {
-        name: "Trauma bypass criteria",
-        href: "/tools/trauma-bypass",
-        tagline:
-          "Physiological, anatomical and mechanism criteria to guide trauma centre bypass.",
-        meta: "CPG 4.x Major trauma",
-      },
-    ],
+    label: "Open Asthma Severity",
+    description: "Adult + paeds thresholds",
+    href: "/tools/asthma",
+    icon: Wind,
   },
 ];
 
-export default function DashboardPage() {
-  return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      {/* Header */}
-      <header className="space-y-3">
-        <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
-          Tools dashboard
-        </p>
-        <h1 className="text-2xl md:text-3xl font-semibold text-slate-50">
-          Ambulance Paramedic Toolkit
-        </h1>
-        <p className="text-sm text-slate-400 max-w-2xl">
-          A small collection of decision-support tools built around HMCAS CPG
-          v2.4 (2025). Designed for time-critical care, dark environments, and
-          offline use on the road.
-        </p>
+const TOOLS: ToolMeta[] = [
+  {
+    name: "Paediatric Arrest (WAAFELSS)",
+    href: "/tools/peds-arrest",
+    description: "Weight-based drugs, shocks and fluids for paediatric arrest.",
+    category: "Paeds Resus",
+  },
+  {
+    name: "Asthma Severity (Adult + Paeds)",
+    href: "/tools/asthma",
+    description: "Unified asthma severity assessment across age groups.",
+    category: "Respiratory",
+  },
+  {
+    name: "MWCS – Croup",
+    href: "/tools/mwcs",
+    description: "Modified Westley Croup Score with CPG-aligned bands.",
+    category: "Paeds Respiratory",
+  },
+  {
+    name: "Stroke BEFAST",
+    href: "/tools/stroke",
+    description: "Stroke screen with onset bands and transport hints.",
+    category: "Neurological",
+  },
+  {
+    name: "Emergency Resuscitation Timer",
+    href: "/tools/resus-timer",
+    description: "2-min CPR cycles with built-in metronome.",
+    category: "Resuscitation",
+  },
+];
 
-        {/* Micro-badges */}
-        <div className="flex flex-wrap gap-2 pt-1">
-          <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs text-slate-200">
-            v0.1.0 • Early access
-          </span>
-          <span className="inline-flex items-center rounded-full border border-emerald-500/60 bg-emerald-500/10 px-2.5 py-1 text-xs text-emerald-100">
-            Offline-capable PWA
-          </span>
-          <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs text-slate-200">
-            Dark-environment friendly
-          </span>
-          <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs text-slate-300">
-            Aligned with CPG v2.4 (2025)
-          </span>
+const KPI_CHIPS = [
+  { label: "Tools available", value: "5" },
+  { label: "Time-critical tools", value: "3" },
+  { label: "Offline-capable PWA", value: "" },
+  { label: "Aligned with CPG v2.4 (2025)", value: "" },
+];
+
+const DashboardPage: React.FC = () => {
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+      {/* Top app bar */}
+      <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/80">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5">
+          <div className="flex flex-col">
+            <span className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-emerald-500">
+              Ambulance • Toolkit
+            </span>
+            <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+              Paramedic Tools
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              type="button"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-slate-100 text-slate-700 hover:border-emerald-500 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+              aria-label="Open menu"
+            >
+              <Menu className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Groups */}
-      <main className="space-y-8">
-        {TOOL_GROUPS.map((group) => (
-          <section
-            key={group.title}
-            className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 md:p-5 space-y-4"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-semibold text-slate-100">
-                  {group.title}
-                </h2>
-                <p className="text-xs text-slate-400 mt-1">
-                  {group.description}
-                </p>
+      <main className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pb-6 pt-4 md:pt-6">
+        <section className="flex flex-col gap-4 md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.4fr)] md:items-start md:gap-6">
+          {/* Left column */}
+          <div className="flex flex-col gap-4">
+            {/* Hero / greeting card */}
+            <div className="rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+              <div className="flex items-start gap-3">
+                <div className="mt-1">
+                  <ActivitySquare className="h-5 w-5 text-emerald-500" />
+                </div>
+                <div className="space-y-2">
+                  <h1 className="text-lg font-semibold md:text-xl">
+                    Decision-support tools for ambulance crews.
+                  </h1>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Built around HMCAS Clinical Practice Guideline v2.4 (2025) to
+                    support time-critical decisions in the back of the truck.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-col gap-2 md:flex-row md:gap-3">
+                <Link
+                  href="/dashboard"
+                  className="inline-flex w-full justify-center rounded-2xl bg-emerald-500 px-4 py-3 text-base font-semibold text-slate-950 shadow-sm hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 md:w-auto md:flex-1"
+                >
+                  Open tools list
+                </Link>
+                <Link
+                  href="/tools/resus-timer"
+                  className="inline-flex w-full justify-center rounded-2xl border border-emerald-500/70 bg-transparent px-4 py-3 text-base font-semibold text-emerald-700 shadow-sm hover:bg-emerald-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-emerald-400/70 dark:text-emerald-100 md:w-auto md:flex-1"
+                >
+                  Start resuscitation timer
+                </Link>
               </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-3">
-              {group.tools.map((tool) => (
-                <Link
-                  key={tool.href}
-                  href={tool.href}
-                  className={classNames(
-                    "group rounded-2xl border border-slate-800 bg-slate-900/70 p-4 flex flex-col justify-between",
-                    "hover:border-emerald-500/80 hover:bg-slate-900 transition-colors"
-                  )}
-                >
-                  <div className="space-y-1.5">
-                    <h3 className="text-sm font-semibold text-slate-50">
+            {/* KPI chips */}
+            <section className="space-y-2">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+                Status
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {KPI_CHIPS.map((chip) => (
+                  <span
+                    key={chip.label}
+                    className={classNames(
+                      "inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-[0.7rem] font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200",
+                      chip.label.includes("Time-critical")
+                        ? "border-emerald-500/70 bg-emerald-500/10 text-emerald-700 dark:border-emerald-400/70 dark:text-emerald-100"
+                        : ""
+                    )}
+                  >
+                    {chip.value
+                      ? `${chip.label}: ${chip.value}`
+                      : chip.label}
+                  </span>
+                ))}
+              </div>
+            </section>
+
+            {/* Tools grid / list */}
+            <section className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                  Clinical tools
+                </h2>
+                <span className="text-[0.7rem] text-slate-500 dark:text-slate-400">
+                  Tap a card to open
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {TOOLS.map((tool) => (
+                  <Link
+                    key={tool.href}
+                    href={tool.href}
+                    className="group block rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 text-left shadow-sm transition-colors hover:border-emerald-500/80 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-emerald-500/70 dark:hover:bg-slate-900"
+                  >
+                    <p className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                      {tool.category}
+                    </p>
+                    <h3 className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-50">
                       {tool.name}
                     </h3>
-                    <p className="text-xs text-slate-400">{tool.tagline}</p>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between">
-                    {tool.meta && (
-                      <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-950/60 px-2 py-0.5 text-[0.65rem] uppercase tracking-[0.18em] text-slate-400">
-                        {tool.meta}
-                      </span>
-                    )}
-                    <span className="ml-auto text-[0.7rem] text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                      {tool.description}
+                    </p>
+                    <span className="mt-2 inline-block text-[0.7rem] font-medium text-emerald-700 opacity-0 transition-opacity group-hover:opacity-100 dark:text-emerald-300">
                       Open tool →
                     </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        ))}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* Right column: quick actions & about */}
+          <div className="flex flex-col gap-4 md:sticky md:top-20">
+            {/* Quick actions */}
+            <section className="space-y-2">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                Quick actions
+              </h2>
+              <div className="flex flex-col gap-2">
+                {QUICK_ACTIONS.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <Link
+                      key={action.href}
+                      href={action.href}
+                      className="flex w-full items-center justify-between rounded-2xl border border-slate-300 bg-slate-100 px-4 py-3 text-left text-sm font-semibold text-slate-900 shadow-sm hover:border-emerald-500 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:hover:border-emerald-500 dark:hover:bg-slate-900/80"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-200">
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <div className="flex flex-col items-start">
+                          <span className="text-sm font-semibold">
+                            {action.label}
+                          </span>
+                          <span className="text-[0.75rem] font-normal text-slate-600 dark:text-slate-400">
+                            {action.description}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* About / disclaimer */}
+            <section>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/90 p-4 text-xs shadow-sm dark:border-slate-800 dark:bg-slate-900/90 dark:text-slate-300">
+                <div className="mb-2 flex items-center gap-2">
+                  <Stethoscope className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                  <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    About this app
+                  </h3>
+                </div>
+                <p className="mb-1">
+                  This toolkit is a teaching and decision-support aid for
+                  HMCAS-style ambulance practice. It mirrors wording and
+                  thresholds from CPG v2.4 where possible.
+                </p>
+                <p>
+                  It does not replace the official guidelines, Clinical
+                  Coordination, or local protocols. Always confirm doses,
+                  ranges and pathways against the current CPG.
+                </p>
+              </div>
+            </section>
+          </div>
+        </section>
       </main>
     </div>
   );
-}
+};
+
+export default DashboardPage;

@@ -7,9 +7,13 @@ import React, {
   useRef,
   useState,
 } from "react";
-
-const CYCLE_DURATION_SECONDS = 120; // 2-minute CPR cycles
-const METRONOME_BPM = 110; // within 100–120 bpm
+import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import {
+  HeartPulse,
+  ActivitySquare,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 
 type Phase = "CPR" | "Pause";
 
@@ -17,505 +21,456 @@ type LogEntry = {
   id: string;
   timeSinceStart: string; // "T+06:32"
   absoluteTime: string; // "14:22:05"
-  message: string; // "Shock delivered", "Adrenaline 1mg IV", etc.
+  message: string; // "Shock delivered", etc.
 };
 
+const CYCLE_SECONDS = 120; // 2-minute CPR cycles
+const DEFAULT_BPM = 110;
+
 function formatSeconds(totalSeconds: number): string {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
+  const safe = Math.max(0, totalSeconds);
+  const minutes = Math.floor(safe / 60);
+  const seconds = safe % 60;
   return `${minutes.toString().padStart(2, "0")}:${seconds
     .toString()
     .padStart(2, "0")}`;
 }
 
-function createId() {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+function formatTPlus(totalSeconds: number): string {
+  return `T+${formatSeconds(totalSeconds)}`;
 }
 
-const ResuscitationTimer: React.FC = () => {
-  const [secondsRemaining, setSecondsRemaining] = useState<number>(
-    CYCLE_DURATION_SECONDS
-  );
-  const [cycleNumber, setCycleNumber] = useState<number>(1);
-  const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [phase, setPhase] = useState<Phase>("CPR");
-
-  const [totalElapsedSeconds, setTotalElapsedSeconds] =
-    useState<number>(0); // total time since first start
-  const elapsedSecondsRef = useRef<number>(0);
-
+export default function ResuscitationTimerPage() {
+  const [isRunning, setIsRunning] = useState(false);
+  const [phase] = useState<Phase>("CPR"); // reserved for future CPR/Pause phases
+  const [cycleNumber, setCycleNumber] = useState(1);
+  const [secondsRemaining, setSecondsRemaining] =
+    useState(CYCLE_SECONDS);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [metronomeOn, setMetronomeOn] = useState(true);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [otherDialogOpen, setOtherDialogOpen] = useState(false);
+  const [otherText, setOtherText] = useState("");
+
+  // start time stored both in a ref (for logic) and state (safe for render)
   const [startTime, setStartTime] = useState<Date | null>(null);
+
   const startTimeRef = useRef<Date | null>(null);
-
-  const timerIntervalRef = useRef<number | null>(null);
-
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const metronomeIntervalRef = useRef<number | null>(null);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const elapsedRef = useRef(0);
 
-  const [otherDialogOpen, setOtherDialogOpen] = useState<boolean>(false);
-  const [otherText, setOtherText] = useState<string>("");
-
-  const [copyStatus, setCopyStatus] = useState<string>("");
-
-  // Keep ref in sync with state for precise timestamps
   useEffect(() => {
-    elapsedSecondsRef.current = totalElapsedSeconds;
-  }, [totalElapsedSeconds]);
+    elapsedRef.current = elapsedSeconds;
+  }, [elapsedSeconds]);
 
-const ensureAudioContext = useCallback(() => {
-  if (typeof window === "undefined") return null;
+  const getAudioContext = useCallback((): AudioContext | null => {
+    if (typeof window === "undefined") return null;
+    if (audioCtxRef.current) return audioCtxRef.current;
 
-  // Narrow the window type so TypeScript knows about both properties
-  const audioWindow = window as unknown as {
-    AudioContext?: typeof AudioContext;
-    webkitAudioContext?: typeof AudioContext;
-  };
+    const AudioCtx =
+      window.AudioContext ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).webkitAudioContext;
 
-  if (!audioCtxRef.current) {
-    const Ctx = audioWindow.AudioContext ?? audioWindow.webkitAudioContext;
-    if (!Ctx) return null;
-    audioCtxRef.current = new Ctx();
-  }
+    if (!AudioCtx) return null;
 
-  return audioCtxRef.current;
-}, []);
+    const ctx = new AudioCtx();
+    audioCtxRef.current = ctx;
+    return ctx;
+  }, []);
 
+  const addLog = useCallback((message: string) => {
+    const now = new Date();
+    const start = startTimeRef.current;
+    const offsetSeconds = start
+      ? Math.floor((now.getTime() - start.getTime()) / 1000)
+      : elapsedRef.current;
+
+    const entry: LogEntry = {
+      id: `${now.getTime()}-${Math.random().toString(16).slice(2)}`,
+      timeSinceStart: formatTPlus(offsetSeconds),
+      absoluteTime: now.toLocaleTimeString(),
+      message,
+    };
+
+    setLogs((prev) => [...prev, entry]);
+  }, []);
+
+  const logCycleStart = useCallback(
+    (cycle: number) => {
+      addLog(`Cycle ${cycle} started (CPR)`);
+    },
+    [addLog]
+  );
 
   const playClick = useCallback(() => {
-    const ctx = ensureAudioContext();
+    const ctx = getAudioContext();
     if (!ctx) return;
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
-    osc.type = "square";
-    osc.frequency.value = 1000;
+    const now = ctx.currentTime;
 
-    gain.gain.value = 0.0;
+    osc.type = "square";
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.3, now + 0.001);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+
     osc.connect(gain);
     gain.connect(ctx.destination);
 
-    const now = ctx.currentTime;
-    gain.gain.setValueAtTime(0.0, now);
-    gain.gain.linearRampToValueAtTime(0.4, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-
     osc.start(now);
     osc.stop(now + 0.1);
-  }, [ensureAudioContext]);
+  }, [getAudioContext]);
 
-  const addLog = useCallback(
-    (message: string, elapsedOverride?: number) => {
-      const elapsedSeconds =
-        typeof elapsedOverride === "number"
-          ? elapsedOverride
-          : elapsedSecondsRef.current;
-
-      const timeSinceStart = `T+${formatSeconds(elapsedSeconds)}`;
-      const absoluteTime = new Date().toLocaleTimeString();
-
-      const entry: LogEntry = {
-        id: createId(),
-        timeSinceStart,
-        absoluteTime,
-        message,
-      };
-
-      setLogs((prev) => [...prev, entry]);
-    },
-    []
-  );
-
-  // Timer effect – handles 1-second countdown and elapsed tracking
+  // Main CPR timer
   useEffect(() => {
-    if (!isRunning) {
-      if (timerIntervalRef.current !== null) {
-        window.clearInterval(timerIntervalRef.current);
-        timerIntervalRef.current = null;
-      }
-      return;
-    }
+    if (!isRunning) return;
 
-    if (timerIntervalRef.current !== null) {
-      window.clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
-
-    timerIntervalRef.current = window.setInterval(() => {
-      setSecondsRemaining((prevSeconds) => {
-        if (prevSeconds <= 1) {
-          // Cycle transition
-          setCycleNumber((prevCycle) => {
-            const nextCycle = prevCycle + 1;
-            addLog(`Cycle ${nextCycle} started (CPR phase)`);
-            return nextCycle;
-          });
-          return CYCLE_DURATION_SECONDS;
+    const id = window.setInterval(() => {
+      setSecondsRemaining((prev) => {
+        if (prev > 1) {
+          return prev - 1;
         }
-        return prevSeconds - 1;
+
+        // Cycle completed -> start next
+        setCycleNumber((prevCycle) => {
+          const next = prevCycle + 1;
+          if (startTimeRef.current) {
+            logCycleStart(next);
+          }
+          return next;
+        });
+
+        return CYCLE_SECONDS;
       });
 
-      setTotalElapsedSeconds((prev) => prev + 1);
+      setElapsedSeconds((prev) => prev + 1);
     }, 1000);
 
-    return () => {
-      if (timerIntervalRef.current !== null) {
-        window.clearInterval(timerIntervalRef.current);
-        timerIntervalRef.current = null;
-      }
-    };
-  }, [isRunning, addLog]);
+    return () => window.clearInterval(id);
+  }, [isRunning, logCycleStart]);
 
-  // Metronome effect – plays clicks during CPR phase when running and not muted
+  // Metronome (100–120 bpm, fixed at DEFAULT_BPM)
   useEffect(() => {
-    if (!isRunning || isMuted || phase !== "CPR") {
-      if (metronomeIntervalRef.current !== null) {
-        window.clearInterval(metronomeIntervalRef.current);
-        metronomeIntervalRef.current = null;
-      }
-      return;
-    }
+    if (!isRunning || !metronomeOn) return;
 
-    const intervalMs = Math.round((60_000 / METRONOME_BPM) || 600);
+    const intervalMs = Math.round(60000 / DEFAULT_BPM);
 
-    if (metronomeIntervalRef.current !== null) {
-      window.clearInterval(metronomeIntervalRef.current);
-      metronomeIntervalRef.current = null;
-    }
-
-    metronomeIntervalRef.current = window.setInterval(() => {
+    const id = window.setInterval(() => {
       playClick();
     }, intervalMs);
 
-    return () => {
-      if (metronomeIntervalRef.current !== null) {
-        window.clearInterval(metronomeIntervalRef.current);
-        metronomeIntervalRef.current = null;
-      }
-    };
-  }, [isRunning, isMuted, phase, playClick]);
+    return () => window.clearInterval(id);
+  }, [isRunning, metronomeOn, playClick]);
 
-  const handleStartPause = useCallback(() => {
-    setIsRunning((prevRunning) => {
-      const nextRunning = !prevRunning;
-
-      if (nextRunning) {
-        // Starting or resuming
-        if (!startTimeRef.current) {
-          const now = new Date();
-          startTimeRef.current = now;
-          setStartTime(now);
-          // First start: elapsed is 0
-          setTotalElapsedSeconds(0);
-          elapsedSecondsRef.current = 0;
-          addLog(`Timer started (Cycle 1, CPR phase)`, 0);
-          addLog(`Cycle 1 started (CPR phase)`, 0);
-        } else {
-          addLog(
-            `Timer resumed (Cycle ${cycleNumber}, ${phase} phase)`,
-            elapsedSecondsRef.current
-          );
-        }
-        if (phase !== "CPR") {
-          setPhase("CPR");
-          addLog(`Phase changed to CPR`, elapsedSecondsRef.current);
-        }
-      } else {
-        // Pausing
-        addLog(
-          `Timer paused (Cycle ${cycleNumber}, ${phase} phase)`,
-          elapsedSecondsRef.current
-        );
-        if (phase !== "Pause") {
-          setPhase("Pause");
-          addLog(`Phase changed to Pause`, elapsedSecondsRef.current);
-        }
-      }
-
-      return nextRunning;
-    });
-  }, [addLog, cycleNumber, phase]);
-
-  const handleReset = useCallback(() => {
-    if (timerIntervalRef.current !== null) {
-      window.clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
-    if (metronomeIntervalRef.current !== null) {
-      window.clearInterval(metronomeIntervalRef.current);
-      metronomeIntervalRef.current = null;
+  const handleStartPause = () => {
+    if (isRunning) {
+      setIsRunning(false);
+      addLog("Timer paused");
+      return;
     }
 
+    if (!startTimeRef.current) {
+      const now = new Date();
+      startTimeRef.current = now;
+      setStartTime(now);
+      setCycleNumber(1);
+      setSecondsRemaining(CYCLE_SECONDS);
+      setElapsedSeconds(0);
+      addLog("Timer started (Cycle 1, CPR)");
+    } else {
+      addLog("Timer resumed");
+    }
+
+    setIsRunning(true);
+  };
+
+  const handleReset = () => {
     setIsRunning(false);
-    setSecondsRemaining(CYCLE_DURATION_SECONDS);
     setCycleNumber(1);
-    setPhase("CPR");
-    setTotalElapsedSeconds(0);
-    elapsedSecondsRef.current = 0;
-    setStartTime(null);
+    setSecondsRemaining(CYCLE_SECONDS);
+    setElapsedSeconds(0);
     startTimeRef.current = null;
-
+    setStartTime(null);
+    setLogs([]);
     addLog("Timer reset");
-  }, [addLog]);
+  };
 
-  const logEventWithContext = useCallback(
-    (label: string) => {
-      const context = ` (Cycle ${cycleNumber}, ${phase} phase)`;
-      addLog(`${label}${context}`);
-    },
-    [addLog, cycleNumber, phase]
-  );
+  const handleShock = () => addLog("Shock delivered");
+  const handleAdrenaline = () => addLog("Adrenaline given");
+  const handleAmiodarone = () => addLog("Amiodarone given");
 
-  const handleOtherSubmit = useCallback(() => {
+  const handleOtherConfirm = () => {
     const trimmed = otherText.trim();
-    if (trimmed.length > 0) {
-      logEventWithContext(trimmed);
+    if (trimmed) {
+      addLog(trimmed);
     }
     setOtherText("");
     setOtherDialogOpen(false);
-  }, [logEventWithContext, otherText]);
+  };
 
-  const displayTime = useMemo(
-    () => formatSeconds(secondsRemaining),
-    [secondsRemaining]
+  const mainTimer = formatSeconds(secondsRemaining);
+  const elapsedFormatted = formatSeconds(elapsedSeconds);
+
+  const lastEvents = useMemo(
+    () => logs.slice(-3).reverse(),
+    [logs]
   );
-  const elapsedDisplay = useMemo(
-    () => formatSeconds(totalElapsedSeconds),
-    [totalElapsedSeconds]
-  );
+
+  const startTimeString = startTime
+    ? startTime.toLocaleTimeString()
+    : "Not started";
 
   const summaryText = useMemo(() => {
-    const lines: string[] = [];
+    const headerLines = [
+      "Resuscitation summary",
+      `Start time: ${startTimeString}`,
+      `Total cycles: ${startTime ? cycleNumber : 0}`,
+      "",
+    ];
 
-    lines.push("Resuscitation summary");
-    lines.push(
-      `Start time: ${startTime ? startTime.toLocaleTimeString() : "-"}`
-    );
-    lines.push(`Total cycles: ${cycleNumber}`);
-    lines.push("");
+    const eventLines =
+      logs.length === 0
+        ? ["No events recorded."]
+        : logs.map(
+            (log) =>
+              `${log.timeSinceStart}  ${log.message} (${log.absoluteTime})`
+          );
 
-    logs.forEach((log) => {
-      lines.push(
-        `${log.timeSinceStart}  ${log.message} (${log.absoluteTime})`
-      );
-    });
-
-    return lines.join("\n");
-  }, [logs, cycleNumber, startTime]);
-
-  const handleCopySummary = useCallback(async () => {
-    if (typeof navigator === "undefined" || !navigator.clipboard) {
-      setCopyStatus("Clipboard not available on this device");
-      setTimeout(() => setCopyStatus(""), 2000);
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(summaryText);
-      setCopyStatus("Summary copied");
-    } catch {
-      setCopyStatus("Copy failed");
-    }
-    setTimeout(() => setCopyStatus(""), 2000);
-  }, [summaryText]);
+    return [...headerLines, ...eventLines].join("\n");
+  }, [cycleNumber, logs, startTime, startTimeString]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
-      <header className="px-4 pt-4 pb-2 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-emerald-500">
-            Resuscitation
-          </p>
-          <h1 className="text-lg font-semibold">Resuscitation cycle timer</h1>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsMuted((v) => !v)}
-          className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:text-emerald-300"
-        >
-          Sound: {isMuted ? "Off" : "On"}
-        </button>
-      </header>
-
-      <main className="flex-1 flex flex-col justify-between gap-4 px-4 pb-4">
-        {/* Centered timer */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white/90 px-6 py-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/90 flex flex-col items-center gap-4">
-            <div className="text-center">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                Cycle {cycleNumber}
-              </p>
-              <p className="mt-1 inline-flex items-center rounded-full border border-emerald-500/60 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-700 dark:border-emerald-400/70 dark:text-emerald-100">
-                {phase === "CPR" ? "CPR phase" : "Pause / Rhythm check"}
-              </p>
+    <div className="min-h-screen bg-slate-950 text-slate-50">
+      <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 pb-5 pt-4">
+        {/* Header */}
+        <header className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300">
+              <HeartPulse className="h-4 w-4" />
+            </span>
+            <div className="flex flex-col">
+              <span className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-emerald-400">
+                Resuscitation
+              </span>
+              <h1 className="text-sm font-semibold">
+                2-minute CPR timer
+              </h1>
             </div>
-            <div className="mt-2 flex items-center justify-center">
-              <div className="relative flex items-center justify-center rounded-full border border-slate-300 bg-slate-50/80 px-10 py-7 shadow-inner dark:border-slate-700 dark:bg-slate-950/80">
-                <span className="text-5xl md:text-6xl font-mono tabular-nums">
-                  {displayTime}
+          </div>
+          <button
+            type="button"
+            onClick={() => setMetronomeOn((on) => !on)}
+            className="inline-flex items-center gap-1 rounded-full border border-slate-700 px-3 py-1 text-[0.7rem] text-slate-200"
+          >
+            {metronomeOn ? (
+              <>
+                <Volume2 className="h-3.5 w-3.5" />
+                Metronome
+              </>
+            ) : (
+              <>
+                <VolumeX className="h-3.5 w-3.5" />
+                Muted
+              </>
+            )}
+          </button>
+        </header>
+
+        {/* Main timer area */}
+        <section className="flex flex-1 flex-col items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <div className="rounded-3xl border border-slate-800 bg-slate-900/80 px-6 py-4 text-center shadow-lg">
+              <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-emerald-400">
+                Cycle {cycleNumber} • {phase}
+              </div>
+              <div className="text-6xl font-semibold tabular-nums tracking-tight sm:text-7xl">
+                {mainTimer}
+              </div>
+              <div className="mt-2 flex items-center justify-center gap-2 text-[0.7rem] text-slate-400">
+                <ActivitySquare className="h-3.5 w-3.5 text-emerald-400" />
+                <span>
+                  Time since start:{" "}
+                  <span className="font-mono text-slate-100">
+                    {elapsedFormatted}
+                  </span>
                 </span>
               </div>
             </div>
-            <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 text-center">
-              Cycle {cycleNumber} · {phase === "CPR" ? "CPR phase" : "Pause phase"} ·
-              {" "}
-              Time since start: {elapsedDisplay}
-            </p>
           </div>
-        </div>
+        </section>
 
-        {/* Event log buttons */}
-        <div className="space-y-3">
-          <div className="flex flex-col gap-2">
-            <p className="text-[0.75rem] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-              Log events
+        {/* Recent events */}
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 px-3 py-2">
+          <div className="mb-1 flex items-center justify-between">
+            <span className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
+              Recent events
+            </span>
+            <span className="text-[0.65rem] text-slate-500">
+              Tap buttons below to log
+            </span>
+          </div>
+          {lastEvents.length === 0 ? (
+            <p className="text-[0.75rem] text-slate-500">
+              No events yet. Shock / Adrenaline / Amiodarone / Other
+              will appear here.
             </p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => logEventWithContext("Shock delivered")}
-                className="flex-1 min-w-[7rem] rounded-full border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-emerald-500 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              >
-                Shock
-              </button>
-              <button
-                type="button"
-                onClick={() => logEventWithContext("Adrenaline given")}
-                className="flex-1 min-w-[7rem] rounded-full border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-emerald-500 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              >
-                Adrenaline
-              </button>
-              <button
-                type="button"
-                onClick={() => logEventWithContext("Amiodarone given")}
-                className="flex-1 min-w-[7rem] rounded-full border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-emerald-500 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              >
-                Amiodarone
-              </button>
-              <button
-                type="button"
-                onClick={() => setOtherDialogOpen(true)}
-                className="flex-1 min-w-[7rem] rounded-full border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-emerald-500 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              >
-                Other…
-              </button>
+          ) : (
+            <ul className="space-y-1">
+              {lastEvents.map((log) => (
+                <li
+                  key={log.id}
+                  className="flex items-baseline justify-between gap-2 text-[0.75rem]"
+                >
+                  <span className="font-mono text-emerald-300">
+                    {log.timeSinceStart}
+                  </span>
+                  <span className="flex-1 text-slate-100">
+                    {log.message}
+                  </span>
+                  <span className="text-[0.65rem] text-slate-500">
+                    {log.absoluteTime}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* Event buttons */}
+        <section className="space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={handleShock}
+              className="h-12 rounded-2xl bg-emerald-500 text-sm font-semibold text-slate-950 shadow-md active:translate-y-[1px]"
+            >
+              Shock
+            </button>
+            <button
+              type="button"
+              onClick={handleAdrenaline}
+              className="h-12 rounded-2xl border border-emerald-500/80 bg-slate-900 text-sm font-semibold text-emerald-300 shadow-md active:translate-y-[1px]"
+            >
+              Adrenaline
+            </button>
+            <button
+              type="button"
+              onClick={handleAmiodarone}
+              className="h-12 rounded-2xl border border-slate-700 bg-slate-900 text-sm font-semibold text-slate-100 shadow-md active:translate-y-[1px]"
+            >
+              Amiodarone
+            </button>
+            <button
+              type="button"
+              onClick={() => setOtherDialogOpen(true)}
+              className="h-12 rounded-2xl border border-slate-700 bg-slate-900 text-sm font-semibold text-slate-100 shadow-md active:translate-y-[1px]"
+            >
+              Other…
+            </button>
+          </div>
+        </section>
+
+        {/* Start / Pause / Reset controls */}
+        <section className="mt-1 flex gap-2">
+          <button
+            type="button"
+            onClick={handleStartPause}
+            className="flex-1 h-14 rounded-2xl bg-emerald-500 text-base font-semibold text-slate-950 shadow-lg active:translate-y-[1px]"
+          >
+            {isRunning ? "Pause" : "Start"}
+          </button>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="h-14 min-w-[5.5rem] rounded-2xl border border-slate-700 bg-slate-900 text-sm font-semibold text-slate-100 shadow-md active:translate-y-[1px]"
+          >
+            Reset
+          </button>
+        </section>
+
+        {/* Full log + summary */}
+        <section className="mt-2 rounded-2xl border border-slate-800 bg-slate-900/80 p-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="flex flex-col">
+              <span className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Full log
+              </span>
+              <span className="text-[0.7rem] text-slate-500">
+                Copy to PRF / ePCR with one tap
+              </span>
             </div>
+            <CopySummaryButton summaryText={summaryText} />
           </div>
+          <div className="max-h-40 space-y-1 overflow-y-auto rounded-lg bg-slate-950/40 p-2 text-[0.75rem]">
+            {logs.length === 0 ? (
+              <p className="text-slate-500">No events recorded yet.</p>
+            ) : (
+              logs.map((log) => (
+                <div
+                  key={log.id}
+                  className="flex items-baseline gap-2 border-b border-slate-800/60 pb-1 last:border-b-0"
+                >
+                  <span className="font-mono text-emerald-300">
+                    {log.timeSinceStart}
+                  </span>
+                  <span className="flex-1 text-slate-100">
+                    {log.message}
+                  </span>
+                  <span className="text-[0.65rem] text-slate-500">
+                    {log.absoluteTime}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
 
-          {/* Summary + log list */}
-          <div className="rounded-2xl border border-slate-200 bg-white/90 p-3 text-xs shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <p className="text-[0.75rem] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                Activity log
+        {/* Other… dialog */}
+        {otherDialogOpen && (
+          <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 px-4 pb-6">
+            <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-950 p-4 shadow-xl">
+              <h2 className="mb-1 text-sm font-semibold">
+                Log other event
+              </h2>
+              <p className="mb-2 text-[0.75rem] text-slate-400">
+                Short description only (e.g. &ldquo;Airway
+                secured&rdquo;, &ldquo;ROSC&rdquo;, &ldquo;Rhythm
+                check&rdquo;).
               </p>
-              <div className="flex items-center gap-2">
+              <textarea
+                rows={2}
+                value={otherText}
+                onChange={(e) => setOtherText(e.target.value)}
+                className="mb-3 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={handleCopySummary}
-                  className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1 text-[0.7rem] font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:text-emerald-300"
+                  onClick={() => {
+                    setOtherDialogOpen(false);
+                    setOtherText("");
+                  }}
+                  className="h-9 rounded-xl border border-slate-700 px-3 text-sm text-slate-200"
                 >
-                  Copy summary
+                  Cancel
                 </button>
-                {copyStatus && (
-                  <span className="text-[0.7rem] text-slate-500 dark:text-slate-400">
-                    {copyStatus}
-                  </span>
-                )}
+                <button
+                  type="button"
+                  onClick={handleOtherConfirm}
+                  className="h-9 rounded-xl bg-emerald-500 px-4 text-sm font-semibold text-slate-950"
+                >
+                  Add
+                </button>
               </div>
             </div>
-            <div className="max-h-40 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50/80 px-2 py-1.5 text-[0.75rem] text-slate-800 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-100">
-              {logs.length === 0 ? (
-                <p className="italic text-slate-500 dark:text-slate-400">
-                  No events logged yet. Start the timer and record shocks, drugs and
-                  key events here.
-                </p>
-              ) : (
-                <ul className="space-y-0.5">
-                  {logs.map((log) => (
-                    <li key={log.id}>
-                      <span className="font-mono text-[0.7rem]">
-                        {log.timeSinceStart}
-                      </span>{" "}
-                      <span className="text-slate-500 dark:text-slate-400">
-                        ({log.absoluteTime})
-                      </span>{" "}
-                      <span>{log.message}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
           </div>
-        </div>
-
-        {/* Controls */}
-        <div className="flex flex-col gap-3">
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={handleStartPause}
-              className={`flex-1 rounded-2xl px-6 py-3 text-base font-semibold shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                isRunning
-                  ? "bg-rose-500 text-white hover:bg-rose-400"
-                  : "bg-emerald-500 text-slate-950 hover:bg-emerald-400"
-              }`}
-            >
-              {isRunning ? "Pause" : "Start"}
-            </button>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="flex-1 rounded-2xl border border-slate-300 bg-slate-100 px-6 py-3 text-base font-semibold text-slate-800 hover:border-emerald-500 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-            >
-              Reset
-            </button>
-          </div>
-        </div>
+        )}
       </main>
-
-      {/* Simple overlay dialog for "Other" event */}
-      {otherDialogOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 px-4">
-          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-4 shadow-lg dark:border-slate-700 dark:bg-slate-900">
-            <p className="text-sm font-semibold mb-2 text-slate-900 dark:text-slate-50">
-              Log other event
-            </p>
-            <input
-              type="text"
-              autoFocus
-              value={otherText}
-              onChange={(e) => setOtherText(e.target.value)}
-              placeholder="e.g. Airway repositioned, ROSC, intubation"
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
-            />
-            <div className="mt-3 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setOtherDialogOpen(false);
-                  setOtherText("");
-                }}
-                className="rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleOtherSubmit}
-                className="rounded-full bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-emerald-400"
-              >
-                Log event
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
-};
-
-export default ResuscitationTimer;
+}

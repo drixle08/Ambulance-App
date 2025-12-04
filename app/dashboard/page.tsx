@@ -123,6 +123,13 @@ const TOOL_GROUPS: ToolGroup[] = [
           "Normal ranges and red-flag values for adult and paediatric patients.",
         meta: "CPG Reference",
       },
+      {
+        name: "Shock Index",
+        href: "/tools/shock-index", // change if your route is different
+        tagline: "Rapid SI check with sepsis/shock prompts.",
+        meta: "Reference • Time-critical",
+      },
+
     ],
   },
 ];

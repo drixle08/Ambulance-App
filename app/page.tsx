@@ -1,5 +1,6 @@
 "use client";
 
+import { InstallHint } from "@/app/_components/InstallHint";
 import * as React from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/app/_components/ThemeToggle";
@@ -82,6 +83,10 @@ const HomePage: React.FC = () => {
               <Menu className="h-4 w-4" />
             </button>
           </div>
+              {/* Install hint – bottom-right */}
+              <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-40">
+              <InstallHint />
+              </div>
         </div>
       </header>
 

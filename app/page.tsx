@@ -43,6 +43,16 @@ export default function HomePage() {
       {/* Top bar with theme toggle */}
       <div className="flex items-center justify-between gap-4 mb-4">
               {/* DEBUG: Dark mode test box */}
+      {/* Emergency resus timer quick access */}
+      <div className="mb-4">
+        <Link
+          href="/tools/resus-timer"
+          className="flex items-center justify-center rounded-2xl border border-rose-500/60 bg-rose-500/10 px-4 py-3 text-xs md:text-sm font-semibold text-rose-700 shadow-sm hover:bg-rose-500/20 dark:border-rose-400/70 dark:bg-rose-500/15 dark:text-rose-100"
+        >
+          <span className="mr-2 inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse" />
+          <span>Emergency resuscitation timer • 2-minute cycles with CPR metronome</span>
+        </Link>
+      </div>
 
         <div className="flex flex-col">
           <span className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-emerald-500">

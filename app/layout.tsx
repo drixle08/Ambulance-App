@@ -28,7 +28,8 @@ export default function RootLayout({
       <body className="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
         <ThemeProvider>
           {children}
-          {process.env.NODE_ENV === "production" && <ServiceWorkerRegister />}
+          {/* TEMP: always register SW for debugging, dev + prod */}
+          <ServiceWorkerRegister />
         </ThemeProvider>
       </body>
     </html>

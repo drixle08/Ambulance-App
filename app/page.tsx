@@ -4,6 +4,7 @@ import { InstallHint } from "@/app/_components/InstallHint";
 import * as React from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/app/_components/ThemeToggle";
+import { StandaloneRedirect } from "@/app/_components/StandaloneRedirect";
 import {
   Menu,
   ActivitySquare,
@@ -62,6 +63,7 @@ const KPI_CHIPS = [
 const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+      <StandaloneRedirect />
       {/* Top app bar */}
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5">

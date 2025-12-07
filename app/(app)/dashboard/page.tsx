@@ -62,7 +62,7 @@ const TOOL_GROUPS: ToolGroup[] = [
       },
       {
         name: "ECMO / ECPR Criteria",
-        href: "/tools/ecmo-criteria",
+        href: "/tools/ecmo-criteria", // or "/tools/ecmo" – just keep this in sync with the actual route
         tagline:
           "Field triggers for considering ECMO/ECPR and discussing with an ECMO centre.",
         meta: "CPG ECMO / ECPR",
@@ -125,11 +125,10 @@ const TOOL_GROUPS: ToolGroup[] = [
       },
       {
         name: "Shock Index",
-        href: "/tools/shock-index", // change if your route is different
+        href: "/tools/shock-index",
         tagline: "Rapid SI check with sepsis/shock prompts.",
         meta: "Reference • Time-critical",
       },
-
     ],
   },
 ];
@@ -140,76 +139,73 @@ function classNames(...classes: Array<string | boolean | null | undefined>) {
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen bg-slate-50 px-4 pb-8 pt-4 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4">
-        {/* Header / Intro */}
-        <header className="space-y-1">
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-emerald-500">
-            Tools dashboard
-          </p>
-          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">
-            Clinical tools for ambulance crews
-          </h1>
-          <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-400">
-            Pick a tool by clinical area. Each card opens a quick calculator or
-            reference aligned with HMCAS Clinical Practice Guideline v2.4
-            (2025).
-          </p>
-        </header>
+    <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pb-8 pt-4">
+      {/* Header / Intro */}
+      <header className="space-y-1">
+        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-emerald-500">
+          Tools dashboard
+        </p>
+        <h1 className="text-xl font-semibold tracking-tight md:text-2xl">
+          Clinical tools for ambulance crews
+        </h1>
+        <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-400">
+          Pick a tool by clinical area. Each card opens a quick calculator or
+          reference aligned with HMCAS Clinical Practice Guideline v2.4 (2025).
+        </p>
+      </header>
 
-        {/* Tool groups */}
-        <div className="space-y-6">
-          {TOOL_GROUPS.map((group) => (
-            <section
-              key={group.title}
-              className="rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80"
-            >
-              <div className="mb-3 flex flex-col gap-1 md:flex-row md:items-baseline md:justify-between">
-                <div>
-                  <h2 className="text-sm font-semibold md:text-base">
-                    {group.title}
-                  </h2>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
-                    {group.description}
-                  </p>
-                </div>
+      {/* Tool groups */}
+      <div className="space-y-6">
+        {TOOL_GROUPS.map((group) => (
+          <section
+            key={group.title}
+            className="rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80"
+          >
+            <div className="mb-3 flex flex-col gap-1 md:flex-row md:items-baseline md:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold md:text-base">
+                  {group.title}
+                </h2>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  {group.description}
+                </p>
               </div>
+            </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {group.tools.map((tool) => (
-                  <Link
-                    key={tool.href}
-                    href={tool.href}
-                    className={classNames(
-                      "group flex flex-col justify-between rounded-2xl border px-4 py-3 text-left text-sm shadow-sm transition-colors",
-                      "border-slate-200 bg-slate-50 hover:border-emerald-500/80 hover:bg-white",
-                      "dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-emerald-500/70 dark:hover:bg-slate-900"
-                    )}
-                  >
-                    <div className="space-y-1.5">
-                      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                        {tool.name}
-                      </h3>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">
-                        {tool.tagline}
-                      </p>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-[0.7rem] font-medium text-emerald-700 dark:text-emerald-300">
-                        Open tool →
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {group.tools.map((tool) => (
+                <Link
+                  key={tool.href}
+                  href={tool.href}
+                  className={classNames(
+                    "group flex flex-col justify-between rounded-2xl border px-4 py-3 text-left text-sm shadow-sm transition-colors",
+                    "border-slate-200 bg-slate-50 hover:border-emerald-500/80 hover:bg-white",
+                    "dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-emerald-500/70 dark:hover:bg-slate-900"
+                  )}
+                >
+                  <div className="space-y-1.5">
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                      {tool.name}
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      {tool.tagline}
+                    </p>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-[0.7rem] font-medium text-emerald-700 dark:text-emerald-300">
+                      Open tool →
+                    </span>
+                    {tool.meta && (
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                        {tool.meta}
                       </span>
-                      {tool.meta && (
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                          {tool.meta}
-                        </span>
-                      )}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ))}
       </div>
     </div>
   );

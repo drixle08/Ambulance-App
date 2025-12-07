@@ -1,7 +1,8 @@
 {
-  "name": "MWCS Paramedic Toolkit",
-  "short_name": "MWCS Tools",
+  "name": "Ambulance Paramedic Toolkit",
+  "short_name": "AP Toolkit",
   "start_url": "/dashboard",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#020617",
   "theme_color": "#22c55e",

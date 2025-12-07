@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   title: "Ambulance Paramedic Toolkit",
   description: "Paramedic tools for ambulance crews",
   manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Ambulance Paramedic Toolkit",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {

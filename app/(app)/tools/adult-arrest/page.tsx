@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CopySummaryButton } from "../../_components/CopySummaryButton";
+import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 
 const summaryText =
   "Adult unwitnessed cardiac arrest – followed updated HMCAS arrest algorithm: assess for undeniable death (CPG 2.7) then start CPR, attach defibrillator/monitor and assess rhythm. For VF/VT: shocks 200 J, then 300 J, then 360 J with 2-min CPR cycles, SGA with continuous compressions, IV/IO access, reversible causes (H’s & T’s), adrenaline 1 mg every 4 min, amiodarone 300 mg then 150 mg, and LUCAS when available. For asystole/PEA: 2-min CPR cycles with SGA, early adrenaline 1 mg then 1 mg every 4 min, reversible causes and LUCAS preparation. ROSC → CPG 2.6; consider termination as per CPG 2.7.";

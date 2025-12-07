@@ -1,9 +1,7 @@
 // public/sw.js
 
-const CACHE_NAME = "apt-cache-v1";
+const CACHE_NAME = "apt-cache-v2";
 
-// Optional: some core routes to try to keep handy.
-// (They'll also be cached on first visit anyway.)
 const CORE_ROUTES = [
   "/",
   "/dashboard",
@@ -26,17 +24,28 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      try {
-        // Best-effort; failures here won't break install.
-        await cache.addAll(CORE_ROUTES);
-      } catch (err) {
-        // Ignore – network might be flaky during install.
-        console.warn("[SW] Precache failed", err);
-      }
+
+      // Fetch each route individually so one failure doesn’t break all
+      await Promise.all(
+        CORE_ROUTES.map(async (url) => {
+          try {
+            const resp = await fetch(url, { cache: "no-cache" });
+            if (resp.ok) {
+              await cache.put(url, resp.clone());
+            } else {
+              console.warn("[SW] Precache skipped (non-OK):", url, resp.status);
+            }
+          } catch (err) {
+            console.warn("[SW] Precache failed for", url, err);
+          }
+        })
+      );
+
       self.skipWaiting();
     })()
   );
 });
+
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(

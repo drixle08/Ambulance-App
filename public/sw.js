@@ -1,80 +1,104 @@
-const CACHE_NAME = "mwcs-cache-v1";
+// public/sw.js
 
-// Pages & assets we want available offline
-const OFFLINE_URLS = [
-  "/",                 // root
+const CACHE_NAME = "apt-cache-v1";
+
+// Optional: some core routes to try to keep handy.
+// (They'll also be cached on first visit anyway.)
+const CORE_ROUTES = [
+  "/",
   "/dashboard",
+  "/tools/asthma",
   "/tools/mwcs",
   "/tools/gcs",
   "/tools/stroke",
-  "/tools/asthma",
   "/tools/vitals",
   "/tools/peds-arrest",
-  "/favicon.ico",
-  "/manifest.webmanifest",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
+  "/tools/peds-arrest-algorithm",
+  "/tools/adult-arrest",
+  "/tools/witnessed-adult-arrest",
+  "/tools/rosc",
+  "/tools/resus-timer",
+  "/tools/ecmo-criteria",
+  "/tools/shock-index",
 ];
 
-// Install: pre-cache core pages & icons
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(OFFLINE_URLS))
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      try {
+        // Best-effort; failures here won't break install.
+        await cache.addAll(CORE_ROUTES);
+      } catch (err) {
+        // Ignore – network might be flaky during install.
+        console.warn("[SW] Precache failed", err);
+      }
+      self.skipWaiting();
+    })()
   );
-  self.skipWaiting();
 });
 
-// Activate: clean up old caches
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
         keys
           .filter((key) => key !== CACHE_NAME)
           .map((key) => caches.delete(key))
-      )
-    )
+      );
+      await self.clients.claim();
+    })()
   );
-  self.clients.claim();
 });
 
-// Fetch: network-first for pages, cache-first for assets
+// Simple strategy:
+// - HTML requests: network-first, fallback to cache.
+// - Everything else: cache-first, fallback to network.
 self.addEventListener("fetch", (event) => {
-  const request = event.request;
+  const { request } = event;
 
-  // We only care about GET requests
   if (request.method !== "GET") return;
 
-  // Handle navigation/page requests
-  if (request.mode === "navigate") {
+  const accept = request.headers.get("accept") || "";
+
+  // HTML/documents → network-first
+  if (accept.includes("text/html")) {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          // Save latest version of the page to cache
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          return response;
-        })
-        .catch(() =>
-          // If offline or network fails, try cache, else fall back to dashboard
-          caches.match(request).then((cached) => cached || caches.match("/dashboard"))
-        )
+      (async () => {
+        try {
+          const networkResp = await fetch(request);
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(request, networkResp.clone());
+          return networkResp;
+        } catch (err) {
+          const cacheMatch = await caches.match(request);
+          if (cacheMatch) return cacheMatch;
+          // last resort: try cached dashboard
+          const fallback = await caches.match("/dashboard");
+          if (fallback) return fallback;
+          throw err;
+        }
+      })()
     );
     return;
   }
 
-  // For static assets (JS, CSS, images) → cache-first
+  // Everything else → cache-first
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
+    (async () => {
+      const cacheMatch = await caches.match(request);
+      if (cacheMatch) return cacheMatch;
 
-      return fetch(request)
-        .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          return response;
-        })
-        .catch(() => cached); // if network fails and nothing cached, just fail
-    })
+      try {
+        const networkResp = await fetch(request);
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(request, networkResp.clone());
+        return networkResp;
+      } catch (err) {
+        // Offline and not in cache – just fail.
+        throw err;
+      }
+    })()
   );
 });

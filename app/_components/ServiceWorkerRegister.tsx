@@ -4,30 +4,22 @@ import { useEffect } from "react";
 
 export function ServiceWorkerRegister() {
   useEffect(() => {
-    // Only run in the browser
     if (typeof window === "undefined") return;
+    if (!("serviceWorker" in navigator)) return;
 
-    // Extra safety: don't register in development
-    if (process.env.NODE_ENV !== "production") {
-      return;
-    }
+    // We use window.load to make sure all Next.js stuff is ready.
+    const register = () => {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .catch((err) => {
+          // Silent fail – don't break the UI.
+          console.error("[SW] registration failed", err);
+        });
+    };
 
-    // Check that service workers are supported
-    if (!("serviceWorker" in navigator)) {
-      console.warn("Service workers are not supported in this browser.");
-      return;
-    }
-
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then((registration) => {
-        console.log("Service worker registered:", registration.scope);
-      })
-      .catch((err) => {
-        console.error("Service worker registration failed:", err);
-      });
+    window.addEventListener("load", register);
+    return () => window.removeEventListener("load", register);
   }, []);
 
-  // This component doesn’t render anything
   return null;
 }

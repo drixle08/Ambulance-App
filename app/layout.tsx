@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/app/_components/ThemeProvider";
-// Temporarily disabled while we debug iOS PWA behaviour
-// import { ServiceWorkerRegister } from "@/app/_components/ServiceWorkerRegister";
+import { ServiceWorkerRegister } from "@/app/_components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
   title: "Ambulance Paramedic Toolkit",
@@ -29,8 +28,7 @@ export default function RootLayout({
       <body className="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
         <ThemeProvider>
           {children}
-          {/* When you’re ready to re-enable the service worker, uncomment below */}
-          {/* {process.env.NODE_ENV === "production" && <ServiceWorkerRegister />} */}
+          {process.env.NODE_ENV === "production" && <ServiceWorkerRegister />}
         </ThemeProvider>
       </body>
     </html>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CopySummaryButton } from "../../_components/CopySummaryButton";
+import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+
 
 type CriterionGroup = "core" | "comorbidity" | "alternative";
 

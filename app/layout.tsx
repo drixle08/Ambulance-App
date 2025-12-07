@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/app/_components/ThemeProvider";
-import { ServiceWorkerRegister } from "./_components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
   title: "Ambulance Paramedic Toolkit",
@@ -28,7 +27,6 @@ export default function RootLayout({
       <body className="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
         <ThemeProvider>
           {children}
-          {process.env.NODE_ENV === "production" && <ServiceWorkerRegister />}
         </ThemeProvider>
       </body>
     </html>

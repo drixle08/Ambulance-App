@@ -1,7 +1,6 @@
 // public/sw.js
 
-const CACHE_NAME = "apt-cache-v2";
-
+const CACHE_NAME = "apt-cache-v3";
 const CORE_ROUTES = [
   "/",
   "/dashboard",
@@ -19,28 +18,24 @@ const CORE_ROUTES = [
   "/tools/ecmo-criteria",
   "/tools/shock-index",
 ];
+const FALLBACK_HTML = "/dashboard";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-
-      // Fetch each route individually so one failure doesn’t break all
-      await Promise.all(
+      await Promise.allSettled(
         CORE_ROUTES.map(async (url) => {
           try {
             const resp = await fetch(url, { cache: "no-cache" });
             if (resp.ok) {
               await cache.put(url, resp.clone());
-            } else {
-              console.warn("[SW] Precache skipped (non-OK):", url, resp.status);
             }
           } catch (err) {
             console.warn("[SW] Precache failed for", url, err);
           }
         })
       );
-
       self.skipWaiting();
     })()
   );
@@ -51,27 +46,30 @@ self.addEventListener("activate", (event) => {
     (async () => {
       const keys = await caches.keys();
       await Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
       );
       await self.clients.claim();
     })()
   );
 });
 
-// Simple strategy:
-// - HTML requests: network-first, fallback to cache.
-// - Everything else: cache-first, fallback to network.
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-
   if (request.method !== "GET") return;
 
-  const accept = request.headers.get("accept") || "";
+  const url = new URL(request.url);
 
-  // HTML/documents → network-first
-  if (accept.includes("text/html")) {
+  // Do not cache APIs or cross-origin requests
+  if (url.origin !== self.location.origin || url.pathname.startsWith("/api")) {
+    return;
+  }
+
+  const accept = request.headers.get("accept") || "";
+  const isHTML =
+    accept.includes("text/html") || request.destination === "document";
+
+  // HTML/documents: network-first with dashboard fallback
+  if (isHTML) {
     event.respondWith(
       (async () => {
         try {
@@ -80,10 +78,9 @@ self.addEventListener("fetch", (event) => {
           cache.put(request, networkResp.clone());
           return networkResp;
         } catch (err) {
-          const cacheMatch = await caches.match(request);
-          if (cacheMatch) return cacheMatch;
-          // last resort: try cached dashboard
-          const fallback = await caches.match("/dashboard");
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          const fallback = await caches.match(FALLBACK_HTML);
           if (fallback) return fallback;
           throw err;
         }
@@ -92,21 +89,15 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Everything else → cache-first
+  // Static assets: cache-first
   event.respondWith(
     (async () => {
-      const cacheMatch = await caches.match(request);
-      if (cacheMatch) return cacheMatch;
-
-      try {
-        const networkResp = await fetch(request);
-        const cache = await caches.open(CACHE_NAME);
-        cache.put(request, networkResp.clone());
-        return networkResp;
-      } catch (err) {
-        // Offline and not in cache – just fail.
-        throw err;
-      }
+      const cached = await caches.match(request);
+      if (cached) return cached;
+      const networkResp = await fetch(request);
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, networkResp.clone());
+      return networkResp;
     })()
   );
 });

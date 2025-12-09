@@ -69,7 +69,7 @@ const HomePage: React.FC = () => {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5">
           <div className="flex flex-col">
             <span className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-emerald-500">
-              Ambulance • Toolkit
+              Ambulance Paramedic Toolkit
             </span>
             <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
               Paramedic Tools
@@ -85,7 +85,7 @@ const HomePage: React.FC = () => {
               <Menu className="h-4 w-4" />
             </button>
           </div>
-              {/* Install hint – bottom-right */}
+              {/* Install hint - bottom-right */}
               <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-40">
               <InstallHint />
               </div>
@@ -113,7 +113,7 @@ const HomePage: React.FC = () => {
                 </div>
               </div>
               <div className="mt-4 flex flex-col gap-2 md:flex-row md:gap-3">
-                {/* THIS is the snippet — main CTA to dashboard */}
+                {/* THIS is the snippet - main CTA to dashboard */}
                 <Link
                   href="/dashboard"
                   className="inline-flex w-full justify-center rounded-2xl bg-emerald-500 px-4 py-3 text-base font-semibold text-slate-950 shadow-sm hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 md:w-auto md:flex-1"

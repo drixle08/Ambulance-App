@@ -33,7 +33,7 @@ const TOOL_GROUPS: ToolGroup[] = [
         meta: "CPG 2.x Adult arrest",
       },
       {
-        name: "Adult Cardiac Arrest – Witnessed",
+        name: "Adult Cardiac Arrest - Witnessed",
         href: "/tools/witnessed-adult-arrest",
         tagline:
           "Witnessed arrest during transport/care with AP pads; crew configuration flow lanes.",
@@ -54,7 +54,7 @@ const TOOL_GROUPS: ToolGroup[] = [
         meta: "CPG 2.x Paeds arrest",
       },
       {
-        name: "Post–Cardiac Arrest (ROSC) Care",
+        name: "Post-Cardiac Arrest (ROSC) Care",
         href: "/tools/rosc",
         tagline:
           "Airway, ventilation, blood pressure targets and transport priorities after ROSC.",
@@ -62,7 +62,7 @@ const TOOL_GROUPS: ToolGroup[] = [
       },
       {
         name: "ECMO / ECPR Criteria",
-        href: "/tools/ecmo-criteria", // or "/tools/ecmo" – just keep this in sync with the actual route
+        href: "/tools/ecmo-criteria", // or "/tools/ecmo" - just keep this in sync with the actual route
         tagline:
           "Field triggers for considering ECMO/ECPR and discussing with an ECMO centre.",
         meta: "CPG ECMO / ECPR",
@@ -82,7 +82,7 @@ const TOOL_GROUPS: ToolGroup[] = [
         meta: "CPG Asthma",
       },
       {
-        name: "MWCS – Croup",
+        name: "MWCS - Croup",
         href: "/tools/mwcs",
         tagline:
           "Modified Westley Croup Score with severity bands and management hints.",
@@ -127,7 +127,7 @@ const TOOL_GROUPS: ToolGroup[] = [
         name: "Shock Index",
         href: "/tools/shock-index",
         tagline: "Rapid SI check with sepsis/shock prompts.",
-        meta: "Reference • Time-critical",
+        meta: "Reference - Time-critical",
       },
     ],
   },
@@ -193,7 +193,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-[0.7rem] font-medium text-emerald-700 dark:text-emerald-300">
-                      Open tool →
+                      Open tool ->
                     </span>
                     {tool.meta && (
                       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">

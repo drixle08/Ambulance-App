@@ -4,6 +4,10 @@ const CACHE_NAME = "apt-cache-v4";
 const CORE_ROUTES = [
   "/",
   "/dashboard",
+  "/dashboard/resuscitation",
+  "/dashboard/respiratory-airway",
+  "/dashboard/assessment-screening",
+  "/dashboard/reference",
   "/manifest.webmanifest",
   "/icons/icon-192.png",
   "/icons/icon-512.png",

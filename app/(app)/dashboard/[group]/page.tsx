@@ -90,3 +90,11 @@ export default function GroupPage({ params }: GroupPageProps) {
     </div>
   );
 }
+
+export function generateStaticParams() {
+  return TOOL_GROUPS.map((group) => ({
+    group: group.slug,
+  }));
+}
+
+export const dynamicParams = false;

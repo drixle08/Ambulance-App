@@ -1,6 +1,6 @@
 // public/sw.js
 
-const CACHE_NAME = "apt-cache-v4";
+const CACHE_NAME = "apt-cache-v5";
 const CORE_ROUTES = [
   "/",
   "/dashboard",

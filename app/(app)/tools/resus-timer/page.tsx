@@ -26,6 +26,25 @@ type LogEntry = {
   message: string; // "Shock delivered", etc.
 };
 
+// Minimal SpeechRecognition typings to avoid TS errors when not available.
+type SpeechRecognitionEventLike = {
+  results: Array<{
+    0: { transcript: string };
+  }>;
+};
+type SpeechRecognitionInstance = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start: () => void;
+  stop: () => void;
+  onstart: (() => void) | null;
+  onend: (() => void) | null;
+  onerror: ((event: unknown) => void) | null;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+};
+type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
+
 const CYCLE_SECONDS = 120; // 2-minute CPR cycles
 const DEFAULT_BPM = 110;
 
@@ -63,7 +82,7 @@ export default function ResuscitationTimerPage() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const elapsedRef = useRef(0);
   const isRunningRef = useRef(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const shouldRestartRecognition = useRef(false);
 
   useEffect(() => {
@@ -77,8 +96,8 @@ export default function ResuscitationTimerPage() {
   // Detect SpeechRecognition support once on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const SpeechRec =
-      (window as unknown as { SpeechRecognition?: SpeechRecognition })
+    const SpeechRec: SpeechRecognitionConstructor | undefined =
+      (window as unknown as { SpeechRecognition?: SpeechRecognitionConstructor })
         .SpeechRecognition ||
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).webkitSpeechRecognition;
@@ -269,8 +288,8 @@ export default function ResuscitationTimerPage() {
     if (!voiceEnabled || !voiceSupported) return;
     if (typeof window === "undefined") return;
 
-    const SpeechRec =
-      (window as unknown as { SpeechRecognition?: SpeechRecognition })
+    const SpeechRec: SpeechRecognitionConstructor | undefined =
+      (window as unknown as { SpeechRecognition?: SpeechRecognitionConstructor })
         .SpeechRecognition ||
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).webkitSpeechRecognition;
@@ -296,7 +315,7 @@ export default function ResuscitationTimerPage() {
     rec.onerror = () => {
       setVoiceListening(false);
     };
-    rec.onresult = (event: SpeechRecognitionEvent) => {
+    rec.onresult = (event) => {
       const transcript = Array.from(event.results)
         .map((r) => r[0].transcript)
         .join(" ")

@@ -321,17 +321,44 @@ export default function ResuscitationTimerPage() {
         .join(" ")
         .toLowerCase();
 
-      if (/\b(start|timer|go|begin|two minute|2 minute)\b/.test(transcript)) {
-        if (!isRunningRef.current) {
-          handleStartPause();
-        }
+      const START_WORDS = [
+        "start timer",
+        "start",
+        "timer",
+        "go",
+        "begin",
+        "two minute",
+        "2 minute",
+      ];
+      const STOP_WORDS = [
+        "stop timer",
+        "stop",
+        "pause timer",
+        "pause",
+        "hold",
+        "halt",
+      ];
+      const RESET_WORDS = ["reset timer", "reset", "restart", "again"];
+
+      const hasStart = START_WORDS.some((word) =>
+        transcript.includes(word)
+      );
+      const hasStop = STOP_WORDS.some((word) =>
+        transcript.includes(word)
+      );
+      const hasReset = RESET_WORDS.some((word) =>
+        transcript.includes(word)
+      );
+
+      if (hasStart && !isRunningRef.current) {
+        handleStartPause();
+        return;
       }
-      if (/\b(pause|stop|hold)\b/.test(transcript)) {
-        if (isRunningRef.current) {
-          handleStartPause();
-        }
+      if (hasStop && isRunningRef.current) {
+        handleStartPause(); // pauses
+        return;
       }
-      if (/\b(reset|restart|again)\b/.test(transcript)) {
+      if (hasReset) {
         handleReset();
       }
     };

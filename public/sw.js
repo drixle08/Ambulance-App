@@ -1,9 +1,12 @@
 // public/sw.js
 
-const CACHE_NAME = "apt-cache-v3";
+const CACHE_NAME = "apt-cache-v4";
 const CORE_ROUTES = [
   "/",
   "/dashboard",
+  "/manifest.webmanifest",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
   "/tools/asthma",
   "/tools/mwcs",
   "/tools/gcs",
@@ -92,12 +95,20 @@ self.addEventListener("fetch", (event) => {
   // Static assets: cache-first
   event.respondWith(
     (async () => {
-      const cached = await caches.match(request);
-      if (cached) return cached;
-      const networkResp = await fetch(request);
       const cache = await caches.open(CACHE_NAME);
-      cache.put(request, networkResp.clone());
-      return networkResp;
+      const cached = await cache.match(request);
+      if (cached) return cached;
+      try {
+        const networkResp = await fetch(request);
+        cache.put(request, networkResp.clone());
+        return networkResp;
+      } catch (err) {
+        console.warn("[SW] Static fetch failed:", request.url, err);
+        // Return cached (if race) or a generic offline response to avoid unhandled rejections.
+        const fallback = await cache.match(request);
+        if (fallback) return fallback;
+        return new Response("Offline", { status: 503, statusText: "Offline" });
+      }
     })()
   );
 });

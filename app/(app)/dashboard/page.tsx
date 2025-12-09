@@ -193,7 +193,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-[0.7rem] font-medium text-emerald-700 dark:text-emerald-300">
-                      Open tool ->
+                      {"Open tool ->"}
                     </span>
                     {tool.meta && (
                       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">

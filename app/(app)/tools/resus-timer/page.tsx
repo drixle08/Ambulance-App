@@ -74,6 +74,7 @@ export default function ResuscitationTimerPage() {
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [voiceListening, setVoiceListening] = useState(false);
+  const hasHydratedRef = useRef(false);
 
   // start time stored both in a ref (for logic) and state (safe for render)
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -105,6 +106,31 @@ export default function ResuscitationTimerPage() {
       setVoiceSupported(true);
     }
   }, []);
+
+  // Hydrate voice preference from localStorage (one-time on client)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (hasHydratedRef.current) return;
+    hasHydratedRef.current = true;
+    try {
+      const stored = window.localStorage.getItem("voiceEnabled");
+      if (stored === "true") {
+        setVoiceEnabled(true);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  // Persist voice preference
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem("voiceEnabled", voiceEnabled ? "true" : "false");
+    } catch {
+      // ignore storage errors
+    }
+  }, [voiceEnabled]);
 
   const getAudioContext = useCallback((): AudioContext | null => {
     if (typeof window === "undefined") return null;
@@ -369,6 +395,11 @@ export default function ResuscitationTimerPage() {
     } catch (err) {
       console.warn("Voice recognition failed to start:", err);
       setVoiceEnabled(false);
+      try {
+        window.localStorage.setItem("voiceEnabled", "false");
+      } catch {
+        // ignore
+      }
     }
 
     return () => {

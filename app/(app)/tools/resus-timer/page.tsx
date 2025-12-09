@@ -13,6 +13,8 @@ import {
   ActivitySquare,
   Volume2,
   VolumeX,
+  Mic,
+  MicOff,
 } from "lucide-react";
 
 type Phase = "CPR" | "Pause";
@@ -44,13 +46,15 @@ export default function ResuscitationTimerPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [phase] = useState<Phase>("CPR"); // reserved for future CPR/Pause phases
   const [cycleNumber, setCycleNumber] = useState(1);
-  const [secondsRemaining, setSecondsRemaining] =
-    useState(CYCLE_SECONDS);
+  const [secondsRemaining, setSecondsRemaining] = useState(CYCLE_SECONDS);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [metronomeOn, setMetronomeOn] = useState(true);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [otherDialogOpen, setOtherDialogOpen] = useState(false);
   const [otherText, setOtherText] = useState("");
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [voiceListening, setVoiceListening] = useState(false);
 
   // start time stored both in a ref (for logic) and state (safe for render)
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -58,10 +62,30 @@ export default function ResuscitationTimerPage() {
   const startTimeRef = useRef<Date | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const elapsedRef = useRef(0);
+  const isRunningRef = useRef(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const shouldRestartRecognition = useRef(false);
 
   useEffect(() => {
     elapsedRef.current = elapsedSeconds;
   }, [elapsedSeconds]);
+
+  useEffect(() => {
+    isRunningRef.current = isRunning;
+  }, [isRunning]);
+
+  // Detect SpeechRecognition support once on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const SpeechRec =
+      (window as unknown as { SpeechRecognition?: SpeechRecognition })
+        .SpeechRecognition ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).webkitSpeechRecognition;
+    if (SpeechRec) {
+      setVoiceSupported(true);
+    }
+  }, []);
 
   const getAudioContext = useCallback((): AudioContext | null => {
     if (typeof window === "undefined") return null;
@@ -153,7 +177,7 @@ export default function ResuscitationTimerPage() {
     return () => window.clearInterval(id);
   }, [isRunning, logCycleStart]);
 
-  // Metronome (100–120 bpm, fixed at DEFAULT_BPM)
+  // Metronome (100-120 bpm, fixed at DEFAULT_BPM)
   useEffect(() => {
     if (!isRunning || !metronomeOn) return;
 
@@ -166,7 +190,7 @@ export default function ResuscitationTimerPage() {
     return () => window.clearInterval(id);
   }, [isRunning, metronomeOn, playClick]);
 
-  const handleStartPause = () => {
+  const handleStartPause = useCallback(() => {
     if (isRunning) {
       setIsRunning(false);
       addLog("Timer paused");
@@ -186,9 +210,9 @@ export default function ResuscitationTimerPage() {
     }
 
     setIsRunning(true);
-  };
+  }, [addLog, isRunning]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setIsRunning(false);
     setCycleNumber(1);
     setSecondsRemaining(CYCLE_SECONDS);
@@ -197,7 +221,7 @@ export default function ResuscitationTimerPage() {
     setStartTime(null);
     setLogs([]);
     addLog("Timer reset");
-  };
+  }, [addLog]);
 
   const handleShock = () => addLog("Shock delivered");
   const handleAdrenaline = () => addLog("Adrenaline given");
@@ -215,10 +239,7 @@ export default function ResuscitationTimerPage() {
   const mainTimer = formatSeconds(secondsRemaining);
   const elapsedFormatted = formatSeconds(elapsedSeconds);
 
-  const lastEvents = useMemo(
-    () => logs.slice(-3).reverse(),
-    [logs]
-  );
+  const lastEvents = useMemo(() => logs.slice(-3).reverse(), [logs]);
 
   const startTimeString = startTime
     ? startTime.toLocaleTimeString()
@@ -243,6 +264,82 @@ export default function ResuscitationTimerPage() {
     return [...headerLines, ...eventLines].join("\n");
   }, [cycleNumber, logs, startTime, startTimeString]);
 
+  // Voice control
+  useEffect(() => {
+    if (!voiceEnabled || !voiceSupported) return;
+    if (typeof window === "undefined") return;
+
+    const SpeechRec =
+      (window as unknown as { SpeechRecognition?: SpeechRecognition })
+        .SpeechRecognition ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).webkitSpeechRecognition;
+    if (!SpeechRec) return;
+
+    const rec = new SpeechRec();
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.lang = "en-US";
+    shouldRestartRecognition.current = true;
+
+    rec.onstart = () => setVoiceListening(true);
+    rec.onend = () => {
+      setVoiceListening(false);
+      if (shouldRestartRecognition.current) {
+        try {
+          rec.start();
+        } catch {
+          // ignore restart errors
+        }
+      }
+    };
+    rec.onerror = () => {
+      setVoiceListening(false);
+    };
+    rec.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = Array.from(event.results)
+        .map((r) => r[0].transcript)
+        .join(" ")
+        .toLowerCase();
+
+      if (/\b(start|timer|go|begin|two minute|2 minute)\b/.test(transcript)) {
+        if (!isRunningRef.current) {
+          handleStartPause();
+        }
+      }
+      if (/\b(pause|stop|hold)\b/.test(transcript)) {
+        if (isRunningRef.current) {
+          handleStartPause();
+        }
+      }
+      if (/\b(reset|restart|again)\b/.test(transcript)) {
+        handleReset();
+      }
+    };
+
+    try {
+      rec.start();
+      recognitionRef.current = rec;
+    } catch (err) {
+      console.warn("Voice recognition failed to start:", err);
+      setVoiceEnabled(false);
+    }
+
+    return () => {
+      shouldRestartRecognition.current = false;
+      rec.onresult = null;
+      rec.onerror = null;
+      rec.onend = null;
+      try {
+        rec.stop();
+      } catch {
+        // ignore
+      }
+      recognitionRef.current = null;
+      setVoiceListening(false);
+    };
+  }, [handleReset, handleStartPause, voiceEnabled, voiceSupported]);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
       <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 pb-5 pt-4">
@@ -256,36 +353,61 @@ export default function ResuscitationTimerPage() {
               <span className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-emerald-400">
                 Resuscitation
               </span>
-              <h1 className="text-sm font-semibold">
-                2-minute CPR timer
-              </h1>
+              <h1 className="text-sm font-semibold">2-minute CPR timer</h1>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setMetronomeOn((on) => !on)}
-            className="inline-flex items-center gap-1 rounded-full border border-slate-700 px-3 py-1 text-[0.7rem] text-slate-200"
-          >
-            {metronomeOn ? (
-              <>
-                <Volume2 className="h-3.5 w-3.5" />
-                Metronome
-              </>
-            ) : (
-              <>
-                <VolumeX className="h-3.5 w-3.5" />
-                Muted
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMetronomeOn((on) => !on)}
+              className="inline-flex items-center gap-1 rounded-full border border-slate-700 px-3 py-1 text-[0.7rem] text-slate-200"
+            >
+              {metronomeOn ? (
+                <>
+                  <Volume2 className="h-3.5 w-3.5" />
+                  Metronome
+                </>
+              ) : (
+                <>
+                  <VolumeX className="h-3.5 w-3.5" />
+                  Muted
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setVoiceEnabled((on) => !on)}
+              disabled={!voiceSupported}
+              className="inline-flex items-center gap-1 rounded-full border border-slate-700 px-3 py-1 text-[0.7rem] text-slate-200 disabled:opacity-50"
+            >
+              {voiceEnabled ? (
+                <>
+                  <Mic className="h-3.5 w-3.5" />
+                  Voice on
+                </>
+              ) : (
+                <>
+                  <MicOff className="h-3.5 w-3.5" />
+                  Voice off
+                </>
+              )}
+            </button>
+          </div>
         </header>
+        {voiceEnabled && (
+          <div className="rounded-xl border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-[0.75rem] text-emerald-100">
+            {voiceListening
+              ? "Listening for: start / pause / reset"
+              : "Mic enabled; starting..."}
+          </div>
+        )}
 
         {/* Main timer area */}
         <section className="flex flex-1 flex-col items-center justify-center">
           <div className="flex flex-col items-center gap-2">
             <div className="rounded-3xl border border-slate-800 bg-slate-900/80 px-6 py-4 text-center shadow-lg">
               <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-emerald-400">
-                Cycle {cycleNumber} • {phase}
+                Cycle {cycleNumber} -> {phase}
               </div>
               <div className="text-6xl font-semibold tabular-nums tracking-tight sm:text-7xl">
                 {mainTimer}
@@ -315,8 +437,8 @@ export default function ResuscitationTimerPage() {
           </div>
           {lastEvents.length === 0 ? (
             <p className="text-[0.75rem] text-slate-500">
-              No events yet. Shock / Adrenaline / Amiodarone / Other
-              will appear here.
+              No events yet. Shock / Adrenaline / Amiodarone / Other will appear
+              here.
             </p>
           ) : (
             <ul className="space-y-1">
@@ -328,9 +450,7 @@ export default function ResuscitationTimerPage() {
                   <span className="font-mono text-emerald-300">
                     {log.timeSinceStart}
                   </span>
-                  <span className="flex-1 text-slate-100">
-                    {log.message}
-                  </span>
+                  <span className="flex-1 text-slate-100">{log.message}</span>
                   <span className="text-[0.65rem] text-slate-500">
                     {log.absoluteTime}
                   </span>
@@ -369,7 +489,7 @@ export default function ResuscitationTimerPage() {
               onClick={() => setOtherDialogOpen(true)}
               className="h-12 rounded-2xl border border-slate-700 bg-slate-900 text-sm font-semibold text-slate-100 shadow-md active:translate-y-[1px]"
             >
-              Other…
+              Other...
             </button>
           </div>
         </section>
@@ -417,9 +537,7 @@ export default function ResuscitationTimerPage() {
                   <span className="font-mono text-emerald-300">
                     {log.timeSinceStart}
                   </span>
-                  <span className="flex-1 text-slate-100">
-                    {log.message}
-                  </span>
+                  <span className="flex-1 text-slate-100">{log.message}</span>
                   <span className="text-[0.65rem] text-slate-500">
                     {log.absoluteTime}
                   </span>
@@ -429,17 +547,14 @@ export default function ResuscitationTimerPage() {
           </div>
         </section>
 
-        {/* Other… dialog */}
+        {/* Other dialog */}
         {otherDialogOpen && (
           <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 px-4 pb-6">
             <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-950 p-4 shadow-xl">
-              <h2 className="mb-1 text-sm font-semibold">
-                Log other event
-              </h2>
+              <h2 className="mb-1 text-sm font-semibold">Log other event</h2>
               <p className="mb-2 text-[0.75rem] text-slate-400">
-                Short description only (e.g. &ldquo;Airway
-                secured&rdquo;, &ldquo;ROSC&rdquo;, &ldquo;Rhythm
-                check&rdquo;).
+                Short description only (e.g. "Airway secured", "ROSC", "Rhythm
+                check").
               </p>
               <textarea
                 rows={2}

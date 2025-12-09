@@ -124,6 +124,12 @@ const TOOL_GROUPS: ToolGroup[] = [
         meta: "CPG Reference",
       },
       {
+        name: "CPG v2.4 (2025) PDF",
+        href: "/reference/cpg/cpg-v2.4-2025.pdf",
+        tagline: "Full guideline for reference (opens PDF).",
+        meta: "Reference",
+      },
+      {
         name: "Shock Index",
         href: "/tools/shock-index",
         tagline: "Rapid SI check with sepsis/shock prompts.",

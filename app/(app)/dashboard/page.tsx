@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 type Tool = {
   name: string;
@@ -146,6 +147,17 @@ function classNames(...classes: Array<string | boolean | null | undefined>) {
 export default function DashboardPage() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pb-8 pt-4">
+      {/* Back to landing */}
+      <div className="flex items-center">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-emerald-500 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-500 dark:hover:bg-slate-900/80"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back to landing
+        </Link>
+      </div>
+
       {/* Header / Intro */}
       <header className="space-y-1">
         <p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-emerald-500">

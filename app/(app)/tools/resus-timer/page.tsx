@@ -407,7 +407,7 @@ export default function ResuscitationTimerPage() {
           <div className="flex flex-col items-center gap-2">
             <div className="rounded-3xl border border-slate-800 bg-slate-900/80 px-6 py-4 text-center shadow-lg">
               <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-emerald-400">
-                Cycle {cycleNumber} -> {phase}
+                Cycle {cycleNumber} {"->"} {phase}
               </div>
               <div className="text-6xl font-semibold tabular-nums tracking-tight sm:text-7xl">
                 {mainTimer}

@@ -2,7 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { CPG_ENTRIES, type CpgEntry } from "@/lib/cpgIndex";
+import {
+  CPG_ENTRIES,
+  normalizeCpgSlug,
+  type CpgEntry,
+} from "@/lib/cpgIndex";
 import { useDevice } from "@/app/_components/DeviceProvider";
 
 // Path to the bundled PDF in /public. Adjust if the filename or location changes.
@@ -34,13 +38,18 @@ export function ProtocolFinder() {
   }, [normalizedQuery]);
 
   const openEntry = (entry: CpgEntry) => {
-    const targetPdfPage = entry.printedPage + PDF_PAGE_OFFSET;
-    const href = `${PDF_PATH}#page=${targetPdfPage}`;
+    const printedPage = entry.printedPage;
+    const targetPdfPage = printedPage + PDF_PAGE_OFFSET;
+
     if (isMobile) {
-      window.location.href = href;
+      const slug = normalizeCpgSlug(entry.code);
+      const href = `/cpg/${slug}?page=${printedPage}`;
+      window.location.assign(href);
     } else {
+      const href = `${PDF_PATH}#page=${targetPdfPage}`;
       window.open(href, "_blank", "noopener,noreferrer");
     }
+
     setQuery("");
   };
 

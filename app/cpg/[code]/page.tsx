@@ -6,7 +6,7 @@ import { findCpgEntryBySlug } from "@/lib/cpgIndex";
 
 type CpgPageProps = {
   params?: { code?: string };
-  searchParams?: { page?: string };
+  searchParams?: { page?: string; code?: string };
 };
 
 export default function CpgPage({
@@ -18,11 +18,16 @@ export default function CpgPage({
   }
 
   const slug = params.code;
-  const entry = slug ? findCpgEntryBySlug(slug) : null;
+  const fallbackCode = searchParams.code;
+  const entry =
+    (slug && findCpgEntryBySlug(slug)) ||
+    (fallbackCode && findCpgEntryBySlug(fallbackCode)) ||
+    null;
 
   if (!entry) return notFound();
 
-  const printedPage = Number(searchParams.page) || entry.printedPage;
+  const printedPage =
+    Number(searchParams.page) || Number(entry.printedPage) || 1;
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pb-12 pt-6">

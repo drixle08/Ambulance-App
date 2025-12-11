@@ -2,7 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { CPG_ENTRIES, type CpgEntry } from "@/lib/cpgIndex";
+import {
+  CPG_ENTRIES,
+  normalizeCpgSlug,
+  type CpgEntry,
+} from "@/lib/cpgIndex";
 import { useDevice } from "@/app/_components/DeviceProvider";
 
 // Path to the bundled PDF in /public. Adjust if the filename or location changes.

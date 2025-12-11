@@ -38,8 +38,10 @@ export function ProtocolFinder() {
     const targetPdfPage = printedPage + PDF_PAGE_OFFSET;
 
     if (isMobile) {
-      // Use the PDF anchor directly on mobile to avoid any slug/route mismatch 404s.
-      const href = `${PDF_PATH}#page=${targetPdfPage}`;
+      const slug = normalizeCpgSlug(entry.code);
+      const href = `/cpg/${encodeURIComponent(
+        slug
+      )}?code=${encodeURIComponent(entry.code)}&page=${printedPage}&pdfPage=${targetPdfPage}`;
       window.location.assign(href);
     } else {
       const href = `${PDF_PATH}#page=${targetPdfPage}`;

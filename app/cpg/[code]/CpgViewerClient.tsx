@@ -18,8 +18,11 @@ const CpgPdfViewer = dynamic(
 type Props = {
   entry: CpgEntry;
   printedPage: number;
+  pdfPage?: number;
 };
 
-export function CpgViewerClient({ entry, printedPage }: Props) {
-  return <CpgPdfViewer entry={entry} printedPage={printedPage} />;
+export function CpgViewerClient({ entry, printedPage, pdfPage }: Props) {
+  return (
+    <CpgPdfViewer entry={entry} printedPage={printedPage} pdfPage={pdfPage} />
+  );
 }

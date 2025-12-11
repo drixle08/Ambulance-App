@@ -12,7 +12,7 @@ import {
 
 type CpgPageProps = {
   params?: { code?: string };
-  searchParams?: { page?: string; code?: string };
+  searchParams?: { page?: string; code?: string; pdfPage?: string };
 };
 
 export default function CpgPage({
@@ -42,6 +42,7 @@ export default function CpgPage({
 
   const printedPage =
     Number(searchParams.page) || Number(resolvedEntry?.printedPage) || 1;
+  const pdfPage = Number(searchParams.pdfPage) || undefined;
 
   const entry =
     resolvedEntry ||
@@ -76,7 +77,7 @@ export default function CpgPage({
         </div>
       </div>
 
-      <CpgViewerClient entry={entry} printedPage={printedPage} />
+      <CpgViewerClient entry={entry} printedPage={printedPage} pdfPage={pdfPage} />
     </div>
   );
 }

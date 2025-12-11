@@ -15,9 +15,10 @@ const PDF_PAGE_OFFSET = 0;
 type Props = {
   entry: CpgEntry;
   printedPage: number;
+  pdfPage?: number;
 };
 
-export function CpgPdfViewer({ entry, printedPage }: Props) {
+export function CpgPdfViewer({ entry, printedPage, pdfPage }: Props) {
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState<number>(1);
@@ -25,9 +26,12 @@ export function CpgPdfViewer({ entry, printedPage }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const targetPdfPage = useMemo(() => {
+    if (pdfPage && Number.isFinite(pdfPage)) {
+      return pdfPage;
+    }
     const target = printedPage + PDF_PAGE_OFFSET;
     return Number.isFinite(target) && target > 0 ? target : 1;
-  }, [printedPage]);
+  }, [pdfPage, printedPage]);
 
   // Configure PDF.js worker
   useEffect(() => {

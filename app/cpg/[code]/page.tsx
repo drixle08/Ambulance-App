@@ -1,7 +1,6 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { CpgViewerClient } from "./CpgViewerClient";
 import {
@@ -19,11 +18,7 @@ export default function CpgPage({
   params = { code: "" },
   searchParams = {},
 }: CpgPageProps) {
-  if (!params || typeof params.code !== "string") {
-    return notFound();
-  }
-
-  const slug = params.code;
+  const slug = typeof params?.code === "string" ? params.code : "";
   const fallbackCode = searchParams.code || "";
 
   const normalizedSlug = normalizeCpgSlug(slug);
@@ -80,4 +75,10 @@ export default function CpgPage({
       <CpgViewerClient entry={entry} printedPage={printedPage} pdfPage={pdfPage} />
     </div>
   );
+}
+
+export function generateStaticParams() {
+  return CPG_ENTRIES.map((entry) => ({
+    code: normalizeCpgSlug(entry.code),
+  }));
 }

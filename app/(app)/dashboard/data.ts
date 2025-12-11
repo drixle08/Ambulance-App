@@ -25,6 +25,12 @@ export const TOOL_GROUPS: ToolGroup[] = [
         tagline: "Mechanism, vitals, anatomic injury, and special consideration checklist for major trauma.",
         meta: "CPG 10.10",
       },
+      {
+        name: "Burn Surface Area Calculator",
+        href: "/tools/burns",
+        tagline: "Rule of Nines / paediatric adjustments with CPG 10.9 burn thresholds.",
+        meta: "CPG 10.9 Burns",
+      },
     ],
   },
   {

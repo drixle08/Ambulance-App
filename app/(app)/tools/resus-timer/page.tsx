@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 import {
   HeartPulse,
@@ -16,6 +10,7 @@ import {
   Mic,
   MicOff,
 } from "lucide-react";
+import { formatSeconds, formatTPlus } from "./timeUtils";
 
 type Phase = "CPR" | "Pause";
 
@@ -48,19 +43,6 @@ type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 const CYCLE_SECONDS = 120; // 2-minute CPR cycles
 const DEFAULT_BPM = 110;
 
-function formatSeconds(totalSeconds: number): string {
-  const safe = Math.max(0, totalSeconds);
-  const minutes = Math.floor(safe / 60);
-  const seconds = safe % 60;
-  return `${minutes.toString().padStart(2, "0")}:${seconds
-    .toString()
-    .padStart(2, "0")}`;
-}
-
-function formatTPlus(totalSeconds: number): string {
-  return `T+${formatSeconds(totalSeconds)}`;
-}
-
 export default function ResuscitationTimerPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [phase] = useState<Phase>("CPR"); // reserved for future CPR/Pause phases
@@ -71,10 +53,24 @@ export default function ResuscitationTimerPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [otherDialogOpen, setOtherDialogOpen] = useState(false);
   const [otherText, setOtherText] = useState("");
-  const [voiceSupported, setVoiceSupported] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const voiceSupported = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const SpeechRec: SpeechRecognitionConstructor | undefined =
+      (window as unknown as { SpeechRecognition?: SpeechRecognitionConstructor })
+        .SpeechRecognition ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).webkitSpeechRecognition;
+    return Boolean(SpeechRec);
+  }, []);
+  const [voiceEnabled, setVoiceEnabled] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem("voiceEnabled") === "true";
+    } catch {
+      return false;
+    }
+  });
   const [voiceListening, setVoiceListening] = useState(false);
-  const hasHydratedRef = useRef(false);
 
   // start time stored both in a ref (for logic) and state (safe for render)
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -93,34 +89,6 @@ export default function ResuscitationTimerPage() {
   useEffect(() => {
     isRunningRef.current = isRunning;
   }, [isRunning]);
-
-  // Detect SpeechRecognition support once on mount
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const SpeechRec: SpeechRecognitionConstructor | undefined =
-      (window as unknown as { SpeechRecognition?: SpeechRecognitionConstructor })
-        .SpeechRecognition ||
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).webkitSpeechRecognition;
-    if (SpeechRec) {
-      setVoiceSupported(true);
-    }
-  }, []);
-
-  // Hydrate voice preference from localStorage (one-time on client)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (hasHydratedRef.current) return;
-    hasHydratedRef.current = true;
-    try {
-      const stored = window.localStorage.getItem("voiceEnabled");
-      if (stored === "true") {
-        setVoiceEnabled(true);
-      }
-    } catch {
-      // ignore storage errors
-    }
-  }, []);
 
   // Persist voice preference
   useEffect(() => {
@@ -394,6 +362,8 @@ export default function ResuscitationTimerPage() {
       recognitionRef.current = rec;
     } catch (err) {
       console.warn("Voice recognition failed to start:", err);
+      // We deliberately drop back to manual mode if the API errors on startup.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVoiceEnabled(false);
       try {
         window.localStorage.setItem("voiceEnabled", "false");
@@ -630,8 +600,8 @@ export default function ResuscitationTimerPage() {
             <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-950 p-4 shadow-xl">
               <h2 className="mb-1 text-sm font-semibold">Log other event</h2>
               <p className="mb-2 text-[0.75rem] text-slate-400">
-                Short description only (e.g. "Airway secured", "ROSC", "Rhythm
-                check").
+                Short description only (e.g. “Airway secured”, “ROSC”, “Rhythm
+                check”).
               </p>
               <textarea
                 rows={2}

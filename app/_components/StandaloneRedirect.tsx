@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 type NavigatorStandalone = Navigator & {
   standalone?: boolean; // iOS Safari-only property
@@ -9,9 +9,12 @@ type NavigatorStandalone = Navigator & {
 
 export function StandaloneRedirect() {
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    if (pathname === "/dashboard") return;
 
     const nav = window.navigator as NavigatorStandalone;
 
@@ -31,7 +34,7 @@ export function StandaloneRedirect() {
     ) {
       router.replace("/dashboard");
     }
-  }, [router]);
+  }, [pathname, router]);
 
   return null;
 }

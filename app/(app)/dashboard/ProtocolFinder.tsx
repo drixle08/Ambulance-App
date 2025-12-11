@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { CPG_ENTRIES, type CpgEntry } from "@/lib/cpgIndex";
+import { useDevice } from "@/app/_components/DeviceProvider";
 
 // Path to the bundled PDF in /public. Adjust if the filename or location changes.
 const PDF_PATH = "/reference/cpg/cpg-v2.4-2025.pdf";
@@ -11,6 +12,7 @@ const PDF_PATH = "/reference/cpg/cpg-v2.4-2025.pdf";
 const PDF_PAGE_OFFSET = 0;
 
 export function ProtocolFinder() {
+  const { isMobile } = useDevice();
   const [query, setQuery] = useState("");
 
   const normalizedQuery = query.trim().toLowerCase();
@@ -34,7 +36,11 @@ export function ProtocolFinder() {
   const openEntry = (entry: CpgEntry) => {
     const targetPdfPage = entry.printedPage + PDF_PAGE_OFFSET;
     const href = `${PDF_PATH}#page=${targetPdfPage}`;
-    window.open(href, "_blank", "noopener,noreferrer");
+    if (isMobile) {
+      window.location.href = href;
+    } else {
+      window.open(href, "_blank", "noopener,noreferrer");
+    }
     setQuery("");
   };
 
@@ -53,7 +59,7 @@ export function ProtocolFinder() {
               openEntry(results[0]);
             }
           }}
-          placeholder="Search protocol or CPG section…"
+          placeholder="Search protocol or CPG section"
           className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
           aria-label="Search protocol or CPG section"
         />

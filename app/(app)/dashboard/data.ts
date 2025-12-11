@@ -14,6 +14,20 @@ export type ToolGroup = {
 
 export const TOOL_GROUPS: ToolGroup[] = [
   {
+    title: "Trauma",
+    slug: "trauma",
+    description:
+      "Trauma assessment and destination decision support, including bypass criteria aligned to CPG 10.10.",
+    tools: [
+      {
+        name: "Trauma Bypass Criteria",
+        href: "/tools/trauma-bypass",
+        tagline: "Mechanism, vitals, anatomic injury, and special consideration checklist for major trauma.",
+        meta: "CPG 10.10",
+      },
+    ],
+  },
+  {
     title: "Resuscitation",
     slug: "resuscitation",
     description:

@@ -2,11 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import {
-  CPG_ENTRIES,
-  normalizeCpgSlug,
-  type CpgEntry,
-} from "@/lib/cpgIndex";
+import { CPG_ENTRIES, type CpgEntry } from "@/lib/cpgIndex";
 import { useDevice } from "@/app/_components/DeviceProvider";
 
 // Path to the bundled PDF in /public. Adjust if the filename or location changes.
@@ -42,10 +38,8 @@ export function ProtocolFinder() {
     const targetPdfPage = printedPage + PDF_PAGE_OFFSET;
 
     if (isMobile) {
-      const slug = normalizeCpgSlug(entry.code);
-      const href = `/cpg/${encodeURIComponent(
-        slug
-      )}?code=${encodeURIComponent(entry.code)}&page=${printedPage}`;
+      // Use the PDF anchor directly on mobile to avoid any slug/route mismatch 404s.
+      const href = `${PDF_PATH}#page=${targetPdfPage}`;
       window.location.assign(href);
     } else {
       const href = `${PDF_PATH}#page=${targetPdfPage}`;

@@ -24,14 +24,32 @@ export function CpgPdfViewer({ entry, printedPage, pdfPage }: Props) {
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [error, setError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [overridePdfPage] = useState<number | null>(() => {
+    if (typeof window === "undefined") return null;
+    const params = new URLSearchParams(window.location.search);
+    const qpPdf = Number(params.get("pdfPage"));
+    return Number.isFinite(qpPdf) && qpPdf > 0 ? qpPdf : null;
+  });
+  const [displayPrintedPage] = useState<number>(() => {
+    if (typeof window === "undefined") return printedPage;
+    const params = new URLSearchParams(window.location.search);
+    const qpPrinted = Number(params.get("page"));
+    if (Number.isFinite(qpPrinted) && qpPrinted > 0) {
+      return qpPrinted;
+    }
+    return printedPage;
+  });
 
   const targetPdfPage = useMemo(() => {
+    if (overridePdfPage && Number.isFinite(overridePdfPage)) {
+      return overridePdfPage;
+    }
     if (pdfPage && Number.isFinite(pdfPage)) {
       return pdfPage;
     }
     const target = printedPage + PDF_PAGE_OFFSET;
     return Number.isFinite(target) && target > 0 ? target : 1;
-  }, [pdfPage, printedPage]);
+  }, [overridePdfPage, pdfPage, printedPage]);
 
   // Configure PDF.js worker
   useEffect(() => {
@@ -172,7 +190,7 @@ export function CpgPdfViewer({ entry, printedPage, pdfPage }: Props) {
       </div>
 
       <p className="text-xs text-slate-500 dark:text-slate-400">
-        Viewing {entry.code} – {entry.title}. Starting at printed page {printedPage} (viewer page {targetPdfPage}). Adjust PDF_PAGE_OFFSET in CpgPdfViewer if the viewer and printed numbering differ.
+        Viewing {entry.code} – {entry.title}. Starting at printed page {displayPrintedPage} (viewer page {targetPdfPage}). Adjust PDF_PAGE_OFFSET in CpgPdfViewer if the viewer and printed numbering differ.
       </p>
     </div>
   );

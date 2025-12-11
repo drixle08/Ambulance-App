@@ -43,7 +43,9 @@ export function ProtocolFinder() {
 
     if (isMobile) {
       const slug = normalizeCpgSlug(entry.code);
-      const href = `/cpg/${slug}?code=${encodeURIComponent(entry.code)}&page=${printedPage}`;
+      const href = `/cpg/${encodeURIComponent(
+        slug
+      )}?code=${encodeURIComponent(entry.code)}&page=${printedPage}`;
       window.location.assign(href);
     } else {
       const href = `${PDF_PATH}#page=${targetPdfPage}`;

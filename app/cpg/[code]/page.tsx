@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -27,7 +29,7 @@ export default function CpgPage({
   const normalizedSlug = normalizeCpgSlug(slug);
   const normalizedFallback = normalizeCpgSlug(fallbackCode);
 
-  const entry =
+  const resolvedEntry =
     findCpgEntryBySlug(slug) ||
     (fallbackCode && findCpgEntryBySlug(fallbackCode)) ||
     CPG_ENTRIES.find((item) => {
@@ -38,10 +40,18 @@ export default function CpgPage({
     }) ||
     null;
 
-  if (!entry) return notFound();
-
   const printedPage =
-    Number(searchParams.page) || Number(entry.printedPage) || 1;
+    Number(searchParams.page) || Number(resolvedEntry?.printedPage) || 1;
+
+  const entry =
+    resolvedEntry ||
+    ({
+      code: fallbackCode || slug,
+      title: fallbackCode || slug,
+      section: "CPG PDF",
+      printedPage,
+      keywords: [],
+    } as const);
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pb-12 pt-6">

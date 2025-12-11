@@ -121,15 +121,22 @@ export function CpgPdfViewer({ entry, printedPage, pdfPage }: Props) {
       context.setTransform(1, 0, 0, 1, 0, 0);
       context.clearRect(0, 0, canvas.width, canvas.height);
 
-      await page.render({
-        canvasContext: context,
-        viewport,
-      }).promise;
+      await page
+        .render({
+          canvasContext: context,
+          viewport,
+        })
+        .promise;
     };
 
     render().catch((err) => {
-      setError("Unable to render CPG page");
       console.error(err);
+      setError("Unable to render CPG page");
+      // Try a gentle retry on the next tick for transient render issues
+      setTimeout(() => {
+        setError(null);
+        setPageNumber((prev) => prev);
+      }, 100);
     });
   }, [pdf, pageNumber]);
 

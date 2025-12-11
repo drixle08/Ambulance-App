@@ -102,7 +102,6 @@ export function CpgPdfViewer({ entry, printedPage }: Props) {
       await page.render({
         canvasContext: context,
         viewport,
-        canvas,
       }).promise;
     };
 

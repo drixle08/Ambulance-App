@@ -2,7 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { CpgViewerClient } from "./CpgViewerClient";
-import { findCpgEntryBySlug } from "@/lib/cpgIndex";
+import {
+  CPG_ENTRIES,
+  findCpgEntryBySlug,
+  normalizeCpgSlug,
+} from "@/lib/cpgIndex";
 
 type CpgPageProps = {
   params?: { code?: string };
@@ -18,10 +22,20 @@ export default function CpgPage({
   }
 
   const slug = params.code;
-  const fallbackCode = searchParams.code;
+  const fallbackCode = searchParams.code || "";
+
+  const normalizedSlug = normalizeCpgSlug(slug);
+  const normalizedFallback = normalizeCpgSlug(fallbackCode);
+
   const entry =
-    (slug && findCpgEntryBySlug(slug)) ||
+    findCpgEntryBySlug(slug) ||
     (fallbackCode && findCpgEntryBySlug(fallbackCode)) ||
+    CPG_ENTRIES.find((item) => {
+      const normalizedCode = normalizeCpgSlug(item.code);
+      return (
+        normalizedCode === normalizedSlug || normalizedCode === normalizedFallback
+      );
+    }) ||
     null;
 
   if (!entry) return notFound();

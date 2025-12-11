@@ -715,3 +715,33 @@ export const CPG_ENTRIES: CpgEntry[] = [
     keywords: ["cpg 17.2", "covid", "cardiac arrest", "covid arrest", "resuscitation"],
   },
 ];
+
+/**
+ * Normalize a slug or code string into a comparable identifier.
+ * - Lowercases
+ * - Replaces spaces/dots with hyphens
+ * - Drops other non-alphanumeric/hyphen chars
+ */
+export function normalizeCpgSlug(input: string): string {
+  return decodeURIComponent(input)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/\./g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/--+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * Find a CPG entry by a URL slug (e.g., "cpg-1-1" or "clinical-approach-and-assessment-of-the-adult-patient").
+ * Matches against normalized code and title.
+ */
+export function findCpgEntryBySlug(slug: string): CpgEntry | undefined {
+  const normalized = normalizeCpgSlug(slug);
+  return CPG_ENTRIES.find((entry) => {
+    const normalizedCode = normalizeCpgSlug(entry.code);
+    const normalizedTitle = normalizeCpgSlug(entry.title);
+    return normalized === normalizedCode || normalized === normalizedTitle;
+  });
+}

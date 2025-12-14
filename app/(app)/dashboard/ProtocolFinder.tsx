@@ -20,6 +20,12 @@ export function ProtocolFinder() {
   const [query, setQuery] = useState("");
 
   const normalizedQuery = query.trim().toLowerCase();
+  const numericQuery = Number(query.trim());
+  const isNumericQuery =
+    query.trim().length > 0 &&
+    Number.isFinite(numericQuery) &&
+    numericQuery > 0 &&
+    numericQuery < 1000;
 
   const results = useMemo(() => {
     if (!normalizedQuery) return [];
@@ -32,10 +38,19 @@ export function ProtocolFinder() {
       return (
         normalizedCode.includes(normalizedQuery) ||
         normalizedTitle.includes(normalizedQuery) ||
-        normalizedKeywords.some((keyword) => keyword.includes(normalizedQuery))
+        normalizedKeywords.some((keyword) => keyword.includes(normalizedQuery)) ||
+        (isNumericQuery && entry.printedPage === Math.round(numericQuery))
       );
     }).slice(0, 10);
-  }, [normalizedQuery]);
+  }, [normalizedQuery, isNumericQuery, numericQuery]);
+
+  const openPrintedPage = (printedPage: number) => {
+    const targetPdfPage = printedPage + PDF_PAGE_OFFSET;
+    const clamped = targetPdfPage > 0 ? targetPdfPage : 1;
+    const href = `${PDF_PATH}#page=${clamped}`;
+    window.location.assign(href);
+    setQuery("");
+  };
 
   const openEntry = (entry: CpgEntry) => {
     const printedPage = entry.printedPage;
@@ -65,9 +80,15 @@ export function ProtocolFinder() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
-            if (event.key === "Enter" && results[0]) {
+            if (event.key === "Enter") {
               event.preventDefault();
-              openEntry(results[0]);
+              if (isNumericQuery) {
+                openPrintedPage(Math.round(numericQuery));
+                return;
+              }
+              if (results[0]) {
+                openEntry(results[0]);
+              }
             }
           }}
           placeholder="Search protocol or CPG section"
@@ -78,8 +99,34 @@ export function ProtocolFinder() {
 
       {normalizedQuery && (
         <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900">
-          {results.length > 0 ? (
+          {results.length > 0 || isNumericQuery ? (
             <ul className="divide-y divide-slate-200 dark:divide-slate-800">
+              {isNumericQuery ? (
+                <li key={`page-${numericQuery}`}>
+                  <button
+                    type="button"
+                    className="flex w-full flex-col items-start gap-1 px-4 py-3 text-left hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:hover:bg-emerald-500/10"
+                    onClick={() => openPrintedPage(Math.round(numericQuery))}
+                  >
+                    <div className="flex w-full items-center justify-between gap-2">
+                      <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                        Open printed page {Math.round(numericQuery)}
+                      </span>
+                      <span className="text-[0.7rem] font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-300">
+                        PDF
+                      </span>
+                    </div>
+                    <div className="flex w-full items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+                      <span className="truncate">
+                        Jump directly to page {Math.round(numericQuery)} in the CPG PDF
+                      </span>
+                      <span className="shrink-0">
+                        #page={Math.round(numericQuery + PDF_PAGE_OFFSET)}
+                      </span>
+                    </div>
+                  </button>
+                </li>
+              ) : null}
               {results.map((entry) => (
                 <li key={entry.code}>
                   <button

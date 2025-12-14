@@ -119,12 +119,11 @@ export async function POST(req: NextRequest) {
   if (!answer) {
     const fallback = [
       "AI answers are disabled. Add OPENAI_API_KEY to enable responses.",
-      "Showing the most relevant CPG excerpts instead:",
     ].join("\n");
 
     return NextResponse.json({
       answer: fallback,
-      sources,
+      sources: [],
     });
   }
 

@@ -81,6 +81,7 @@ export default function ResuscitationTimerPage() {
   const isRunningRef = useRef(false);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const shouldRestartRecognition = useRef(false);
+  const lastVoiceCommandAtRef = useRef(0);
 
   useEffect(() => {
     elapsedRef.current = elapsedSeconds;
@@ -310,10 +311,12 @@ export default function ResuscitationTimerPage() {
       setVoiceListening(false);
     };
     rec.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map((r) => r[0].transcript)
-        .join(" ")
-        .toLowerCase();
+      const latestResult = event.results[event.results.length - 1];
+      const transcript = (latestResult?.[0]?.transcript || "")
+        .toLowerCase()
+        .trim();
+
+      if (!transcript) return;
 
       const START_WORDS = [
         "start timer",
@@ -334,26 +337,30 @@ export default function ResuscitationTimerPage() {
       ];
       const RESET_WORDS = ["reset timer", "reset", "restart", "again"];
 
-      const hasStart = START_WORDS.some((word) =>
-        transcript.includes(word)
-      );
-      const hasStop = STOP_WORDS.some((word) =>
-        transcript.includes(word)
-      );
-      const hasReset = RESET_WORDS.some((word) =>
-        transcript.includes(word)
-      );
+      const hasStart = START_WORDS.some((word) => transcript.includes(word));
+      const hasStop = STOP_WORDS.some((word) => transcript.includes(word));
+      const hasReset = RESET_WORDS.some((word) => transcript.includes(word));
+
+      const now = Date.now();
+      const recentCommand =
+        now - lastVoiceCommandAtRef.current < 1200; // debounce rapid re-triggers
+      if (recentCommand) return;
+
+      if (hasReset) {
+        handleReset();
+        lastVoiceCommandAtRef.current = now;
+        return;
+      }
 
       if (hasStart && !isRunningRef.current) {
         handleStartPause();
+        lastVoiceCommandAtRef.current = now;
         return;
       }
       if (hasStop && isRunningRef.current) {
         handleStartPause(); // pauses
+        lastVoiceCommandAtRef.current = now;
         return;
-      }
-      if (hasReset) {
-        handleReset();
       }
     };
 

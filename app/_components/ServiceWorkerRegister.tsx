@@ -42,7 +42,12 @@ export function ServiceWorkerRegister() {
       }
     };
 
-    register();
+    // Defer registration slightly to avoid competing with first paint/network fetches.
+    const timeoutId = window.setTimeout(() => {
+      register();
+    }, 800);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   return null;

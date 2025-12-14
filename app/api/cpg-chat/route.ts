@@ -117,8 +117,19 @@ export async function POST(req: NextRequest) {
   const answer = await callOpenAI(prompt);
 
   if (!answer) {
+    const topSnippets = sources.slice(0, 2);
+    const fallbackAnswer =
+      topSnippets.length > 0
+        ? topSnippets
+            .map(
+              (s) =>
+                `Page ${s.printedPage}: ${s.snippet.replace(/\s+/g, " ").trim()}`
+            )
+            .join("\n\n")
+        : "No CPG excerpts available.";
+
     return NextResponse.json({
-      answer: "Relevant CPG excerpts:",
+      answer: fallbackAnswer,
       sources,
     });
   }

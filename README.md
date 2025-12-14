@@ -20,11 +20,16 @@ A lightweight PWA built with Next.js 16 and Tailwind CSS that delivers quick-ref
    Open http://localhost:3000 to view the app.
 
 ## Scripts
-- `npm run dev` – start the development server.
-- `npm run lint` – lint the codebase with ESLint.
-- `npm run type-check` – run TypeScript type checking.
-- `npm run test` – run unit tests.
-- `npm run build` – create a production build.
+- `npm run dev` — start the development server.
+- `npm run lint` — lint the codebase with ESLint.
+- `npm run type-check` — run TypeScript type checking.
+- `npm run test` — run unit tests.
+- `npm run build` — create a production build.
+- `npm run build:cpg-index` — rebuild the CPG search index from `public/reference/cpg/cpg-v2.4-2025.pdf`.
+
+## CPG Chat setup
+- The CPG Chat tool uses the on-disk index at `public/cpg-index.json`. Regenerate it after swapping the PDF by running `npm run build:cpg-index`.
+- To enable generated answers, provide `OPENAI_API_KEY` (and optionally `OPENAI_MODEL`, default `gpt-4o-mini`). Without a key, the chat returns top CPG excerpts with page links.
 
 ## PWA notes
 - Manifest is available at `/manifest.webmanifest` and the app targets `/dashboard` as the start URL.

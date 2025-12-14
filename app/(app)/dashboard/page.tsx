@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, FolderOpen } from "lucide-react";
 import { ProtocolFinder } from "./ProtocolFinder";
 import { TOOL_GROUPS } from "./data";
+import { CpgChatBubble } from "@/app/_components/CpgChatBubble";
 
 function classNames(...classes: Array<string | boolean | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -9,7 +10,8 @@ function classNames(...classes: Array<string | boolean | null | undefined>) {
 
 export default function DashboardPage() {
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pb-8 pt-4">
+    <>
+      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pb-8 pt-4">
       {/* Back to landing + Protocol Finder */}
       <div className="flex flex-wrap items-center gap-2">
         <Link
@@ -75,6 +77,8 @@ export default function DashboardPage() {
           </Link>
         ))}
       </div>
-    </div>
+      </div>
+      <CpgChatBubble />
+    </>
   );
 }

@@ -22,6 +22,7 @@ const CORE_ROUTES = [
   "/tools/witnessed-adult-arrest",
   "/tools/rosc",
   "/tools/resus-timer",
+  "/tools/cpg-chat",
   "/tools/ecmo-criteria",
   "/tools/shock-index",
 ];

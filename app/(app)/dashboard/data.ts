@@ -153,6 +153,12 @@ export const TOOL_GROUPS: ToolGroup[] = [
         meta: "Reference",
       },
       {
+        name: "CPG Chat (beta)",
+        href: "/tools/cpg-chat",
+        tagline: "Ask CPG questions and get answers with citations and PDF links.",
+        meta: "Reference",
+      },
+      {
         name: "Shock Index",
         href: "/tools/shock-index",
         tagline: "Rapid SI check with sepsis/shock prompts.",

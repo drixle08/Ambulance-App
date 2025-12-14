@@ -36,9 +36,11 @@ function buildPrompt(query: string, sources: Source[]): string {
 
   return [
     "You are a paramedic assistant. Answer using ONLY the provided CPG excerpts.",
+    "Respond in a concise, plain-English narrative (2-5 sentences max) that highlights the key actions/thresholds.",
+    "If steps are clearer as bullets, use a short bullet list, but stay brief.",
     "If the excerpts do not answer the question, say you are not sure and ask for a CPG-relevant question.",
     "Do not invent information outside the excerpts. Avoid patient-specific advice.",
-    "Cite the page numbers you used (e.g., 'Page 58').",
+    "Cite the page numbers you used inline (e.g., '... (Page 58)').",
     "",
     `Question: ${query}`,
     "",
@@ -66,7 +68,7 @@ async function callOpenAI(prompt: string) {
         {
           role: "system",
           content:
-            "You are a concise paramedic assistant. Answer strictly from the provided CPG excerpts. If unsure, say you are not sure. Cite page numbers. Never include identifying info.",
+            "You are a concise paramedic assistant. Answer strictly from the provided CPG excerpts. Use brief narrative sentences (or a short bullet list) that clearly state actions/thresholds. If unsure, say you are not sure. Cite page numbers inline. Never include identifying info.",
         },
         {
           role: "user",

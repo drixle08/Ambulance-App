@@ -35,13 +35,16 @@ function buildPrompt(query: string, sources: Source[]): string {
     .join("\n\n");
 
   return [
-    "You are a paramedic assistant. Answer using ONLY the provided CPG excerpts.",
-    "Format: Start with 1-2 sentences that summarize what to do, then add 3-6 short bullets with concrete actions/meds/doses.",
-    "Paraphrase in plain English. Do not paste long excerpts. Keep it under ~120 words.",
-    "Highlight the actionable points and numeric targets. Avoid filler and long quotes.",
-    "If the excerpts do not answer the question, say you are not sure and ask for a CPG-relevant question.",
-    "Do not invent information outside the excerpts. Avoid patient-specific advice.",
-    "Cite page numbers inline at the end of sentences or bullets (e.g., '(Page 58)').",
+    "You are a paramedic assistant. Use ONLY the provided CPG excerpts; never invent details.",
+    "Response structure (strict):",
+    "1) Brief lead-in: 1-2 sentences summarizing the management or key answer in plain English.",
+    "2) Bullets: 3-6 concise bullets with specific actions/meds/thresholds. Each bullet must end with the page citation in parentheses, e.g., '(Page 58)'.",
+    "Rules:",
+    "- Paraphrase; do not copy long lines. Avoid filler.",
+    "- Include concrete numbers/doses/thresholds when present.",
+    "- Keep total length under ~120 words.",
+    "- If excerpts don’t answer, say you are not sure and ask for a CPG-relevant question.",
+    "- No patient-specific advice.",
     "",
     `Question: ${query}`,
     "",
@@ -69,7 +72,7 @@ async function callOpenAI(prompt: string) {
         {
           role: "system",
           content:
-            "You are a concise paramedic assistant. Answer strictly from the provided CPG excerpts. Format: 1-2 sentence summary, then 3-6 short bullets with actions/meds/doses. Paraphrase; do not copy long lines. Keep under ~120 words. If unsure, say you are not sure. Cite page numbers inline. Never include identifying info.",
+            "You are a concise paramedic assistant. Follow the required format: 1-2 sentence lead-in, then 3-6 short bullets with actions/meds/doses. Paraphrase the provided CPG excerpts; do not copy long lines. End each sentence or bullet with the page citation in parentheses. Keep under ~120 words. If unsure, say you are not sure. Never include identifying info.",
         },
         {
           role: "user",

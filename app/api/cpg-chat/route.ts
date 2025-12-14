@@ -36,11 +36,11 @@ function buildPrompt(query: string, sources: Source[]): string {
 
   return [
     "You are a paramedic assistant. Answer using ONLY the provided CPG excerpts.",
-    "Respond in a concise, plain-English narrative (2-5 sentences max) that highlights the key actions/thresholds.",
-    "If steps are clearer as bullets, use a short bullet list, but stay brief.",
+    "Respond in your own words, not by copying long passages. Keep it concise (2-4 sentences or 3-6 short bullets).",
+    "Highlight the actionable points and numeric targets. Avoid filler and long quotes.",
     "If the excerpts do not answer the question, say you are not sure and ask for a CPG-relevant question.",
     "Do not invent information outside the excerpts. Avoid patient-specific advice.",
-    "Cite the page numbers you used inline (e.g., '... (Page 58)').",
+    "Cite page numbers inline at the end of sentences or bullets (e.g., '(Page 58)').",
     "",
     `Question: ${query}`,
     "",
@@ -68,7 +68,7 @@ async function callOpenAI(prompt: string) {
         {
           role: "system",
           content:
-            "You are a concise paramedic assistant. Answer strictly from the provided CPG excerpts. Use brief narrative sentences (or a short bullet list) that clearly state actions/thresholds. If unsure, say you are not sure. Cite page numbers inline. Never include identifying info.",
+            "You are a concise paramedic assistant. Answer strictly from the provided CPG excerpts. Rephrase in plain English; do not copy long lines. Keep it short (2-4 sentences or 3-6 bullets), focus on actionable steps and numeric thresholds. If unsure, say you are not sure. Cite page numbers inline. Never include identifying info.",
         },
         {
           role: "user",

@@ -7,58 +7,71 @@ type Source = {
   id: string;
   page: number;
   printedPage: number;
-  snippet: string;
   pdfUrl: string;
+  label: string;
 };
 
 const DEFAULT_MODEL = "gpt-4o-mini";
 
 function buildSources(chunks: CpgChunk[]): Source[] {
-  return chunks.map((chunk) => ({
-    id: chunk.id,
-    page: chunk.page,
-    printedPage: chunk.printedPage,
-    snippet:
-      chunk.text.length > 500
-        ? `${chunk.text.slice(0, 500)}...`
-        : chunk.text,
-    pdfUrl: `/reference/cpg/cpg-v2.4-2025.pdf#page=${chunk.page}`,
-  }));
+  const seenPages = new Set<number>();
+
+  return chunks
+    .filter((chunk) => {
+      if (seenPages.has(chunk.printedPage)) return false;
+      seenPages.add(chunk.printedPage);
+      return true;
+    })
+    .map((chunk) => ({
+      id: chunk.id,
+      page: chunk.page,
+      printedPage: chunk.printedPage,
+      pdfUrl: `/reference/cpg/cpg-v2.4-2025.pdf#page=${chunk.page}`,
+      label: `CPG p.${chunk.printedPage}`,
+    }));
 }
 
-function buildPrompt(query: string, sources: Source[]): string {
-  const sourceText = sources
-    .map(
-      (source) =>
-        `Page ${source.printedPage}: ${source.snippet.replace(/\s+/g, " ")}`
-    )
+function buildSourceLine(sources: Source[]): string {
+  if (sources.length === 0) return "";
+  const parts = sources.map((source) => source.label).filter(Boolean);
+  const uniqueParts = Array.from(new Set(parts));
+  return uniqueParts.length
+    ? `Sources (CPG): ${uniqueParts.join("; ")}`
+    : "";
+}
+
+function buildPrompt(query: string, chunks: CpgChunk[], sources: Source[]) {
+  const sourceLine = buildSourceLine(sources);
+  const context = chunks
+    .map((chunk) => {
+      const cleaned = chunk.text.replace(/\s+/g, " ").trim();
+      const snippet =
+        cleaned.length > 600 ? `${cleaned.slice(0, 600)}...` : cleaned;
+      return `Page ${chunk.printedPage}: ${snippet}`;
+    })
     .join("\n\n");
 
   return [
-    "You are the AI clinical assistant inside the “Ambulance Paramedic Toolkit” app for HMCAS (Qatar) pre-hospital crews. Primary reference: HMCAS CPG v2.4 (2025). Use ONLY the provided excerpts; do not invent details.",
-    "Your job: convert retrieved CPG lines into clear, concise, actionable guidance. Do NOT dump raw text.",
-    "",
-    "Default answer structure:",
-    "- Brief Summary (1–3 sentences): what the issue is and what you will cover.",
-    "- Immediate Priorities / Primary Approach: ordered bullets (ABC, time-critical checks, when to escalate/pre-alert).",
-    "- Assessment: bullets for key history/exam/monitoring/decision tools (summarise usage; don’t paste tables).",
-    "- Management / Treatment:",
-    "  - Non-pharm bullets.",
-    "  - Medications bullets: drug, indication, dose (adult/paeds if present), route, frequency/max, cautions. Include “Do NOT” bullets if present.",
-    "- Transport & Handover: urgency, destination/bypass, pre-alerts, key handover points if stated.",
-    "- Notes / Limitations: call out missing info/assumptions/ambiguity; remind this is decision support.",
-    "",
-    "Style rules:",
-    "- Paraphrase; avoid long quotes. Be action-oriented and ordered. Highlight numbers/thresholds if present.",
-    "- Keep concise and scannable (mobile). Use bullets for steps/meds/red flags.",
-    "- If excerpts don’t answer, say you are not sure and ask for a CPG-relevant question.",
-    "- Do not invent local policy. Use general medical knowledge only to clarify, never to contradict the CPG.",
-    "- Only quote briefly if wording is critical. End sentences/bullets with page citations when citing facts (e.g., '(Page 58)').",
+    "You are the AI clinical assistant inside the Ambulance Paramedic Toolkit app. Primary reference: HMCAS Clinical Practice Guidelines (CPG) v2.4 (2025).",
+    "Give concise, clinically useful answers for pre-hospital clinicians. Use the retrieved CPG passages as background, but answer in your own words.",
+    "Use this structure with plain headings and minimal bullets:",
+    "Summary",
+    "Immediate Priorities",
+    "Assessment",
+    "Management / Treatment",
+    "Transport & Handover",
+    "Notes / Limitations",
+    "Style: clean, professional, no decorative symbols or heavy markdown. Short paragraphs; bullets only when needed (especially for meds with dose/route/frequency/cautions, include Do NOT if present).",
+    "Do not paste long blocks of guideline text. If the CPG does not clearly support a detail, say so and avoid inventing local policy.",
+    'Finish with one compact sources line, e.g., "Sources (CPG): CPG p.80; CPG p.81". Do not include source excerpts.',
     "",
     `Question: ${query}`,
     "",
-    "Relevant CPG excerpts:",
-    sourceText || "None",
+    "Context from CPG (paraphrase; do not paste):",
+    context || "None",
+    "",
+    "Use the following for the sources line:",
+    sourceLine || "None",
   ].join("\n");
 }
 
@@ -81,7 +94,7 @@ async function callOpenAI(prompt: string) {
         {
           role: "system",
           content:
-            "You are the AI clinical assistant in the Ambulance Paramedic Toolkit for HMCAS crews. Base answers ONLY on provided CPG v2.4 (2025) excerpts. Summarize, don’t dump text. Use the required structure: brief summary; immediate priorities; assessment; management (non-pharm, meds with dose/route/frequency/cautions, Do NOT if stated); transport/handover; notes/limitations. Paraphrase, be action-oriented, mobile-friendly, and cite pages inline. If not covered or unclear, say so rather than inventing policy. Never include identifying info.",
+            "You are the AI clinical assistant in the Ambulance Paramedic Toolkit for HMCAS crews. Primary reference: HMCAS CPG v2.4 (2025). Provide concise, clinically useful answers using the retrieved CPG content as background, but answer in your own words. Use the headings: Summary; Immediate Priorities; Assessment; Management / Treatment; Transport & Handover; Notes / Limitations. Keep formatting plain (no decorative symbols), use short paragraphs and bullets only where helpful (especially for drugs with dose/route/frequency/cautions and any Do NOT guidance). Do not paste long guideline text. If details are unclear or absent, say so without inventing policy. End every answer with a single compact sources line like \"Sources (CPG): CPG p.80; CPG p.81\" and do not include source excerpts. Never include identifying information.",
         },
         {
           role: "user",
@@ -99,8 +112,7 @@ async function callOpenAI(prompt: string) {
 
   const data = await resp.json();
   const answer =
-    data?.choices?.[0]?.message?.content?.trim() ??
-    "I could not generate an answer right now.";
+    data?.choices?.[0]?.message?.content?.trim() ?? null;
   return answer;
 }
 
@@ -128,29 +140,30 @@ export async function POST(req: NextRequest) {
   }
 
   const sources = buildSources(topChunks);
-  const prompt = buildPrompt(query, sources);
+  const sourceLine = buildSourceLine(sources);
+  const prompt = buildPrompt(query, topChunks, sources);
   const answer = await callOpenAI(prompt);
 
-  if (!answer) {
-    const topSnippets = sources.slice(0, 2);
-    const fallbackAnswer =
-      topSnippets.length > 0
-        ? topSnippets
-            .map(
-              (s) =>
-                `Page ${s.printedPage}: ${s.snippet.replace(/\s+/g, " ").trim()}`
-            )
-            .join("\n\n")
-        : "No CPG excerpts available.";
+  const finalAnswer =
+    sourceLine && answer && !answer.toLowerCase().includes("sources (cpg")
+      ? `${answer.trim()}\n\n${sourceLine}`
+      : answer;
+
+  if (!finalAnswer) {
+    const fallbackAnswer = sourceLine
+      ? `I could not generate an answer right now. ${sourceLine}`
+      : "I could not generate an answer right now. Please review the relevant CPG pages in the PDF.";
 
     return NextResponse.json({
       answer: fallbackAnswer,
       sources,
+      sourceLine,
     });
   }
 
   return NextResponse.json({
-    answer,
+    answer: finalAnswer,
     sources,
+    sourceLine,
   });
 }

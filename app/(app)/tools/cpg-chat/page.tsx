@@ -4,10 +4,11 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
-  BookOpenCheck,
+  Copy,
   Loader2,
   MessageCircle,
   Send,
+  Share2,
   User,
 } from "lucide-react";
 
@@ -15,8 +16,8 @@ type SourceDoc = {
   id: string;
   page: number;
   printedPage: number;
-  snippet: string;
   pdfUrl: string;
+  label: string;
 };
 
 type ChatMessage = {
@@ -24,6 +25,7 @@ type ChatMessage = {
   role: "user" | "assistant";
   content: string;
   sources?: SourceDoc[];
+  sourceLine?: string;
 };
 
 const EXAMPLES = [
@@ -33,28 +35,52 @@ const EXAMPLES = [
   "Pelvic trauma: when should I apply a pelvic binder?",
 ];
 
-function Sources({ sources }: { sources: SourceDoc[] }) {
-  if (!sources || sources.length === 0) return null;
+function SourcesLine({
+  sourceLine,
+  sources,
+}: {
+  sourceLine?: string;
+  sources?: SourceDoc[];
+}) {
+  if (!sourceLine) return null;
+
+  const deduped = sources
+    ? Array.from(
+        new Map(
+          sources.map((source) => [
+            source.label,
+            { label: source.label, pdfUrl: source.pdfUrl },
+          ])
+        ).values()
+      )
+    : [];
+
+  const hasLinks = deduped.length > 0;
 
   return (
-    <div className="mt-3 space-y-2 rounded-xl border border-slate-800 bg-slate-900/80 p-3">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-400">
-        <BookOpenCheck className="h-4 w-4" />
-        Sources (CPG)
-      </div>
-      <div className="space-y-2">
-        {sources.map((source) => (
-          <div
-            key={source.id}
-            className="rounded-lg border border-slate-800/80 bg-slate-950/60 p-3"
-          >
-            <p className="mb-1 text-xs font-semibold text-emerald-300">
-              Page {source.printedPage}
-            </p>
-            <p className="text-[0.8rem] text-slate-200">{source.snippet}</p>
-          </div>
-        ))}
-      </div>
+    <div className="mt-2 text-[0.8rem] text-slate-300">
+      {hasLinks ? (
+        <>
+          <span className="font-semibold text-emerald-200">Sources (CPG): </span>
+          {deduped.map((source, index) => (
+            <span key={`${source.label}-${index}`}>
+              {source.pdfUrl ? (
+                <Link
+                  href={source.pdfUrl}
+                  className="underline decoration-emerald-400/70 underline-offset-4 hover:text-emerald-100"
+                >
+                  {source.label}
+                </Link>
+              ) : (
+                source.label
+              )}
+              {index < deduped.length - 1 ? "; " : ""}
+            </span>
+          ))}
+        </>
+      ) : (
+        sourceLine
+      )}
     </div>
   );
 }
@@ -71,11 +97,58 @@ export default function CpgChatPage() {
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [canShare, setCanShare] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    setCanShare(typeof navigator !== "undefined" && "share" in navigator);
+  }, []);
+
+  const buildShareText = (message: ChatMessage) => {
+    if (!message.content) return "";
+    const includesSources =
+      message.sourceLine &&
+      message.content.toLowerCase().includes("sources (cpg");
+    const sourcesText =
+      !includesSources && message.sourceLine
+        ? `\n\n${message.sourceLine}`
+        : "";
+    return `${message.content}${sourcesText}`.trim();
+  };
+
+  const handleCopy = async (message: ChatMessage) => {
+    const text = buildShareText(message);
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedMessageId(message.id);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch (err) {
+      console.error(err);
+      setError("Unable to copy right now. Please try again.");
+    }
+  };
+
+  const handleShare = async (message: ChatMessage) => {
+    if (!canShare) return;
+    const text = buildShareText(message);
+    if (!text) return;
+    try {
+      await navigator.share({
+        title: "CPG Chat summary",
+        text,
+      });
+    } catch (err) {
+      if ((err as Error).name === "AbortError") return;
+      console.error(err);
+      setError("Unable to share right now. Please try again.");
+    }
+  };
 
   const sendMessage = async (question: string) => {
     const trimmed = question.trim();
@@ -100,6 +173,21 @@ export default function CpgChatPage() {
       });
 
       const data = await resp.json();
+      const sources: SourceDoc[] = Array.isArray(data?.sources)
+        ? data.sources.map((source: any) => ({
+            id: String(source?.id ?? crypto.randomUUID()),
+            page: Number(source?.page ?? 0),
+            printedPage: Number(source?.printedPage ?? 0),
+            pdfUrl: typeof source?.pdfUrl === "string" ? source.pdfUrl : "",
+            label:
+              typeof source?.label === "string"
+                ? source.label
+                : source?.printedPage
+                  ? `CPG p.${source.printedPage}`
+                  : "CPG",
+          }))
+        : [];
+
       const assistantMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -107,7 +195,9 @@ export default function CpgChatPage() {
           typeof data?.answer === "string"
             ? data.answer
             : "I could not produce an answer.",
-        sources: Array.isArray(data?.sources) ? data.sources : [],
+        sources,
+        sourceLine:
+          typeof data?.sourceLine === "string" ? data.sourceLine : undefined,
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
@@ -148,8 +238,8 @@ export default function CpgChatPage() {
             <h1 className="text-lg font-semibold">CPG-grounded Q&A</h1>
             <p className="text-sm text-slate-300">
               Ask questions about the guideline. Answers stay inside the CPG and
-              show the pages used. If the model is not configured, you will see
-              the top CPG excerpts instead.
+              show a compact sources line with CPG pages. If the model is not
+              configured, you will see the sources note instead of full text.
             </p>
           </div>
         </div>
@@ -169,32 +259,67 @@ export default function CpgChatPage() {
 
       <div className="flex flex-1 flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-3">
         <div className="flex flex-col gap-3 overflow-auto">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className="rounded-2xl border border-slate-800/70 bg-slate-950/60 p-3 shadow-sm"
-            >
-              <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-                {message.role === "user" ? (
-                  <>
-                    <User className="h-3.5 w-3.5" />
-                    You
-                  </>
-                ) : (
-                  <>
-                    <MessageCircle className="h-3.5 w-3.5 text-emerald-300" />
-                    CPG Chat
-                  </>
-                )}
+          {messages.map((message) => {
+            const hasInlineSources =
+              message.role === "assistant" &&
+              message.content.toLowerCase().includes("sources (cpg");
+
+            return (
+              <div
+                key={message.id}
+                className="rounded-2xl border border-slate-800/70 bg-slate-950/60 p-3 shadow-sm"
+              >
+                <div className="mb-2 flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                    {message.role === "user" ? (
+                      <>
+                        <User className="h-3.5 w-3.5" />
+                        You
+                      </>
+                    ) : (
+                      <>
+                        <MessageCircle className="h-3.5 w-3.5 text-emerald-300" />
+                        CPG Chat
+                      </>
+                    )}
+                  </div>
+                  {message.role === "assistant" ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(message)}
+                        className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-[12px] font-semibold text-slate-100 hover:border-emerald-400 hover:text-emerald-100"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                        {copiedMessageId === message.id
+                          ? "Copied"
+                          : "Copy summary"}
+                      </button>
+                      {canShare ? (
+                        <button
+                          type="button"
+                          onClick={() => handleShare(message)}
+                          className="inline-flex items-center gap-1 rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-[12px] font-semibold text-slate-100 hover:border-emerald-400 hover:text-emerald-100"
+                        >
+                          <Share2 className="h-3.5 w-3.5" />
+                          Share
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+                <p className="whitespace-pre-wrap text-sm text-slate-100 leading-relaxed">
+                  {message.content}
+                </p>
+                {!hasInlineSources ? (
+                  <SourcesLine
+                    sourceLine={message.sourceLine}
+                    sources={message.sources}
+                  />
+                ) : null}
               </div>
-              <p className="whitespace-pre-wrap text-sm text-slate-100">
-                {message.content}
-              </p>
-              {message.sources && message.sources.length > 0 ? (
-                <Sources sources={message.sources} />
-              ) : null}
-            </div>
-          ))}
+            );
+          })}
           <div ref={endRef} />
         </div>
 
@@ -225,8 +350,9 @@ export default function CpgChatPage() {
             <p className="text-xs text-red-300">{error}</p>
           ) : (
             <p className="text-[11px] text-slate-400">
-              Answers are grounded in the CPG. Out-of-scope or missing model
-              configuration will return excerpts or a refusal.
+              Answers stay inside the CPG and end with a compact sources line.
+              If the model is unavailable, you will see a brief sources note or
+              a refusal.
             </p>
           )}
         </form>

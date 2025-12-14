@@ -6,7 +6,6 @@ import * as React from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/app/_components/ThemeToggle";
 import { StandaloneRedirect } from "@/app/_components/StandaloneRedirect";
-import { CpgChatBubble } from "@/app/_components/CpgChatBubble";
 import {
   Menu,
   ActivitySquare,
@@ -233,7 +232,6 @@ const DesktopHome: React.FC = () => {
       <div className="fixed bottom-4 right-4 z-40 md:bottom-6 md:right-6">
         <InstallHint />
       </div>
-      <CpgChatBubble />
     </div>
   );
 };
@@ -339,7 +337,6 @@ const MobileHome: React.FC = () => {
       <div className="fixed bottom-4 right-4 z-40 md:bottom-6 md:right-6">
         <InstallHint />
       </div>
-      <CpgChatBubble />
     </div>
   );
 };

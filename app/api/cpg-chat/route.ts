@@ -117,13 +117,9 @@ export async function POST(req: NextRequest) {
   const answer = await callOpenAI(prompt);
 
   if (!answer) {
-    const fallback = [
-      "AI answers are disabled. Add OPENAI_API_KEY to enable responses.",
-    ].join("\n");
-
     return NextResponse.json({
-      answer: fallback,
-      sources: [],
+      answer: "Relevant CPG excerpts:",
+      sources,
     });
   }
 

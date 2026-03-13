@@ -1,82 +1,115 @@
 import Link from "next/link";
-import { ArrowLeft, FolderOpen } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import {
+  ShieldAlert,
+  HeartPulse,
+  Wind,
+  Brain,
+  BookOpen,
+} from "lucide-react";
 import { ProtocolFinder } from "./ProtocolFinder";
 import { TOOL_GROUPS } from "./data";
 import { CpgChatBubble } from "@/app/_components/CpgChatBubble";
 
-function classNames(...classes: Array<string | boolean | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
+const ICON_MAP: Record<string, LucideIcon> = {
+  ShieldAlert,
+  HeartPulse,
+  Wind,
+  Brain,
+  BookOpen,
+};
+
+const COLOR_MAP: Record<string, { bg: string; icon: string; hover: string; ring: string }> = {
+  orange: {
+    bg: "bg-orange-500/10 dark:bg-orange-500/15",
+    icon: "text-orange-600 dark:text-orange-300",
+    hover: "hover:border-orange-400/60 dark:hover:border-orange-400/50",
+    ring: "group-hover:ring-orange-400/30",
+  },
+  red: {
+    bg: "bg-red-500/10 dark:bg-red-500/15",
+    icon: "text-red-600 dark:text-red-300",
+    hover: "hover:border-red-400/60 dark:hover:border-red-400/50",
+    ring: "group-hover:ring-red-400/30",
+  },
+  sky: {
+    bg: "bg-sky-500/10 dark:bg-sky-500/15",
+    icon: "text-sky-600 dark:text-sky-300",
+    hover: "hover:border-sky-400/60 dark:hover:border-sky-400/50",
+    ring: "group-hover:ring-sky-400/30",
+  },
+  violet: {
+    bg: "bg-violet-500/10 dark:bg-violet-500/15",
+    icon: "text-violet-600 dark:text-violet-300",
+    hover: "hover:border-violet-400/60 dark:hover:border-violet-400/50",
+    ring: "group-hover:ring-violet-400/30",
+  },
+  amber: {
+    bg: "bg-amber-500/10 dark:bg-amber-500/15",
+    icon: "text-amber-600 dark:text-amber-300",
+    hover: "hover:border-amber-400/60 dark:hover:border-amber-400/50",
+    ring: "group-hover:ring-amber-400/30",
+  },
+};
 
 export default function DashboardPage() {
   return (
     <>
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pb-8 pt-4">
-      {/* Back to landing + Protocol Finder */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Link
-          href="/?allowLanding=1"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-emerald-500 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-500 dark:hover:bg-slate-900/80"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Back to landing
-        </Link>
-
-        <div className="min-w-[12rem] flex-1">
-          <ProtocolFinder />
-        </div>
-      </div>
-
-      {/* Header / Intro */}
-      <header className="space-y-1">
-        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-emerald-500">
-          Tools dashboard
-        </p>
-        <h1 className="text-xl font-semibold tracking-tight md:text-2xl">
-          Clinical tools for ambulance crews
-        </h1>
-        <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-400">
-          Pick a category to see its tools. Optimized for quick mobile access
-          during time-critical care.
-        </p>
-      </header>
-
-      {/* Category tiles */}
-      <div className="grid gap-3 md:grid-cols-2">
-        {TOOL_GROUPS.map((group) => (
+        {/* Back + Protocol Finder */}
+        <div className="flex flex-wrap items-center gap-2">
           <Link
-            key={group.slug}
-            href={`/dashboard/${group.slug}`}
-            className={classNames(
-              "group relative flex flex-col gap-2 rounded-3xl border px-4 py-3 shadow-sm transition-colors",
-              "border-slate-200 bg-white/90 hover:border-emerald-500/80 hover:bg-white",
-              "dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-emerald-500/70 dark:hover:bg-slate-900"
-            )}
+            href="/?allowLanding=1"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-emerald-500 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-500 dark:hover:bg-slate-900/80"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-1">
-                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-emerald-500">
-                  {group.slug.replace("-", " ")}
-                </p>
-                <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50">
-                  {group.title}
-                </h2>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  {group.description}
-                </p>
-              </div>
-              <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-3 py-1 text-[0.7rem] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200">
-                {group.tools.length} tools
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-[0.8rem] font-medium text-emerald-700 dark:text-emerald-300">
-              <FolderOpen className="h-4 w-4" />
-              View tools
-            </div>
-            <div className="pointer-events-none absolute inset-0 rounded-3xl border border-emerald-500/0 transition-colors group-hover:border-emerald-500/50" />
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back
           </Link>
-        ))}
-      </div>
+          <div className="min-w-[12rem] flex-1">
+            <ProtocolFinder />
+          </div>
+        </div>
+
+        {/* Header */}
+        <header className="space-y-0.5">
+          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-emerald-500">
+            Tools dashboard
+          </p>
+          <h1 className="text-xl font-semibold tracking-tight md:text-2xl">
+            Select a category
+          </h1>
+        </header>
+
+        {/* Category icon tiles */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {TOOL_GROUPS.map((group) => {
+            const Icon = ICON_MAP[group.icon] ?? BookOpen;
+            const color = COLOR_MAP[group.color] ?? COLOR_MAP.amber;
+
+            return (
+              <Link
+                key={group.slug}
+                href={`/dashboard/${group.slug}`}
+                className={`group flex flex-col items-center gap-3 rounded-3xl border border-slate-200 bg-white/90 p-5 text-center shadow-sm transition-all ${color.hover} hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80 dark:hover:bg-slate-900`}
+              >
+                <div
+                  className={`flex h-16 w-16 items-center justify-center rounded-2xl ${color.bg} ring-4 ring-transparent transition-all ${color.ring}`}
+                >
+                  <Icon className={`h-8 w-8 ${color.icon}`} />
+                </div>
+                <div className="space-y-1">
+                  <h2 className="text-sm font-semibold leading-tight text-slate-900 dark:text-slate-50">
+                    {group.shortTitle ?? group.title}
+                  </h2>
+                  <span className="inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                    {group.tools.length} {group.tools.length === 1 ? "tool" : "tools"}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
       <CpgChatBubble />
     </>

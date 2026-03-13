@@ -1,14 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import {
+  ArrowLeft,
+  RotateCcw,
+  Brain,
+  Activity,
+  Volume2,
+  Stethoscope,
+  Layers,
+  AlertTriangle,
+} from "lucide-react";
 
-type SeverityBand =
-  | "mild"
-  | "moderate"
-  | "severe"
-  | "impending"
-  | "none";
+// ─── Scoring ─────────────────────────────────────────────────────────────────
 
 type LOCOption = "normal" | "disoriented";
 type CyanosisOption = "none" | "with-agitation" | "at-rest";
@@ -16,33 +22,24 @@ type StridorOption = "none" | "with-agitation" | "at-rest";
 type AirEntryOption = "normal" | "decreased" | "markedly-decreased";
 type RetractionOption = "none" | "mild" | "moderate" | "severe";
 
-function classNames(...classes: Array<string | boolean | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
+type SeverityBand = "none" | "mild" | "moderate" | "severe" | "impending";
 
-const locScore: Record<LOCOption, number> = {
-  normal: 0,
-  disoriented: 5,
-};
-
+const locScore: Record<LOCOption, number> = { normal: 0, disoriented: 5 };
 const cyanosisScore: Record<CyanosisOption, number> = {
   none: 0,
   "with-agitation": 4,
   "at-rest": 5,
 };
-
 const stridorScore: Record<StridorOption, number> = {
   none: 0,
   "with-agitation": 1,
   "at-rest": 2,
 };
-
 const airEntryScore: Record<AirEntryOption, number> = {
   normal: 0,
   decreased: 1,
   "markedly-decreased": 2,
 };
-
 const retractionsScore: Record<RetractionOption, number> = {
   none: 0,
   mild: 1,
@@ -58,476 +55,421 @@ function getSeverityBand(total: number): SeverityBand {
   return "impending";
 }
 
-const severityLabel: Record<SeverityBand, string> = {
-  none: "No croup features",
-  mild: "Mild croup",
-  moderate: "Moderate croup",
-  severe: "Severe croup",
-  impending: "Impending respiratory failure",
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
+type BandStyle = {
+  label: string;
+  range: string;
+  border: string;
+  bg: string;
+  text: string;
+  bar: string;
 };
 
-export default function MwcsPage() {
-  const [ageYears, setAgeYears] = useState<string>("3");
+const BAND_STYLES: Record<SeverityBand, BandStyle> = {
+  none: {
+    label: "No features",
+    range: "0",
+    border: "border-slate-700",
+    bg: "bg-slate-900",
+    text: "text-slate-400",
+    bar: "bg-slate-600",
+  },
+  mild: {
+    label: "Mild Croup",
+    range: "1–2",
+    border: "border-emerald-700",
+    bg: "bg-emerald-950/70",
+    text: "text-emerald-300",
+    bar: "bg-emerald-500",
+  },
+  moderate: {
+    label: "Moderate Croup",
+    range: "3–5",
+    border: "border-amber-700",
+    bg: "bg-amber-950/70",
+    text: "text-amber-300",
+    bar: "bg-amber-500",
+  },
+  severe: {
+    label: "Severe Croup",
+    range: "6–11",
+    border: "border-orange-700",
+    bg: "bg-orange-950/70",
+    text: "text-orange-300",
+    bar: "bg-orange-500",
+  },
+  impending: {
+    label: "Impending Resp. Failure",
+    range: "≥ 12",
+    border: "border-rose-700",
+    bg: "bg-rose-950/70",
+    text: "text-rose-300",
+    bar: "bg-rose-500",
+  },
+};
 
+// Point badge colour based on score value
+function ptColor(pts: number): string {
+  if (pts === 0) return "bg-slate-700 text-slate-400";
+  if (pts <= 2) return "bg-emerald-900/80 text-emerald-300";
+  if (pts <= 4) return "bg-amber-900/80 text-amber-300";
+  return "bg-rose-900/80 text-rose-300";
+}
+
+const ACTIONS: Record<SeverityBand, string[]> = {
+  none: [
+    "Reassess diagnosis — consider alternative causes of stridor.",
+    "Monitor WOB, RR, SpO₂. Follow CPG if croup still suspected.",
+  ],
+  mild: [
+    "Steroid (e.g. oral dexamethasone) per CPG dose chart.",
+    "Observe for progression. Caregiver education and safety-net advice.",
+    "Transport or discharge per CPG criteria and Clinical Coordination.",
+  ],
+  moderate: [
+    "Steroid + consider nebulised adrenaline per CPG.",
+    "Monitor closely: RR, WOB, stridor at rest, mental state.",
+    "Transport to ED. Prenotify if requiring repeated nebulised adrenaline.",
+  ],
+  severe: [
+    "Time-critical: nebulised adrenaline + steroid immediately per CPG.",
+    "Position of comfort. Minimise distress. Titrate O₂ if hypoxic.",
+    "Priority transport with prenotification. Consider CCP/anaesthetics.",
+  ],
+  impending: [
+    "Impending failure: urgent nebulised adrenaline + advanced airway planning.",
+    "Prepare for RSI / advanced airway (CCP/ED/anaesthetics) per CPG.",
+    "Priority 1 transport + immediate prenotification + Clinical Coordination.",
+  ],
+};
+
+const BLURB: Record<SeverityBand, string> = {
+  none: "No clear croup features. Correlate with history, barking cough and respiratory exam.",
+  mild: "Barking cough with minimal distress. Steroids; observe for deterioration.",
+  moderate: "Increased WOB and stridor. Steroids + consider nebulised adrenaline. Transport to ED.",
+  severe: "Marked distress — stridor at rest, significant retractions, or altered mentation. Time-critical.",
+  impending: "Features of respiratory failure. Time-critical transfer; prepare for advanced airway.",
+};
+
+const MAX_SCORE = 17;
+
+// ─── Page ────────────────────────────────────────────────────────────────────
+
+export default function MwcsPage() {
   const [loc, setLoc] = useState<LOCOption>("normal");
   const [cyanosis, setCyanosis] = useState<CyanosisOption>("none");
-  const [stridor, setStridor] = useState<StridorOption>("with-agitation");
+  const [stridor, setStridor] = useState<StridorOption>("none");
   const [airEntry, setAirEntry] = useState<AirEntryOption>("normal");
-  const [retractions, setRetractions] =
-    useState<RetractionOption>("mild");
+  const [retractions, setRetractions] = useState<RetractionOption>("none");
 
-  const locPoints = locScore[loc];
-  const cyanosisPoints = cyanosisScore[cyanosis];
-  const stridorPoints = stridorScore[stridor];
-  const airEntryPoints = airEntryScore[airEntry];
-  const retractionsPoints = retractionsScore[retractions];
+  const locPts = locScore[loc];
+  const cyanPts = cyanosisScore[cyanosis];
+  const stridPts = stridorScore[stridor];
+  const airPts = airEntryScore[airEntry];
+  const retPts = retractionsScore[retractions];
+  const total = locPts + cyanPts + stridPts + airPts + retPts;
 
-  const totalScore =
-    locPoints +
-    cyanosisPoints +
-    stridorPoints +
-    airEntryPoints +
-    retractionsPoints;
+  const band = getSeverityBand(total);
+  const bs = BAND_STYLES[band];
 
-  const band = getSeverityBand(totalScore);
-
-  const severityColor =
-    band === "impending"
-      ? "text-red-500"
-      : band === "severe"
-      ? "text-red-500"
-      : band === "moderate"
-      ? "text-yellow-500"
-      : band === "mild"
-      ? "text-emerald-500"
-      : "text-slate-500";
-
-  const bandBlurb: Record<SeverityBand, string> = {
-    none:
-      "No clear croup features on this score. Correlate with history, cough, and respiratory exam.",
-    mild:
-      "Barking cough with minimal distress. Usually managed with single-dose steroids; observe for deterioration as per CPG.",
-    moderate:
-      "Increased work of breathing and stridor. Requires close observation, steroids, and consideration of nebulised adrenaline as per CPG.",
-    severe:
-      "Marked distress with stridor at rest, significant retractions, or altered mentation. Time-critical management with nebulised adrenaline, steroids, and early senior/CCP/ED support.",
-    impending:
-      "Features of respiratory failure (silent chest, severe retractions, reduced LOC, or high score). Time-critical transfer; prepare for advanced airway/RSI as per CPG.",
-  };
-
-  const suggestedActions: string[] = [];
-  if (band === "none") {
-    suggestedActions.push(
-      "Reassess diagnosis; consider alternative causes of stridor or noisy breathing.",
-      "Monitor work of breathing, RR, and SpO₂; follow CPG if croup still suspected."
-    );
-  } else if (band === "mild") {
-    suggestedActions.push(
-      "Administer steroid (e.g. oral dexamethasone) as per CPG dose chart.",
-      "Observe and monitor for progression; provide caregiver education and safety-net advice.",
-      "Transport or discharge according to CPG criteria and Clinical Coordination."
-    );
-  } else if (band === "moderate") {
-    suggestedActions.push(
-      "Administer steroid and consider nebulised adrenaline as per CPG.",
-      "Monitor closely: RR, work of breathing, stridor at rest, and mental state.",
-      "Transport to ED; prenotify if needing repeated nebulised adrenaline."
-    );
-  } else if (band === "severe") {
-    suggestedActions.push(
-      "Time-critical: nebulised adrenaline + steroid immediately as per CPG.",
-      "Position of comfort; minimise distress and handling; titrate oxygen if hypoxic.",
-      "Priority transport with prenotification; consider CCP/anaesthetics support."
-    );
-  } else if (band === "impending") {
-    suggestedActions.push(
-      "Impending respiratory failure: urgent nebulised adrenaline and advanced airway planning.",
-      "Prepare for possible RSI/advanced airway (CCP/ED/anaesthetics) as per CPG.",
-      "Priority 1 transport with immediate prenotification and early Clinical Coordination involvement."
-    );
-  }
-
-  const ageNum = Number(ageYears);
-  const summaryBits: string[] = [];
-  summaryBits.push(
-    `MWCS: ${totalScore} (${severityLabel[band]})`
-  );
-  if (!Number.isNaN(ageNum)) {
-    summaryBits.push(`approx age ${ageNum} years`);
-  }
-
-  summaryBits.push(
-    `LOC: ${loc === "normal" ? "normal" : "disoriented"}`,
-    `cyanosis: ${
-      cyanosis === "none"
-        ? "none"
-        : cyanosis === "with-agitation"
-        ? "with agitation"
-        : "at rest"
-    }`,
-    `stridor: ${
-      stridor === "none"
-        ? "none"
-        : stridor === "with-agitation"
-        ? "with agitation"
-        : "at rest"
-    }`,
-    `air entry: ${
-      airEntry === "normal"
-        ? "normal"
-        : airEntry === "decreased"
-        ? "decreased"
-        : "markedly decreased"
-    }`,
-    `retractions: ${retractions}`
-  );
-
-  const summaryText =
-    summaryBits.join("; ") +
-    `. Actions: ${suggestedActions[0] ?? "See CPG for management."}`;
+  const barWidth = `${Math.min(100, (total / MAX_SCORE) * 100)}%`;
 
   function handleReset() {
-    setAgeYears("3");
     setLoc("normal");
     setCyanosis("none");
-    setStridor("with-agitation");
+    setStridor("none");
     setAirEntry("normal");
-    setRetractions("mild");
+    setRetractions("none");
   }
 
-  return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
-      <header className="space-y-2">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
-              Paediatric respiratory
-            </p>
-            <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 dark:text-slate-50">
-              MWCS – Modified Westley Croup Score
-            </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-             Croup is a common viral infection affecting the subglottic airway. The severity 
-             is determined using the Modified Westley Croup Score as per CPG 5.3 Croup, which 
-             guides treatment for mild, moderate and severe croup.
-            </p>
+  const summaryText =
+    `MWCS: ${total}/17 — ${bs.label}. ` +
+    `LOC: ${loc} (${locPts}pt), cyanosis: ${cyanosis} (${cyanPts}pt), ` +
+    `stridor: ${stridor} (${stridPts}pt), air entry: ${airEntry} (${airPts}pt), ` +
+    `retractions: ${retractions} (${retPts}pt). Actions: ${ACTIONS[band][0]}`;
 
-          </div>
-          <button
-            type="button"
-            onClick={handleReset}
-            className="h-9 px-3 rounded-lg border border-slate-300 bg-slate-50 text-xs font-medium text-slate-700 shadow-sm hover:border-emerald-500 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-500 dark:hover:text-emerald-300"
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-52">
+      {/* ── Sticky Header ── */}
+      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
+        <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-3">
+          <Link
+            href="/dashboard/respiratory"
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
           >
-            Reset
-          </button>
+            <ArrowLeft className="w-4 h-4 text-slate-300" />
+          </Link>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-sky-400">
+              Paediatric Respiratory
+            </p>
+            <h1 className="text-base font-bold text-white leading-tight">
+              MWCS — Modified Westley Croup Score
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
+              aria-label="Reset"
+            >
+              <RotateCcw className="w-4 h-4 text-slate-300" />
+            </button>
+            <CopySummaryButton summaryText={summaryText} />
+          </div>
         </div>
       </header>
 
-      <section className="grid gap-6 md:grid-cols-3">
-        {/* Left: inputs */}
-        <div className="md:col-span-2 space-y-4">
-          {/* Age */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
-              Patient
-            </p>
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="text-xs text-slate-600 dark:text-slate-400">
-                Approx age (years)
-              </label>
-              <input
-                type="number"
-                min={0}
-                inputMode="decimal"
-                value={ageYears}
-                onChange={(e) => setAgeYears(e.target.value)}
-                className="w-24 rounded-lg border border-slate-300 bg-slate-50 px-2 py-1.5 text-xs text-slate-900 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50"
-              />
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                Typically 6&nbsp;months–6&nbsp;years for croup presentations.
-              </span>
+      <main className="mx-auto max-w-2xl px-4 pt-4 space-y-3">
+        {/* ── Score Bar ── */}
+        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 space-y-2">
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider">
+                Running score
+              </p>
+              <p className="text-3xl font-bold text-white tabular-nums leading-none">
+                {total}
+                <span className="text-sm font-normal text-slate-500 ml-1">
+                  / {MAX_SCORE}
+                </span>
+              </p>
+            </div>
+            <div className="text-right text-xs text-slate-500">
+              <p>LOC {locPts} + Cyan {cyanPts} + Strid {stridPts}</p>
+              <p>Air {airPts} + Ret {retPts}</p>
             </div>
           </div>
-
-          {/* LOC */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
-                  Level of consciousness
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  Reduced or disoriented LOC scores highly and suggests severe
-                  disease / impending failure.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {([
-                { id: "normal", label: "Normal / alert" },
-                { id: "disoriented", label: "Disoriented / reduced LOC" },
-              ] as const).map((opt) => {
-                const active = loc === opt.id;
-                const points = locScore[opt.id];
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setLoc(opt.id)}
-                    className={classNames(
-                      "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition flex items-center justify-between gap-2 min-w-40",
-                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
-                      active
-                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
-                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
-                    )}
-                  >
-                    <span>{opt.label}</span>
-                    <span className="text-[0.65rem] text-slate-500 dark:text-slate-400">
-                      {points} pts
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+          {/* Progress bar */}
+          <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-300 ${bs.bar}`}
+              style={{ width: barWidth }}
+            />
           </div>
-
-          {/* Cyanosis */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
-                  Cyanosis
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  Peripheral/central cyanosis with agitation vs at rest.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {([
-                { id: "none", label: "None observed" },
-                { id: "with-agitation", label: "With agitation" },
-                { id: "at-rest", label: "Present at rest" },
-              ] as const).map((opt) => {
-                const active = cyanosis === opt.id;
-                const points = cyanosisScore[opt.id];
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setCyanosis(opt.id)}
-                    className={classNames(
-                      "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition flex items-center justify-between gap-2 min-w-40",
-                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
-                      active
-                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
-                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
-                    )}
-                  >
-                    <span>{opt.label}</span>
-                    <span className="text-[0.65rem] text-slate-500 dark:text-slate-400">
-                      {points} pts
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Stridor */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
-                  Stridor
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  Presence of inspiratory stridor with agitation vs at rest.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {([
-                { id: "none", label: "None" },
-                { id: "with-agitation", label: "Only with agitation" },
-                { id: "at-rest", label: "At rest" },
-              ] as const).map((opt) => {
-                const active = stridor === opt.id;
-                const points = stridorScore[opt.id];
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setStridor(opt.id)}
-                    className={classNames(
-                      "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition flex items-center justify-between gap-2 min-w-40",
-                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
-                      active
-                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
-                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
-                    )}
-                  >
-                    <span>{opt.label}</span>
-                    <span className="text-[0.65rem] text-slate-500 dark:text-slate-400">
-                      {points} pts
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Air entry */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
-                  Air entry
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  Global air entry on auscultation.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {([
-                { id: "normal", label: "Normal" },
-                { id: "decreased", label: "Decreased" },
-                {
-                  id: "markedly-decreased",
-                  label: "Markedly decreased / barely audible",
-                },
-              ] as const).map((opt) => {
-                const active = airEntry === opt.id;
-                const points = airEntryScore[opt.id];
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setAirEntry(opt.id)}
-                    className={classNames(
-                      "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition flex items-center justify-between gap-2 min-w-40",
-                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
-                      active
-                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
-                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
-                    )}
-                  >
-                    <span>{opt.label}</span>
-                    <span className="text-[0.65rem] text-slate-500 dark:text-slate-400">
-                      {points} pts
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Retractions */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
-                  Chest wall retractions
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  Suprasternal, intercostal, and subcostal recession.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {([
-                { id: "none", label: "None" },
-                { id: "mild", label: "Mild" },
-                { id: "moderate", label: "Moderate" },
-                { id: "severe", label: "Severe" },
-              ] as const).map((opt) => {
-                const active = retractions === opt.id;
-                const points = retractionsScore[opt.id];
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setRetractions(opt.id)}
-                    className={classNames(
-                      "px-3 py-1.5 rounded-xl text-xs md:text-sm border transition flex items-center justify-between gap-2 min-w-40",
-                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
-                      active
-                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-100"
-                        : "border-slate-300 bg-slate-100 text-slate-800 hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
-                    )}
-                  >
-                    <span>{opt.label}</span>
-                    <span className="text-[0.65rem] text-slate-500 dark:text-slate-400">
-                      {points} pts
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+          {/* Scale labels */}
+          <div className="flex justify-between text-[9px] text-slate-600">
+            <span>0 — None</span>
+            <span>1–2 Mild</span>
+            <span>3–5 Mod</span>
+            <span>6–11 Severe</span>
+            <span>≥12 Impending</span>
           </div>
         </div>
 
-        {/* Right: summary */}
-        <div className="md:col-span-1">
-          <div className="h-full rounded-2xl border border-slate-200 bg-slate-50 p-4 flex flex-col gap-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
-                  Croup score
-                </p>
-                <p
-                  className={classNames(
-                    "mt-1 text-lg md:text-xl font-semibold",
-                    severityColor
-                  )}
+        {/* ── LOC ── */}
+        <ScoreRow
+          label="Level of Consciousness"
+          icon={<Brain className="w-4 h-4 text-sky-400" />}
+          options={[
+            { id: "normal", label: "Normal / alert", pts: locScore.normal },
+            {
+              id: "disoriented",
+              label: "Disoriented / ↓ LOC",
+              pts: locScore.disoriented,
+            },
+          ]}
+          value={loc}
+          onChange={(v) => setLoc(v as LOCOption)}
+          columns={2}
+        />
+
+        {/* ── Cyanosis ── */}
+        <ScoreRow
+          label="Cyanosis"
+          icon={<Activity className="w-4 h-4 text-sky-400" />}
+          options={[
+            { id: "none", label: "None", pts: cyanosisScore.none },
+            {
+              id: "with-agitation",
+              label: "With agitation",
+              pts: cyanosisScore["with-agitation"],
+            },
+            {
+              id: "at-rest",
+              label: "At rest",
+              pts: cyanosisScore["at-rest"],
+            },
+          ]}
+          value={cyanosis}
+          onChange={(v) => setCyanosis(v as CyanosisOption)}
+        />
+
+        {/* ── Stridor ── */}
+        <ScoreRow
+          label="Stridor"
+          icon={<Volume2 className="w-4 h-4 text-sky-400" />}
+          options={[
+            { id: "none", label: "None", pts: stridorScore.none },
+            {
+              id: "with-agitation",
+              label: "With agitation",
+              pts: stridorScore["with-agitation"],
+            },
+            { id: "at-rest", label: "At rest", pts: stridorScore["at-rest"] },
+          ]}
+          value={stridor}
+          onChange={(v) => setStridor(v as StridorOption)}
+        />
+
+        {/* ── Air Entry ── */}
+        <ScoreRow
+          label="Air Entry"
+          icon={<Stethoscope className="w-4 h-4 text-sky-400" />}
+          options={[
+            { id: "normal", label: "Normal", pts: airEntryScore.normal },
+            {
+              id: "decreased",
+              label: "Decreased",
+              pts: airEntryScore.decreased,
+            },
+            {
+              id: "markedly-decreased",
+              label: "Markedly ↓",
+              pts: airEntryScore["markedly-decreased"],
+            },
+          ]}
+          value={airEntry}
+          onChange={(v) => setAirEntry(v as AirEntryOption)}
+        />
+
+        {/* ── Retractions ── */}
+        <ScoreRow
+          label="Chest Wall Retractions"
+          icon={<Layers className="w-4 h-4 text-sky-400" />}
+          options={[
+            { id: "none", label: "None", pts: retractionsScore.none },
+            { id: "mild", label: "Mild", pts: retractionsScore.mild },
+            {
+              id: "moderate",
+              label: "Moderate",
+              pts: retractionsScore.moderate,
+            },
+            { id: "severe", label: "Severe", pts: retractionsScore.severe },
+          ]}
+          value={retractions}
+          onChange={(v) => setRetractions(v as RetractionOption)}
+          columns={4}
+        />
+
+        {/* ── Reference ── */}
+        <p className="text-[10px] text-slate-600 pb-2">
+          CPG 5.3 Croup — total possible 0–17. Always follow CPG 5.3 for management decisions.
+        </p>
+      </main>
+
+      {/* ── Sticky Outcome Bar ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-800 bg-slate-950/95 backdrop-blur-sm">
+        <div className="mx-auto max-w-2xl px-4 py-3 space-y-2">
+          {/* Band header */}
+          <div className={`rounded-xl border p-3 space-y-2 ${bs.border} ${bs.bg}`}>
+            <div className="flex items-center gap-3">
+              {band === "impending" && (
+                <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+              )}
+              <div className="flex-1 flex items-baseline gap-3">
+                <span className={`text-lg font-bold ${bs.text}`}>
+                  {bs.label}
+                </span>
+                <span className="text-xs text-slate-500">
+                  Score {total} — range {bs.range}
+                </span>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-snug">{BLURB[band]}</p>
+            <ul className="space-y-0.5">
+              {ACTIONS[band].map((a, i) => (
+                <li
+                  key={i}
+                  className="flex gap-1.5 text-[11px] text-slate-300 leading-snug"
                 >
-                  {severityLabel[band]}
-                </p>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Total MWCS:{" "}
-                  <span className="font-semibold text-slate-900 dark:text-slate-50">
-                    {totalScore}
-                  </span>{" "}
-                  (LOC {locPoints} + cyanosis {cyanosisPoints} + stridor{" "}
-                  {stridorPoints} + air entry {airEntryPoints} + retractions{" "}
-                  {retractionsPoints})
-                </p>
-              </div>
-              <CopySummaryButton summaryText={summaryText} />
-            </div>
-
-            <div className="rounded-xl bg-slate-100 border border-slate-200 p-3 text-xs text-slate-700 dark:bg-slate-900/80 dark:border-slate-800 dark:text-slate-300">
-              <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                Interpretation & management hint
-              </p>
-              <p>{bandBlurb[band]}</p>
-            </div>
-
-            <div className="rounded-xl bg-slate-100 border border-slate-200 p-3 text-xs text-slate-700 dark:bg-slate-900/80 dark:border-slate-800 dark:text-slate-300">
-              <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                Suggested prehospital actions (summary)
-              </p>
-              <ul className="mt-1 space-y-1.5">
-                {suggestedActions.map((a, idx) => (
-                  <li key={idx} className="flex gap-2">
-                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400/70 shrink-0" />
-                    <span>{a}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-             Total possible score 0–17. CPG 5.3 defines: Mild croup ≤2, Moderate 3–7, 
-             Severe ≥8. This tool adds a teaching band for “impending respiratory failure” 
-             at very high scores – always follow CPG 5.3 for management decisions.
-            </p>
-
+                  <span
+                    className={`mt-1 w-1.5 h-1.5 rounded-full flex-shrink-0 ${bs.bar}`}
+                  />
+                  {a}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
+  );
+}
+
+// ─── Sub-component ────────────────────────────────────────────────────────────
+
+type ScoreOption = { id: string; label: string; pts: number };
+
+type ScoreRowProps = {
+  label: string;
+  icon: React.ReactNode;
+  options: ScoreOption[];
+  value: string;
+  onChange: (v: string) => void;
+  columns?: 2 | 3 | 4;
+};
+
+function ScoreRow({
+  label,
+  icon,
+  options,
+  value,
+  onChange,
+  columns = 3,
+}: ScoreRowProps) {
+  const colClass =
+    columns === 2
+      ? "grid-cols-2"
+      : columns === 4
+      ? "grid-cols-4"
+      : "grid-cols-3";
+
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-3 space-y-2">
+      <div className="flex items-center gap-2">
+        {icon}
+        <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+          {label}
+        </span>
+      </div>
+      <div className={`grid gap-2 ${colClass}`}>
+        {options.map((opt) => {
+          const selected = value === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => onChange(opt.id)}
+              className={`rounded-xl border p-2.5 text-center transition-colors active:scale-95 ${
+                selected
+                  ? "border-sky-500/70 bg-sky-950/50"
+                  : "border-slate-700 bg-slate-800 hover:border-slate-600"
+              }`}
+            >
+              {/* Point badge */}
+              <div className="flex justify-center mb-1.5">
+                <span
+                  className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
+                    selected ? "bg-sky-800 text-sky-200" : ptColor(opt.pts)
+                  }`}
+                >
+                  {opt.pts} pt{opt.pts !== 1 ? "s" : ""}
+                </span>
+              </div>
+              <p
+                className={`text-xs font-medium leading-snug ${
+                  selected ? "text-white" : "text-slate-400"
+                }`}
+              >
+                {opt.label}
+              </p>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

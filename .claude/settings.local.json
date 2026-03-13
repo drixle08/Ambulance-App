@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Dev/my-first-app/app -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\) -not -path */node_modules/* -not -path */.next/*)",
+      "Bash(find /c/Dev/my-first-app/components -type f \\\\\\(-name *.tsx -o -name *.ts \\\\\\) -not -path */node_modules/* -not -path */.next/*)",
+      "Bash(grep -rn \"Open tool ->\" /c/Dev/my-first-app/app/\\\\\\(app\\\\\\)/dashboard/[group]/page.tsx)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/tools/adult-arrest)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/tools/rosc)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/tools/asthma)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/tools/cpg-chat)",
+      "Bash(node -e \"const pkg = require\\(''./node_modules/lucide-react/package.json''\\); console.log\\(pkg.version\\)\")",
+      "Bash(node -e \"const l = require\\(''lucide-react''\\); const icons = [''HeartOff'',''ShieldAlert'',''Timer'',''TrendingUp'',''Flame'',''Stethoscope'',''Gauge'',''MessageCircle'',''GitBranch'',''BookOpen'',''ChevronRight'']; icons.forEach\\(i => console.log\\(i, !!l[i]\\)\\)\")",
+      "Bash(node --input-type=module:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/dashboard)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/dashboard/resuscitation)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/tools/resus-timer)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/tools/trauma-bypass)"
+    ]
+  }
+}

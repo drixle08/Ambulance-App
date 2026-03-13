@@ -2,226 +2,230 @@
 
 import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import {
+  ArrowLeft,
+  Zap,
+  XCircle,
+  Heart,
+  AlertTriangle,
+  CheckCircle,
+  Baby,
+  Activity,
+} from "lucide-react";
 
-type StepCard = {
-  title: string;
-  description: string;
-};
+// ─── Data ────────────────────────────────────────────────────────────────────
 
-type CycleCard = {
+const INITIAL_STEPS = [
+  {
+    label: "Recognise paediatric cardiac arrest",
+    detail:
+      "Unresponsive, absent or agonal breathing, no pulse. Consider undeniable death criteria (CPG 2.7).",
+  },
+  {
+    label: "Start CPR & prepare BVM",
+    detail: "High-quality chest compressions immediately. Prepare BVM.",
+  },
+  {
+    label: "Give 5 BVM breaths → resume CPR → attach pads",
+    detail:
+      "Once BVM ready, deliver 5 effective breaths. Resume compressions. Attach defib pads while CPR continues.",
+  },
+];
+
+type CycleItem = {
   title: string;
   badge?: string;
   points: string[];
 };
 
-const INITIAL_STEPS: StepCard[] = [
+const SHOCKABLE_CYCLES: CycleItem[] = [
   {
-    title: "Recognise paediatric cardiac arrest",
-    description:
-      "Unresponsive with absent or agonal breathing and no pulse. Consider criteria for undeniable death (CPG 2.7) if appropriate.",
-  },
-  {
-    title: "Start CPR & prepare BVM",
-    description:
-      "Begin high-quality chest compressions immediately. Prepare BVM.",
-  },
-  {
-    title: "Give 5 BVM breaths, resume CPR & attach pads",
-    description:
-      "Once BVM is ready, deliver 5 effective breaths via BVM, then resume chest compressions. Attach defibrillation pads/monitor while CPR continues and follow the standard paediatric cardiac arrest algorithm.",
-  },
-];
-
-
-const SHOCKABLE_CYCLES: CycleCard[] = [
-  {
-    title: "Cycle 1 – airway & first shocks",
-    badge: "Shock 4 J/kg when VF/VT",
+    title: "Cycle 1 — Airway & first shock",
+    badge: "4 J/kg",
     points: [
-      "After rhythm check, if VF/VT, deliver a single shock at 4 J/kg.",
-      "Immediately resume CPR for 2 minutes.",
-      "Insert SGA early, then maintain continuous compressions with ventilations every 3–5 seconds.",
+      "VF/VT → single shock 4 J/kg.",
+      "Immediately resume CPR 2 min.",
+      "Insert SGA. Continuous compressions + ventilation every 3–5 s.",
     ],
   },
   {
-    title: "Cycle 2 – IV/IO & reversible causes",
-    badge: "Shock 4 J/kg when VF/VT",
+    title: "Cycle 2 — IV/IO & reversible causes",
+    badge: "4 J/kg",
     points: [
-      "After 2 minutes of CPR, recheck rhythm.",
-      "If VF/VT persists, deliver a single shock at 4 J/kg and resume CPR for 2 minutes.",
-      "Establish IV/IO access and actively search for reversible causes (H’s and T’s).",
+      "Recheck rhythm after 2 min CPR.",
+      "VF/VT persists → shock 4 J/kg → resume CPR.",
+      "Establish IV/IO. Search for H's & T's.",
     ],
   },
   {
-    title: "Cycle 3 – adrenaline + amiodarone",
-    badge: "Shock 4 J/kg when VF/VT",
+    title: "Cycle 3 — Adrenaline + Amiodarone",
+    badge: "4 J/kg",
     points: [
-      "After each 2-minute CPR cycle, reassess rhythm and give a single 4 J/kg shock if VF/VT persists.",
-      "Epinephrine 0.01 mg/kg (0.1 mL/kg of 1:10,000) IV/IO every 4 minutes.",
-      "Amiodarone 5 mg/kg IV/IO for refractory VF/VT as per CPG.",
+      "Shock 4 J/kg if VF/VT persists.",
+      "Adrenaline 0.01 mg/kg (0.1 mL/kg of 1:10,000) IV/IO every 4 min.",
+      "Amiodarone 5 mg/kg IV/IO for refractory VF/VT.",
     ],
   },
   {
-    title: "Cycle 4 – further amiodarone & LUCAS",
-    badge: "Shock 4 J/kg when VF/VT",
+    title: "Cycle 4 — 2nd Amiodarone & LUCAS",
+    badge: "4 J/kg",
     points: [
-      "Continue 2-minute CPR cycles with rhythm checks and single shocks at 4 J/kg when VF/VT persists.",
-      "Repeat amiodarone 5 mg/kg as per CPG if still in refractory VF/VT.",
-      "Prepare LUCAS (if applicable and patient size/weight is suitable) while maintaining compressions.",
+      "Continue 2-min cycles with rhythm checks and 4 J/kg shocks.",
+      "Repeat amiodarone 5 mg/kg if still refractory VF/VT.",
+      "LUCAS if suitable size/weight — maintain compressions.",
     ],
   },
 ];
 
-const NON_SHOCKABLE_CYCLES: CycleCard[] = [
+const NONSHOCKABLE_CYCLES: CycleItem[] = [
   {
-    title: "Cycle 1 – airway",
+    title: "Cycle 1 — Airway",
     points: [
-      "If asystole/PEA, do not shock.",
-      "Continue CPR for 2 minutes.",
-      "Insert SGA then maintain continuous compressions with ventilations every 3–5 seconds.",
+      "Asystole/PEA → do NOT shock.",
+      "Continue CPR 2 min.",
+      "Insert SGA. Continuous compressions + ventilation every 3–5 s.",
     ],
   },
   {
-    title: "Cycle 2 – IV/IO & adrenaline",
+    title: "Cycle 2 — IV/IO & Adrenaline",
     points: [
-      "Maintain 2-minute CPR cycles.",
-      "Obtain IV/IO access if not already in place.",
-      "Epinephrine 0.01 mg/kg (0.1 mL/kg of 1:10,000) IV/IO every 4 minutes.",
+      "Maintain 2-min CPR cycles.",
+      "Obtain IV/IO access.",
+      "Adrenaline 0.01 mg/kg (0.1 mL/kg of 1:10,000) IV/IO every 4 min.",
     ],
   },
   {
-    title: "Cycle 3 – reversible causes",
+    title: "Cycle 3 — Reversible Causes",
     points: [
-      "Continue 2-minute CPR cycles with rhythm reassessment.",
-      "Actively search for and treat reversible causes (H’s and T’s).",
+      "Continue 2-min CPR cycles with rhythm reassessment.",
+      "Actively search for and treat reversible causes (H's & T's).",
     ],
   },
   {
-    title: "Cycle 4 – ongoing adrenaline & LUCAS",
+    title: "Cycle 4 — Ongoing Adrenaline & LUCAS",
     points: [
-      "Keep giving epinephrine 0.01 mg/kg IV/IO every 4 minutes.",
-      "Prepare LUCAS if applicable and size/weight allow, while maintaining compressions.",
+      "Continue adrenaline 0.01 mg/kg IV/IO every 4 min.",
+      "LUCAS if suitable size/weight — maintain compressions.",
     ],
   },
 ];
 
 const summaryText =
-  "Paediatric cardiac arrest algorithm: start CPR and BVM, attach defibrillator, then 2-minute CPR cycles with rhythm checks. Deliver single shocks at 4 J/kg for VF/VT, give epinephrine 0.01 mg/kg IV/IO every 4 minutes, amiodarone 5 mg/kg for refractory VF/VT, early SGA and reversible causes, and do not terminate resuscitation in the field – transport with CPR in progress.";
+  "Paediatric cardiac arrest: start CPR, BVM, attach defib, then 2-min CPR cycles with rhythm checks. VF/VT → shock 4 J/kg; Asystole/PEA → no shock. Adrenaline 0.01 mg/kg IV/IO every 4 min; amiodarone 5 mg/kg for refractory VF/VT. Early SGA, IV/IO, reversible causes. Do NOT terminate in field — transport with CPR in progress.";
+
+// ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function PedsArrestAlgorithmPage() {
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      {/* Top bar */}
-      <div className="flex items-center justify-between gap-4">
-        <Link
-          href="/dashboard"
-          className="text-xs font-medium text-slate-600 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400"
-        >
-          ← Back to dashboard
-        </Link>
-        <CopySummaryButton summaryText={summaryText} />
-      </div>
-
-      {/* Header */}
-      <header className="space-y-2">
-        <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
-          Resuscitation
-        </p>
-        <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 dark:text-slate-50">
-          Paediatric Cardiac Arrest Algorithm
-        </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400 max-w-3xl">
-          Diagram-style reference for paediatric cardiac arrest based on the
-          updated HMCAS cardiac arrest algorithm. Use alongside your paediatric
-          arrest drug calculator (WAAFELSS) and the full CPG. All doses and
-          decisions must be confirmed with CPG 2.x before clinical use.
-        </p>
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-8">
+      {/* ── Sticky Header ── */}
+      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
+        <div className="mx-auto max-w-3xl px-4 py-3 flex items-center gap-3">
+          <Link
+            href="/dashboard/resuscitation"
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 text-slate-300" />
+          </Link>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
+              Paediatric Resuscitation
+            </p>
+            <h1 className="text-base font-bold text-white leading-tight">
+              Paediatric Cardiac Arrest Algorithm
+            </h1>
+          </div>
+          <CopySummaryButton summaryText={summaryText} />
+        </div>
       </header>
 
-      {/* Initial steps */}
-      <section className="grid gap-4 md:grid-cols-[2fr,1fr]">
-        <div className="space-y-3">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
-            <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase mb-2">
-              Initial recognition & setup
-            </p>
-            <div className="space-y-2">
-              {INITIAL_STEPS.map((step, idx) => (
-                <div
-                  key={step.title}
-                  className="flex gap-3 rounded-xl bg-slate-100 border border-slate-200 p-3 dark:bg-slate-900/70 dark:border-slate-800"
-                >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-xs font-semibold text-white">
-                    {idx + 1}
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">
-                      {step.title}
-                    </p>
-                    <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
-                      {step.description}
-                    </p>
-                  </div>
+      <main className="mx-auto max-w-3xl px-4 pt-4 space-y-4">
+        {/* ── Initial Steps ── */}
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Baby className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+              Recognition & Setup
+            </span>
+          </div>
+          <div className="space-y-2">
+            {INITIAL_STEPS.map((step, idx) => (
+              <div
+                key={idx}
+                className="flex gap-3 rounded-xl bg-slate-800 p-3"
+              >
+                <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500 text-xs font-bold text-white">
+                  {idx + 1}
                 </div>
-              ))}
+                <div>
+                  <p className="text-sm font-semibold text-white leading-snug">
+                    {step.label}
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-400">{step.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── No Resuscitation Note ── */}
+        <div className="flex items-start gap-3 rounded-xl border border-rose-900/50 bg-rose-950/30 p-3">
+          <AlertTriangle className="w-4 h-4 text-rose-400 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-rose-300">
+            <span className="font-semibold">Undeniable death:</span> if the
+            child meets criteria (CPG 2.7), do not commence resuscitation.
+          </p>
+        </div>
+
+        {/* ── Rhythm Check Decision ── */}
+        <div className="flex items-center justify-center gap-3">
+          <div className="flex-1 h-px bg-slate-800" />
+          <div className="flex items-center gap-2 rounded-full border border-emerald-700 bg-emerald-950/60 px-4 py-1.5">
+            <Activity className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider">
+              Rhythm Check
+            </span>
+          </div>
+          <div className="flex-1 h-px bg-slate-800" />
+        </div>
+
+        {/* ── Rhythm Fork ── */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* VF/VT */}
+          <div className="rounded-2xl border border-amber-900/60 bg-slate-900 overflow-hidden">
+            <div className="flex items-center gap-2 bg-amber-950/50 px-3 py-2.5 border-b border-amber-900/40">
+              <Zap className="w-4 h-4 text-amber-400" />
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                  Shockable
+                </p>
+                <p className="text-xs font-semibold text-amber-200">VF / VT</p>
+              </div>
             </div>
-          </div>
-        </div>
-
-        {/* Undeniable death note */}
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
-          <p className="text-[0.65rem] tracking-[0.2em] uppercase text-slate-500 dark:text-slate-400 mb-1">
-            No resuscitation criteria
-          </p>
-          <p>
-            If the child meets{" "}
-            <span className="font-semibold">undeniable death</span> criteria,
-            follow CPG 2.7 and do not commence resuscitation. Otherwise, proceed
-            with the paediatric cardiac arrest algorithm.
-          </p>
-        </div>
-      </section>
-
-      {/* Rhythm branches */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-center">
-          <div className="inline-flex items-center rounded-full border border-emerald-500/60 bg-emerald-500/10 px-4 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-100">
-            Rhythm shockable?
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Shockable side */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <p className="text-xs font-semibold tracking-[0.3em] text-amber-500 uppercase">
-              VF/VT (shockable)
-            </p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              For each 2-minute CPR cycle, if VF/VT is present at rhythm check,
-              deliver a <span className="font-semibold">single shock 4 J/kg</span>, then
-              immediately resume CPR for 2 minutes.
-            </p>
-            <div className="space-y-2">
+            <div className="p-3 space-y-2">
+              <p className="text-[11px] text-amber-300/80">
+                Single shock <span className="font-bold">4 J/kg</span> → immediate CPR
+              </p>
               {SHOCKABLE_CYCLES.map((cycle, idx) => (
                 <div
-                  key={cycle.title}
-                  className="rounded-xl bg-slate-100 border border-slate-200 p-3 dark:bg-slate-900/70 dark:border-slate-800"
+                  key={idx}
+                  className="rounded-xl bg-slate-800/80 border border-amber-900/30 p-3 space-y-1.5"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                    <p className="text-xs font-semibold text-white leading-snug">
                       {idx + 1}. {cycle.title}
                     </p>
                     {cycle.badge && (
-                      <span className="ml-2 inline-flex items-center rounded-full border border-amber-400/70 bg-amber-400/10 px-2 py-0.5 text-[0.65rem] font-medium text-amber-600 dark:text-amber-200">
+                      <span className="flex-shrink-0 rounded-md bg-amber-500/20 border border-amber-500/40 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
                         {cycle.badge}
                       </span>
                     )}
                   </div>
-                  <ul className="mt-1.5 space-y-1 text-xs text-slate-700 dark:text-slate-300">
-                    {cycle.points.map((p) => (
-                      <li key={p} className="flex gap-2">
-                        <span className="mt-[0.3rem] h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
-                        <span>{p}</span>
+                  <ul className="space-y-1">
+                    {cycle.points.map((p, pi) => (
+                      <li key={pi} className="flex gap-1.5 text-[11px] text-slate-400">
+                        <span className="mt-1 w-1 h-1 rounded-full bg-amber-500/70 flex-shrink-0" />
+                        {p}
                       </li>
                     ))}
                   </ul>
@@ -230,31 +234,36 @@ export default function PedsArrestAlgorithmPage() {
             </div>
           </div>
 
-          {/* Non-shockable side */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <p className="text-xs font-semibold tracking-[0.3em] text-orange-400 uppercase">
-              Asystole / PEA (non-shockable)
-            </p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              If rhythm is not shockable,{" "}
-              <span className="font-semibold">do not shock</span>. Maintain
-              continuous 2-minute CPR cycles with rhythm checks, airway
-              management, adrenaline, and reversible causes.
-            </p>
-            <div className="space-y-2">
-              {NON_SHOCKABLE_CYCLES.map((cycle, idx) => (
+          {/* Asystole / PEA */}
+          <div className="rounded-2xl border border-sky-900/60 bg-slate-900 overflow-hidden">
+            <div className="flex items-center gap-2 bg-sky-950/50 px-3 py-2.5 border-b border-sky-900/40">
+              <XCircle className="w-4 h-4 text-sky-400" />
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-sky-400">
+                  Non-shockable
+                </p>
+                <p className="text-xs font-semibold text-sky-200">
+                  Asystole / PEA
+                </p>
+              </div>
+            </div>
+            <div className="p-3 space-y-2">
+              <p className="text-[11px] text-sky-300/80">
+                Do <span className="font-bold">NOT</span> shock → CPR continues
+              </p>
+              {NONSHOCKABLE_CYCLES.map((cycle, idx) => (
                 <div
-                  key={cycle.title}
-                  className="rounded-xl bg-slate-100 border border-slate-200 p-3 dark:bg-slate-900/70 dark:border-slate-800"
+                  key={idx}
+                  className="rounded-xl bg-slate-800/80 border border-sky-900/30 p-3 space-y-1.5"
                 >
-                  <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                  <p className="text-xs font-semibold text-white leading-snug">
                     {idx + 1}. {cycle.title}
                   </p>
-                  <ul className="mt-1.5 space-y-1 text-xs text-slate-700 dark:text-slate-300">
-                    {cycle.points.map((p) => (
-                      <li key={p} className="flex gap-2">
-                        <span className="mt-[0.3rem] h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
-                        <span>{p}</span>
+                  <ul className="space-y-1">
+                    {cycle.points.map((p, pi) => (
+                      <li key={pi} className="flex gap-1.5 text-[11px] text-slate-400">
+                        <span className="mt-1 w-1 h-1 rounded-full bg-sky-500/70 flex-shrink-0" />
+                        {p}
                       </li>
                     ))}
                   </ul>
@@ -263,66 +272,72 @@ export default function PedsArrestAlgorithmPage() {
             </div>
           </div>
         </div>
-      </section>
 
-      {/* ROSC section */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-center">
-          <div className="inline-flex items-center rounded-full bg-amber-400 px-4 py-1 text-xs font-semibold text-slate-900">
-            ROSC?
+        {/* ── ROSC Decision ── */}
+        <div className="flex items-center justify-center gap-3">
+          <div className="flex-1 h-px bg-slate-800" />
+          <div className="flex items-center gap-2 rounded-full border border-amber-600 bg-amber-950/60 px-4 py-1.5">
+            <Heart className="w-3.5 h-3.5 text-amber-400" />
+            <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">
+              ROSC?
+            </span>
+          </div>
+          <div className="flex-1 h-px bg-slate-800" />
+        </div>
+
+        {/* ── ROSC Outcomes ── */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-emerald-900/60 bg-slate-900 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle className="w-4 h-4 text-emerald-400" />
+              <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                Yes — ROSC
+              </p>
+            </div>
+            <p className="text-xs text-slate-300">
+              Manage per{" "}
+              <span className="font-semibold text-white">ROSC CPG 2.6</span> for
+              paeds. Optimise oxygenation, ventilation, BP and temperature.
+              Early transport to appropriate facility.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-orange-900/60 bg-slate-900 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Activity className="w-4 h-4 text-orange-400" />
+              <p className="text-xs font-bold text-orange-400 uppercase tracking-wider">
+                No — Continue
+              </p>
+            </div>
+            <p className="text-xs text-slate-300">
+              Continue 2-min CPR cycles. VF/VT → 4 J/kg shocks + adrenaline +
+              amiodarone. Asystole/PEA → CPR + adrenaline + reversible causes.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-rose-900/60 bg-slate-900 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="w-4 h-4 text-rose-400" />
+              <p className="text-xs font-bold text-rose-400 uppercase tracking-wider">
+                No Field Termination
+              </p>
+            </div>
+            <p className="text-xs text-slate-300">
+              <span className="font-semibold text-white">
+                Do NOT terminate paediatric resuscitation in the field.
+              </span>{" "}
+              Transport to appropriate facility with CPR in progress per CPG and
+              Clinical Coordination.
+            </p>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
-            <p className="text-[0.7rem] font-semibold text-blue-600 dark:text-blue-300 mb-1">
-              YES – sustained ROSC
-            </p>
-            <p>
-              Manage according to <span className="font-semibold">ROSC CPG 2.6</span> for
-              paediatric patients. Optimise oxygenation, ventilation, blood
-              pressure and temperature, and{" "}
-              <span className="font-semibold">consider early transport</span> to
-              an appropriate facility.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
-            <p className="text-[0.7rem] font-semibold text-orange-500 mb-1">
-              NO – continue resuscitation
-            </p>
-            <p>
-              Continue 2-minute CPR cycles with rhythm checks. For VF/VT, keep
-              delivering single 4 J/kg shocks with adrenaline and amiodarone as
-              per CPG. For asystole/PEA, focus on high-quality CPR, adrenaline
-              and reversible causes.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-300">
-            <p className="text-[0.7rem] font-semibold text-rose-500 mb-1">
-              NO – field termination?
-            </p>
-            <p>
-              <span className="font-semibold">
-                Termination of paediatric resuscitation should not occur in the
-                field.
-              </span>{" "}
-              Continue resuscitation and{" "}
-              <span className="font-semibold">
-                transport to an appropriate facility with CPR in progress
-              </span>{" "}
-              in line with local CPG and Clinical Coordination.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <p className="text-[0.7rem] text-slate-500 dark:text-slate-500">
-        This reference is a visual aid only. Always follow the current HMCAS
-        Clinical Practice Guidelines and directions from Clinical Coordination
-        when managing paediatric cardiac arrest.
-      </p>
+        {/* ── Disclaimer ── */}
+        <p className="text-[11px] text-slate-600 pb-2">
+          Visual aid only. Follow current HMCAS CPGs and Clinical Coordination
+          when managing paediatric cardiac arrest.
+        </p>
+      </main>
     </div>
   );
 }

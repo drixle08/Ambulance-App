@@ -1,399 +1,488 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
+import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import {
+  ArrowLeft,
+  Baby,
+  Syringe,
+  Zap,
+  Droplets,
+  Activity,
+  RotateCcw,
+  Plus,
+  Minus,
+  Scale,
+  Heart,
+} from "lucide-react";
 
-function toFixed(value: number | null | undefined, dp: number = 1) {
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function estimateWeightKg(ageYears: number, ageMonths: number): number | null {
+  const totalMonths = ageYears * 12 + ageMonths;
+  if (totalMonths <= 0) return null;
+  if (ageYears === 0) return totalMonths * 0.5 + 4;
+  if (ageYears >= 1 && ageYears <= 5) return ageYears * 2 + 8;
+  if (ageYears >= 6 && ageYears <= 14) return ageYears * 3 + 7;
+  return null;
+}
+
+function fmt(value: number | null | undefined, dp = 1): string {
   if (value == null || Number.isNaN(value)) return "–";
   return value.toFixed(dp);
 }
 
-// Estimate weight if actual not provided (aligned with CPG v2.4 formulas)
-function estimateWeightKg(ageYears: number, ageMonths: number): number | null {
-  const totalMonths = ageYears * 12 + ageMonths;
+// ─── Types ──────────────────────────────────────────────────────────────────
 
-  if (totalMonths <= 0) return null;
+type ColorKey = "emerald" | "sky" | "blue" | "amber" | "yellow" | "rose";
 
-  // 0–12 months: (months × 0.5) + 4
-  if (ageYears === 0) {
-    return totalMonths * 0.5 + 4;
-  }
+const COLOR_STYLES: Record<
+  ColorKey,
+  { border: string; iconBg: string; accent: string }
+> = {
+  emerald: {
+    border: "border-emerald-900/60",
+    iconBg: "bg-emerald-900/40 text-emerald-400",
+    accent: "text-emerald-400",
+  },
+  sky: {
+    border: "border-sky-900/60",
+    iconBg: "bg-sky-900/40 text-sky-400",
+    accent: "text-sky-400",
+  },
+  blue: {
+    border: "border-blue-900/60",
+    iconBg: "bg-blue-900/40 text-blue-400",
+    accent: "text-blue-400",
+  },
+  amber: {
+    border: "border-amber-900/60",
+    iconBg: "bg-amber-900/40 text-amber-400",
+    accent: "text-amber-400",
+  },
+  yellow: {
+    border: "border-yellow-900/60",
+    iconBg: "bg-yellow-900/40 text-yellow-400",
+    accent: "text-yellow-400",
+  },
+  rose: {
+    border: "border-rose-900/60",
+    iconBg: "bg-rose-900/40 text-rose-400",
+    accent: "text-rose-400",
+  },
+};
 
-  // 1–5 years: (age × 2) + 8
-  if (ageYears >= 1 && ageYears <= 5) {
-    return ageYears * 2 + 8;
-  }
-
-  // 6–14 years: (age × 3) + 7
-  if (ageYears >= 6 && ageYears <= 14) {
-    return ageYears * 3 + 7;
-  }
-
-  // Outside range supported by the formula
-  return null;
-}
+// ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function PedsArrestPage() {
-  // Age fields as strings so they can be truly blank
-  const [ageYears, setAgeYears] = useState<string>("");
-  const [ageMonths, setAgeMonths] = useState<string>("");
-  const [weightInput, setWeightInput] = useState<string>("");
+  const [ageYears, setAgeYears] = useState(0);
+  const [ageMonths, setAgeMonths] = useState(0);
+  const [hasAge, setHasAge] = useState(false);
+  const [weightOverride, setWeightOverride] = useState("");
 
-  // Convert to numbers for calculations
-  const yearsNum = Math.min(14, Math.max(0, Number(ageYears || "0")));
-  const monthsNum = Math.min(11, Math.max(0, Number(ageMonths || "0")));
-  const hasAnyAge = ageYears !== "" || ageMonths !== "";
+  const estWeight = hasAge ? estimateWeightKg(ageYears, ageMonths) : null;
+  const parsedOverride = parseFloat(weightOverride);
+  const weight =
+    !isNaN(parsedOverride) && parsedOverride > 0 ? parsedOverride : estWeight;
 
-  const parsedWeight = parseFloat(weightInput);
-  const estWeight = hasAnyAge ? estimateWeightKg(yearsNum, monthsNum) : null;
+  // Doses
+  const adrMg = weight ? 0.01 * weight : null;
+  const adrMl = weight ? 0.1 * weight : null;
+  const amioMg = weight ? 5 * weight : null;
+  const fluid10 = weight ? 10 * weight : null;
+  const fluid20 = weight ? 20 * weight : null;
+  const defib4 = weight ? 4 * weight : null;
+  const defib6 = weight ? 6 * weight : null;
+  const defib8 = weight ? 8 * weight : null;
+  const defib10 = weight ? 10 * weight : null;
+  const dex10Vol = weight ? 2.5 * weight : null;
+  const sbp = hasAge && ageYears > 0 ? 70 + 2 * ageYears : 70;
 
-  const weightUsed =
-    !Number.isNaN(parsedWeight) && parsedWeight > 0 ? parsedWeight : estWeight;
+  function adjustYears(delta: number) {
+    setAgeYears((prev) => Math.max(0, Math.min(14, prev + delta)));
+    if (!hasAge) setHasAge(true);
+  }
 
-  // Core calculations (check against local CPG before clinical use)
-  const adrenalineDoseMg =
-    weightUsed != null ? 0.01 * weightUsed : null; // 0.01 mg/kg
-  const adrenalineVolMl =
-    weightUsed != null ? 0.1 * weightUsed : null; // 0.1 mL/kg of 1:10,000 (0.1 mg/mL)
+  function adjustMonths(delta: number) {
+    setAgeMonths((prev) => Math.max(0, Math.min(11, prev + delta)));
+    if (!hasAge) setHasAge(true);
+  }
 
-  const fluids10 = weightUsed != null ? 10 * weightUsed : null;
-  const fluids20 = weightUsed != null ? 20 * weightUsed : null; // 2 × 10 mL/kg
+  function handleReset() {
+    setAgeYears(0);
+    setAgeMonths(0);
+    setHasAge(false);
+    setWeightOverride("");
+  }
 
-  const amiodaroneDoseMg = weightUsed != null ? 5 * weightUsed : null; // 5 mg/kg
-
-  const defib4 = weightUsed != null ? 4 * weightUsed : null;
-  const defib6 = weightUsed != null ? 6 * weightUsed : null;
-  const defib8 = weightUsed != null ? 8 * weightUsed : null;
-  const defib10 = weightUsed != null ? 10 * weightUsed : null;
-
-  const dextrose10Vol =
-    weightUsed != null ? 2.5 * weightUsed : null; // 2.5 mL/kg of 10%
-
-  const computedAgeYears = hasAnyAge ? yearsNum + monthsNum / 12 : null;
-
-  const targetSBP = hasAnyAge ? (yearsNum > 0 ? 70 + 2 * yearsNum : 70) : null;
-
-  const handleReset = () => {
-    setAgeYears("");
-    setAgeMonths("");
-    setWeightInput("");
-  };
-
-  // 🔹 Summary text for PRF / notes
   const summaryText =
-    weightUsed == null
-      ? "Paediatric arrest calculator – no valid age/weight entered. Complete age/weight to generate weight-based doses and confirm all values with local CPG."
-      : `Paediatric arrest: approx age ${toFixed(
-          computedAgeYears ?? null,
-          1
-        )} years, weight ~${toFixed(
-          weightUsed,
-          1
-        )} kg. Adrenaline 0.01 mg/kg ≈ ${toFixed(
-          adrenalineDoseMg,
-          3
-        )} mg (${toFixed(
-          adrenalineVolMl,
-          1
-        )} mL of 1:10,000). Amiodarone 5 mg/kg ≈ ${toFixed(
-          amiodaroneDoseMg,
-          1
-        )} mg. Fluids 10 mL/kg ≈ ${toFixed(
-          fluids10,
-          0
-        )} mL; up to 20 mL/kg total ≈ ${toFixed(
-          fluids20,
-          0
-        )} mL. First shock 4 J/kg ≈ ${toFixed(
-          defib4,
-          0
-        )} J. Target SBP ≥ ${toFixed(
-          targetSBP ?? null,
-          0
-        )} mmHg (confirm with local CPG).`;
-
-  const hasValidWeight = weightUsed != null;
+    weight == null
+      ? "Paediatric arrest – no valid age/weight entered."
+      : `Paediatric arrest: ${ageYears}y ${ageMonths}m, weight ~${fmt(weight)} kg. ` +
+        `Adrenaline 0.01 mg/kg ≈ ${fmt(adrMg, 3)} mg (${fmt(adrMl, 1)} mL of 1:10,000). ` +
+        `Amiodarone 5 mg/kg ≈ ${fmt(amioMg, 1)} mg. ` +
+        `Fluids 10 mL/kg ≈ ${fmt(fluid10, 0)} mL (max 20 mL/kg ≈ ${fmt(fluid20, 0)} mL). ` +
+        `First shock 4 J/kg ≈ ${fmt(defib4, 0)} J. Target SBP ≥ ${sbp} mmHg.`;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
-      {/* Header */}
-      <header className="space-y-2">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400">
-              Paediatric resuscitation
-            </p>
-            <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 dark:text-slate-50">
-              Paediatric Arrest Calculator (WAAFELSS-style)
-            </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-3xl">
-              Age-based weight estimate with key arrest doses (adrenaline, amiodarone,
-              fluids, defibrillation energy, dextrose) and target systolic blood
-              pressure. Aligned with HMCAS CPG v2.4 patterns. Always confirm doses on
-              your local resus chart / CPG before use on real patients.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleReset}
-            className="h-9 px-3 rounded-lg border border-slate-300 bg-slate-50 text-xs font-medium text-slate-700 shadow-sm hover:border-emerald-500 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-500 dark:hover:text-emerald-300"
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-28">
+      {/* ── Sticky Header ── */}
+      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
+        <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-3">
+          <Link
+            href="/dashboard/resuscitation"
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
           >
-            Reset
-          </button>
+            <ArrowLeft className="w-4 h-4 text-slate-300" />
+          </Link>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
+              Paediatric Resuscitation
+            </p>
+            <h1 className="text-base font-bold text-white leading-tight">
+              Paediatric Arrest — WAAFELSS
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
+              aria-label="Reset"
+            >
+              <RotateCcw className="w-4 h-4 text-slate-300" />
+            </button>
+            <CopySummaryButton summaryText={summaryText} />
+          </div>
         </div>
       </header>
 
-      {/* Main layout: inputs + summary */}
-      <section className="grid gap-6 md:grid-cols-3">
-        {/* Left: inputs */}
-        <div className="md:col-span-2 space-y-4">
-          {/* Age card */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
-              Age
-            </p>
-            <div className="flex gap-3">
-              <div className="flex-1 space-y-1">
-                <label className="text-[11px] text-slate-600 dark:text-slate-400">
-                  Years
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={14}
-                  value={ageYears}
-                  onChange={(e) => setAgeYears(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm text-slate-900 shadow-sm outline-none focus:border-emerald-400 focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50"
-                />
-              </div>
-              <div className="flex-1 space-y-1">
-                <label className="text-[11px] text-slate-600 dark:text-slate-400">
-                  Months (0–11)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={11}
-                  value={ageMonths}
-                  onChange={(e) => setAgeMonths(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm text-slate-900 shadow-sm outline-none focus:border-emerald-400 focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50"
-                />
+      <main className="mx-auto max-w-2xl px-4 pt-4 space-y-4">
+        {/* ── Age Input ── */}
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <Baby className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+              Patient Age
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Years */}
+            <div className="space-y-1.5">
+              <p className="text-[11px] text-slate-500 text-center">Years</p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => adjustYears(-1)}
+                  className="flex-1 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 flex items-center justify-center transition-colors"
+                >
+                  <Minus className="w-5 h-5 text-slate-300" />
+                </button>
+                <span className="w-10 text-center text-2xl font-bold text-white tabular-nums">
+                  {ageYears}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => adjustYears(1)}
+                  className="flex-1 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 flex items-center justify-center transition-colors"
+                >
+                  <Plus className="w-5 h-5 text-slate-300" />
+                </button>
               </div>
             </div>
-            <p className="text-[11px] text-slate-600 dark:text-slate-400">
-              Computed age:{" "}
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
-                {toFixed(computedAgeYears ?? null, 1)} years
-              </span>
-            </p>
-          </div>
 
-          {/* Weight card */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
-              Weight
-            </p>
-            <div className="space-y-1">
-              <label className="text-[11px] text-slate-600 dark:text-slate-400">
-                Enter actual weight (kg) – optional
-              </label>
-              <input
-                type="number"
-                min={0}
-                step="0.1"
-                value={weightInput}
-                onChange={(e) => setWeightInput(e.target.value)}
-                placeholder="Leave blank to use estimate"
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm outline-none focus:border-emerald-400 focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:placeholder:text-slate-500"
-              />
-            </div>
-            <p className="text-[11px] text-slate-600 dark:text-slate-400">
-              Estimated from age:{" "}
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
-                {estWeight ? `${toFixed(estWeight, 1)} kg` : "–"}
-              </span>
-            </p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-500">
-              Using CPG v2.4 estimates: 0–12 months ≈ (months × 0.5) + 4; 1–5 years ≈
-              (age × 2) + 8; 6–14 years ≈ (age × 3) + 7. Always confirm with your local
-              CPG/resus chart.
-            </p>
-          </div>
-
-          {/* Quick notes */}
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-700 space-y-2 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-200">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
-              Quick notes
-            </p>
-            <ul className="space-y-1 list-disc pl-4">
-              <li>Calculations use actual weight if entered.</li>
-              <li>Otherwise, age-based weight estimate is used.</li>
-              <li>Always cross-check critical doses with your WAAFELSS/resus chart.</li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Right: summary card */}
-        <div className="md:col-span-1">
-          <div className="h-full rounded-2xl border border-slate-200 bg-slate-50 p-4 flex flex-col gap-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
-                  Arrest summary
-                </p>
-                <p className="mt-1 text-lg md:text-xl font-semibold text-slate-900 dark:text-slate-50">
-                  {hasValidWeight
-                    ? `Weight ~${toFixed(weightUsed ?? null, 1)} kg`
-                    : "Awaiting age/weight"}
-                </p>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  {hasValidWeight
-                    ? "Weight-based doses calculated below. Use this summary for PRF/ePCR, but confirm all doses in the CPG."
-                    : "Enter age and/or weight to generate weight-based doses."}
-                </p>
-              </div>
-              <CopySummaryButton summaryText={summaryText} />
-            </div>
-
-            <div className="rounded-xl bg-slate-100 border border-slate-200 p-3 text-xs text-slate-700 dark:bg-slate-900/80 dark:border-slate-800 dark:text-slate-300">
-              <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1">
-                Key numbers (first line)
+            {/* Months */}
+            <div className="space-y-1.5">
+              <p className="text-[11px] text-slate-500 text-center">
+                Months (0–11)
               </p>
-              <ul className="space-y-1.5">
-                <li>
-                  <span className="font-semibold">Adrenaline:</span>{" "}
-                  0.01 mg/kg ≈ {toFixed(adrenalineDoseMg, 3)} mg (
-                  {toFixed(adrenalineVolMl, 1)} mL of 1:10,000)
-                </li>
-                <li>
-                  <span className="font-semibold">Fluids:</span> 10 mL/kg ≈{" "}
-                  {toFixed(fluids10, 0)} mL (up to 20 mL/kg ≈{" "}
-                  {toFixed(fluids20, 0)} mL)
-                </li>
-                <li>
-                  <span className="font-semibold">First shock:</span> 4 J/kg ≈{" "}
-                  {toFixed(defib4, 0)} J
-                </li>
-                <li>
-                  <span className="font-semibold">Target SBP:</span> ≥{" "}
-                  {toFixed(targetSBP ?? null, 0)} mmHg
-                </li>
-              </ul>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => adjustMonths(-1)}
+                  className="flex-1 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 flex items-center justify-center transition-colors"
+                >
+                  <Minus className="w-5 h-5 text-slate-300" />
+                </button>
+                <span className="w-10 text-center text-2xl font-bold text-white tabular-nums">
+                  {ageMonths}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => adjustMonths(1)}
+                  className="flex-1 h-12 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-600 flex items-center justify-center transition-colors"
+                >
+                  <Plus className="w-5 h-5 text-slate-300" />
+                </button>
+              </div>
             </div>
+          </div>
+        </section>
 
-            <p className="text-[0.7rem] text-slate-600 dark:text-slate-500 mt-auto">
-              This tool supports WAAFELSS-style paediatric arrest management. It does
-              not replace your HMCAS CPG, resuscitation charts, or Clinical
-              Coordination. Always cross-check doses and adapt to the clinical
-              situation.
+        {/* ── Weight ── */}
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Scale className="w-4 h-4 text-emerald-400" />
+              <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                Weight
+              </span>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider">
+                {!isNaN(parsedOverride) && parsedOverride > 0
+                  ? "Actual"
+                  : "Estimated"}
+              </p>
+              <p className="text-2xl font-bold text-emerald-400 tabular-nums">
+                {weight != null ? `${fmt(weight)} kg` : "–"}
+              </p>
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] text-slate-500">
+              Override with actual weight (kg)
+            </label>
+            <input
+              type="number"
+              min={0}
+              step="0.1"
+              value={weightOverride}
+              onChange={(e) => setWeightOverride(e.target.value)}
+              placeholder="Leave blank to use estimate"
+              className="mt-1 w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-3 text-base text-white placeholder:text-slate-600 outline-none focus:border-emerald-500"
+            />
+          </div>
+          <p className="text-[10px] text-slate-600">
+            CPG v2.4 formulas — 0–12m: (months×0.5)+4 · 1–5y: (age×2)+8 ·
+            6–14y: (age×3)+7
+          </p>
+        </section>
+
+        {/* ── Dose Cards ── */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Adrenaline */}
+          <DoseCard
+            letter="A"
+            title="Adrenaline"
+            formula="0.01 mg/kg = 0.1 mL/kg"
+            color="emerald"
+            icon={<Syringe className="w-5 h-5" />}
+          >
+            <BigValue value={fmt(adrMg, 3)} unit="mg" />
+            <SmallValue value={fmt(adrMl, 1)} unit="mL of 1:10,000" />
+          </DoseCard>
+
+          {/* Amiodarone */}
+          <DoseCard
+            letter="A"
+            title="Amiodarone"
+            formula="5 mg/kg — VF/VT only"
+            color="sky"
+            icon={<Zap className="w-5 h-5" />}
+          >
+            <BigValue value={fmt(amioMg, 1)} unit="mg" />
+          </DoseCard>
+
+          {/* Fluids */}
+          <DoseCard
+            letter="F"
+            title="Fluids"
+            formula="10 mL/kg isotonic"
+            color="blue"
+            icon={<Droplets className="w-5 h-5" />}
+          >
+            <BigValue value={fmt(fluid10, 0)} unit="mL" />
+            <SmallValue value={`max ${fmt(fluid20, 0)} mL`} unit="(×2 boluses)" />
+          </DoseCard>
+
+          {/* Energy */}
+          <DoseCard
+            letter="E"
+            title="Energy"
+            formula="4 → 10 J/kg"
+            color="amber"
+            icon={<Zap className="w-5 h-5" />}
+          >
+            <div className="grid grid-cols-2 gap-1">
+              <ShockRow label="4 J/kg" value={fmt(defib4, 0)} />
+              <ShockRow label="6 J/kg" value={fmt(defib6, 0)} />
+              <ShockRow label="8 J/kg" value={fmt(defib8, 0)} />
+              <ShockRow label="10 J/kg" value={fmt(defib10, 0)} />
+            </div>
+          </DoseCard>
+
+          {/* Sugar */}
+          <DoseCard
+            letter="S"
+            title="Sugar (Dextrose 10%)"
+            formula="2.5 mL/kg IV"
+            color="yellow"
+            icon={<Droplets className="w-5 h-5" />}
+          >
+            <BigValue value={fmt(dex10Vol, 1)} unit="mL" />
+          </DoseCard>
+
+          {/* Systolic BP */}
+          <DoseCard
+            letter="S"
+            title="Target SBP"
+            formula="(age × 2) + 70 mmHg"
+            color="rose"
+            icon={<Activity className="w-5 h-5" />}
+          >
+            <BigValue
+              value={hasAge ? `≥ ${sbp}` : "–"}
+              unit={hasAge ? "mmHg" : ""}
+            />
+          </DoseCard>
+        </div>
+
+        {/* ── WAAFELSS Mnemonic ── */}
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 mb-3">
+            WAAFELSS Mnemonic
+          </p>
+          <div className="grid grid-cols-2 gap-y-2 gap-x-4">
+            {(
+              [
+                ["W", "Weight"],
+                ["A", "Airway"],
+                ["A", "Adrenaline / Amiodarone"],
+                ["F", "Fluids"],
+                ["E", "Energy (Defib)"],
+                ["L", "Lorazepam"],
+                ["S", "Sugar (Dextrose)"],
+                ["S", "Systolic BP target"],
+              ] as [string, string][]
+            ).map(([letter, label], i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-md bg-emerald-900/60 text-emerald-400 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                  {letter}
+                </span>
+                <span className="text-xs text-slate-300">{label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Disclaimer ── */}
+        <div className="flex items-start gap-2 rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+          <Heart className="w-4 h-4 text-rose-500 mt-0.5 flex-shrink-0" />
+          <p className="text-[11px] text-slate-500 leading-relaxed">
+            Cross-check all doses against your HMCAS CPG, resuscitation chart,
+            and clinical judgement before use on real patients.
+          </p>
+        </div>
+      </main>
+
+      {/* ── Sticky Bottom Bar ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-800 bg-slate-950/95 backdrop-blur-sm">
+        <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-4">
+          <div className="flex-1">
+            <p className="text-[10px] text-slate-500 uppercase tracking-widest">
+              Active weight
+            </p>
+            <p className="text-lg font-bold text-white tabular-nums">
+              {weight != null ? `~${fmt(weight)} kg` : "Enter age or weight"}
             </p>
           </div>
+          {weight != null && (
+            <>
+              <div className="text-right">
+                <p className="text-[10px] text-slate-500">Adrenaline</p>
+                <p className="text-base font-bold text-emerald-400 tabular-nums">
+                  {fmt(adrMl, 1)} mL
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] text-slate-500">1st Shock</p>
+                <p className="text-base font-bold text-amber-400 tabular-nums">
+                  {fmt(defib4, 0)} J
+                </p>
+              </div>
+            </>
+          )}
         </div>
-      </section>
-
-      {/* Grid of dose cards */}
-      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* Adrenaline */}
-        <DoseCard title="Adrenaline (1:10,000)" subtitle="0.01 mg/kg = 0.1 mL/kg">
-          <Row label="Dose" value={toFixed(adrenalineDoseMg, 3)} unit="mg" />
-          <Row label="Volume" value={toFixed(adrenalineVolMl, 1)} unit="mL" />
-        </DoseCard>
-
-        {/* Amiodarone */}
-        <DoseCard title="Amiodarone" subtitle="5 mg/kg (VF/pulseless VT)">
-          <Row label="Dose" value={toFixed(amiodaroneDoseMg, 1)} unit="mg" />
-        </DoseCard>
-
-        {/* Fluids */}
-        <DoseCard title="Fluids (Isotonic)" subtitle="10 mL/kg × 2 (CPG WAAFELSS)">
-          <Row
-            label="10 mL/kg (1st bolus)"
-            value={toFixed(fluids10, 0)}
-            unit="mL"
-          />
-          <Row
-            label="Max 20 mL/kg (2 boluses)"
-            value={toFixed(fluids20, 0)}
-            unit="mL"
-          />
-        </DoseCard>
-
-        {/* Defibrillation energy */}
-        <DoseCard
-          title="Defibrillation Energy"
-          subtitle="Start 4 J/kg – escalate to max 10 J/kg"
-        >
-          <Row label="Initial (4 J/kg)" value={toFixed(defib4, 0)} unit="J" />
-          <Row label="Next (6 J/kg)" value={toFixed(defib6, 0)} unit="J" />
-          <Row label="Then (8 J/kg)" value={toFixed(defib8, 0)} unit="J" />
-          <Row label="Max (10 J/kg)" value={toFixed(defib10, 0)} unit="J" />
-        </DoseCard>
-
-        {/* Dextrose */}
-        <DoseCard title="Dextrose 10% (Hypoglycaemia)" subtitle="2.5 mL/kg IV">
-          <Row label="Volume" value={toFixed(dextrose10Vol, 1)} unit="mL" />
-        </DoseCard>
-
-        {/* Target SBP */}
-        <DoseCard title="Target Systolic BP" subtitle="Age ≥1 yr: (age × 2) + 70">
-          <Row label="SBP ≥" value={toFixed(targetSBP ?? null, 0)} unit="mmHg" />
-        </DoseCard>
-      </section>
-
-      <p className="pt-2 text-[0.7rem] text-slate-600 dark:text-slate-500 max-w-4xl">
-        This tool is a quick-reference calculator for education and simulation. All
-        doses and parameters must be checked against your local Clinical Practice
-        Guidelines, resuscitation charts, and clinical judgement before use in real
-        patients.
-      </p>
+      </div>
     </div>
   );
 }
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
 
 type DoseCardProps = {
+  letter: string;
   title: string;
-  subtitle?: string;
-  children: ReactNode;
+  formula: string;
+  color: ColorKey;
+  icon: React.ReactNode;
+  children: React.ReactNode;
 };
 
-function DoseCard({ title, subtitle, children }: DoseCardProps) {
+function DoseCard({
+  letter,
+  title,
+  formula,
+  color,
+  icon,
+  children,
+}: DoseCardProps) {
+  const s = COLOR_STYLES[color];
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-800 space-y-2 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100">
-      <div>
-        <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-          {title}
-        </p>
-        {subtitle && (
-          <p className="text-[11px] text-slate-600 dark:text-slate-400">
-            {subtitle}
+    <div className={`rounded-2xl border ${s.border} bg-slate-900 p-4 space-y-2`}>
+      <div className="flex items-center gap-2">
+        <div
+          className={`w-8 h-8 rounded-lg ${s.iconBg} flex items-center justify-center flex-shrink-0`}
+        >
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <p className={`text-[10px] font-bold uppercase tracking-widest ${s.accent}`}>
+            {letter}
           </p>
-        )}
+          <p className="text-sm font-semibold text-white leading-tight truncate">
+            {title}
+          </p>
+        </div>
       </div>
-      <div className="mt-1 space-y-1.5">{children}</div>
+      <p className="text-[10px] text-slate-500">{formula}</p>
+      <div>{children}</div>
     </div>
   );
 }
 
-type RowProps = {
-  label: string;
-  value: string;
-  unit?: string;
-};
-
-function Row({ label, value, unit }: RowProps) {
+function BigValue({ value, unit }: { value: string; unit: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-3">
-      <span className="text-[11px] text-slate-600 dark:text-slate-300">
-        {label}
+    <div className="flex items-baseline gap-1">
+      <span className="text-2xl font-bold text-white tabular-nums">{value}</span>
+      {unit && (
+        <span className="text-xs text-slate-400">{unit}</span>
+      )}
+    </div>
+  );
+}
+
+function SmallValue({ value, unit }: { value: string; unit: string }) {
+  return (
+    <div className="flex items-baseline gap-1 mt-0.5">
+      <span className="text-sm font-semibold text-slate-300 tabular-nums">
+        {value}
       </span>
-      <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+      <span className="text-[10px] text-slate-500">{unit}</span>
+    </div>
+  );
+}
+
+function ShockRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-slate-800 px-2 py-1.5 text-center">
+      <p className="text-[9px] text-slate-500 leading-none">{label}</p>
+      <p className="text-sm font-bold text-white tabular-nums mt-0.5">
         {value}{" "}
-        {unit && (
-          <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400">
-            {unit}
-          </span>
-        )}
-      </span>
+        <span className="text-[10px] font-normal text-slate-400">J</span>
+      </p>
     </div>
   );
 }

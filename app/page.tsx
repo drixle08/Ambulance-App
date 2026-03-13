@@ -31,25 +31,25 @@ type QuickAction = {
 
 const QUICK_ACTIONS: QuickAction[] = [
   {
-    label: "Start resuscitation timer",
+    label: "Resus Timer",
     description: "2-min cycles with CPR metronome",
     href: "/tools/resus-timer",
     icon: HeartPulse,
   },
   {
-    label: "Open Paediatric Arrest",
+    label: "Paeds Arrest",
     description: "WAAFELSS doses & shocks",
     href: "/tools/peds-arrest",
     icon: Baby,
   },
   {
-    label: "Open Stroke BEFAST",
+    label: "Stroke BEFAST",
     description: "Onset bands & transport priority",
     href: "/tools/stroke",
     icon: Brain,
   },
   {
-    label: "Open Asthma Severity",
+    label: "Asthma Severity",
     description: "Adult + paeds thresholds",
     href: "/tools/asthma",
     icon: Wind,
@@ -63,33 +63,23 @@ const KPI_CHIPS = [
   { label: "Aligned with CPG v2.4 (2025)", value: "" },
 ];
 
-function QuickActions({ layout = "stack" }: { layout?: "stack" | "grid" }) {
-  const containerClasses =
-    layout === "grid"
-      ? "grid grid-cols-1 gap-2 sm:grid-cols-2"
-      : "flex flex-col gap-2";
-
+function QuickActions() {
   return (
-    <div className={containerClasses}>
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       {QUICK_ACTIONS.map((action) => {
         const Icon = action.icon;
         return (
           <Link
             key={action.href}
             href={action.href}
-            className="flex w-full items-center justify-between rounded-2xl border border-slate-300 bg-slate-100 px-4 py-3 text-left text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:border-emerald-500 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:hover:border-emerald-500 dark:hover:bg-slate-900/80"
+            className="group flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-3 py-4 text-center shadow-sm transition-all hover:border-emerald-500/70 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-emerald-500/60 dark:hover:bg-slate-900"
           >
-            <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-200">
-                <Icon className="h-5 w-5" />
-              </span>
-              <div className="flex flex-col items-start">
-                <span className="text-sm font-semibold">{action.label}</span>
-                <span className="text-[0.75rem] font-normal text-slate-600 dark:text-slate-400">
-                  {action.description}
-                </span>
-              </div>
-            </div>
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 transition-colors group-hover:bg-emerald-500/20 dark:bg-emerald-500/15 dark:group-hover:bg-emerald-500/25">
+              <Icon className="h-6 w-6 text-emerald-600 dark:text-emerald-300" />
+            </span>
+            <span className="text-xs font-semibold leading-tight text-slate-800 dark:text-slate-100">
+              {action.label}
+            </span>
           </Link>
         );
       })}
@@ -329,7 +319,7 @@ const MobileHome: React.FC = () => {
           <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
             Quick actions
           </h2>
-          <QuickActions layout="grid" />
+          <QuickActions />
         </section>
 
         <StatusSection />

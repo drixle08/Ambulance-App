@@ -2,225 +2,322 @@
 
 import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import {
+  ArrowLeft,
+  ShieldCheck,
+  Wind,
+  HeartPulse,
+  Brain,
+  Ambulance,
+  Activity,
+} from "lucide-react";
 
-type Step = {
-  title: string;
-  description: string;
-};
+// ─── Data ────────────────────────────────────────────────────────────────────
+
+type Step = { title: string; detail: string };
 
 type Section = {
   id: string;
   title: string;
-  subtitle?: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  color: "emerald" | "sky" | "rose" | "violet";
   steps: Step[];
 };
 
-const ROSC_SECTIONS: Section[] = [
+const SECTIONS: Section[] = [
   {
     id: "immediate",
-    title: "Immediate priorities after ROSC",
-    subtitle:
-      "Confirm ROSC, stabilise, and move from arrest algorithm to post–cardiac arrest care.",
+    title: "Immediate Priorities",
+    subtitle: "Confirm ROSC, stop CPR, reassess",
+    icon: <ShieldCheck className="w-5 h-5" />,
+    color: "emerald",
     steps: [
       {
         title: "Confirm sustained ROSC",
-        description:
-          "Check for an organised rhythm with palpable pulse, rising/maintained blood pressure, and appropriate EtCO₂. Use clinical assessment and monitoring in line with CPG 2.6.",
+        detail:
+          "Organised rhythm with palpable pulse, rising or maintained BP, and appropriate EtCO₂. Use clinical assessment + monitoring per CPG 2.6.",
       },
       {
         title: "Move to post-arrest phase",
-        description:
-          "Stop chest compressions once sustained ROSC is confirmed. Maintain airway, support breathing and circulation, and prepare for ongoing monitoring and transport or stay for 10 minutes as per cpg guideline.",
+        detail:
+          "Stop compressions once sustained ROSC confirmed. Maintain airway, support breathing and circulation. Remain on scene for 10 minutes or transport as per CPG.",
       },
       {
-        title: "Reassess LOC ABC",
-        description:
-          "Perform a focused primary assessment (LOC, airway, breathing, circulation). Correct reversible causes and treat immediately life-threatening problems.",
+        title: "Reassess LOC — ABC",
+        detail:
+          "Focused primary assessment: level of consciousness, airway, breathing, circulation. Correct reversible causes and treat immediately life-threatening problems.",
       },
     ],
   },
   {
-    id: "airway-breathing",
-    title: "Airway & breathing",
-    subtitle: "Support oxygenation and ventilation without hyperventilating.",
+    id: "airway",
+    title: "Airway & Breathing",
+    subtitle: "Oxygenate without hyperventilating",
+    icon: <Wind className="w-5 h-5" />,
+    color: "sky",
     steps: [
       {
         title: "Secure the airway",
-        description:
-          "Consider inserting an advanced airway if not already done during the arrest, where the airway is compromised or oxygenation/ventilation is suboptimal. Consider replacing an SGA with an ETT (age-dependent) as per CPG 2.6.",
+        detail:
+          "Insert advanced airway if airway is compromised or oxygenation/ventilation suboptimal. Consider replacing SGA with ETT (age-dependent) as per CPG 2.6.",
       },
       {
-        title: "Ventilate carefully",
-        description:
-          "Ensure adequate tidal volumes based on ideal body weight. Avoid hyperventilation. Use a controlled rate with appropriate inspiratory time and allow full exhalation.",
+        title: "Ventilate carefully — avoid hyperventilation",
+        detail:
+          "Adequate tidal volumes per ideal body weight. Controlled rate, appropriate inspiratory time, allow full exhalation. Avoid excessive bagging.",
       },
       {
-        title: "Accept higher EtCO₂ post-ROSC",
-        description:
-          "An elevated EtCO₂ is expected following ROSC. Do not attempt to fully normalise EtCO₂ prehospitally; this is corrected over time in hospital. Adjust ventilation based on lung pathology and the cause of arrest.",
+        title: "Accept elevated EtCO₂ post-ROSC",
+        detail:
+          "Elevated EtCO₂ is expected after ROSC. Do not attempt to fully normalise it prehospitally — correct over time in hospital. Adjust for cause of arrest.",
       },
       {
-        title: "Target oxygen saturation",
-        description:
-          "Aim to maintain SpO₂ > 90%. Avoid prolonged hypoxia or unnecessary hyperoxia. Titrate oxygen according to the relevant respiratory or cardiac CPG if there are special considerations.",
+        title: "Target SpO₂ > 90%",
+        detail:
+          "Avoid prolonged hypoxia and unnecessary hyperoxia. Titrate oxygen delivery. Follow respiratory or cardiac CPG if special considerations apply.",
       },
     ],
   },
   {
     id: "circulation",
-    title: "Circulation, blood pressure & fluids",
-    subtitle: "Maintain perfusion pressure and treat the underlying cardiac cause.",
+    title: "Circulation, BP & Fluids",
+    subtitle: "Maintain perfusion — treat underlying cause",
+    icon: <HeartPulse className="w-5 h-5" />,
+    color: "rose",
     steps: [
       {
         title: "12-lead ECG & cardiac cause",
-        description:
-          "Obtain a 12-lead ECG on all ROSC patients after a medical cardiac arrest, especially if a cardiac cause is suspected. If a pre-arrest ECG showed STEMI, transport to an appropriate PCI-capable facility as per CPG 2.6.",
+        detail:
+          "Obtain 12-lead ECG on all ROSC patients after medical cardiac arrest. If pre-arrest ECG showed STEMI, transport to PCI-capable facility per CPG 2.6.",
       },
       {
-        title: "Monitor BP & MAP frequently",
-        description:
-          "Monitor BP and MAP at least every 5 minutes. For adults, maintain SBP > 90 mmHg and MAP > 65 mmHg (or MAP 70–80 mmHg for isolated TBI). For paediatrics, maintain age-appropriate SBP using (age × 2) + 70 and avoid large BP spikes, especially in trauma.",
+        title: "Monitor BP & MAP every 5 min",
+        detail:
+          "Adults: maintain SBP > 90 mmHg and MAP ≥ 65 mmHg (MAP 70–80 mmHg for isolated TBI). Paediatrics: SBP ≥ (age × 2) + 70 mmHg. Avoid large BP spikes in trauma.",
       },
       {
-        title: "Use fluids judiciously",
-        description:
-          "Adults: give 250 mL IV boluses to a maximum of 1–2 L depending on the cause of arrest. In major haemorrhage, limit to a maximum of 1 L. Paediatrics: give 10–20 mL/kg bolus, which may be repeated once if required, according to CPG 2.6.",
+        title: "Fluids — use judiciously",
+        detail:
+          "Adults: 250 mL IV boluses up to 1–2 L (max 1 L in major haemorrhage). Paediatrics: 10–20 mL/kg bolus, may be repeated once if required, per CPG 2.6.",
       },
       {
-        title: "Consider vasopressors/inotropes",
-        description:
-          "If hypotension persists despite fluids, consider vasopressor/inotrope support to maintain target MAP. Phenylephrine or noradrenaline may be considered for adults. Adrenaline infusions in adults are not for routine use and should follow CPG guidance.",
+        title: "Consider vasopressors if hypotension persists",
+        detail:
+          "If hypotension despite fluids, consider vasopressor/inotrope to maintain target MAP. Phenylephrine or noradrenaline for adults. Adrenaline infusions not routine — follow CPG guidance.",
       },
     ],
   },
   {
-    id: "neuro-transport",
-    title: "Neurological care, temperature & transport",
-    subtitle:
-      "Protect the brain, control agitation/seizures, and choose the right destination.",
+    id: "neuro",
+    title: "Neuro, Temperature & Transport",
+    subtitle: "Protect the brain — choose the right destination",
+    icon: <Brain className="w-5 h-5" />,
+    color: "violet",
     steps: [
       {
         title: "Protect cerebral perfusion",
-        description:
-          "Avoid hypotension, hypoxia and extremes of CO₂, as these worsen neurological outcomes. In isolated TBI, favour the higher MAP target (70–80 mmHg) as per CPG 2.6.",
+        detail:
+          "Avoid hypotension, hypoxia and extremes of CO₂ — all worsen neurological outcomes. For isolated TBI, target MAP 70–80 mmHg per CPG 2.6.",
       },
       {
         title: "Manage agitation, pain & seizures",
-        description:
-          "Treat pain, agitation and seizures using the relevant CPGs (analgesia, sedation, seizure management). Avoid excessive movement and maintain cervical spine precautions where trauma is suspected.",
+        detail:
+          "Treat using relevant CPGs (analgesia, sedation, seizure management). Avoid excessive movement. Maintain cervical spine precautions where trauma is suspected.",
       },
       {
         title: "Temperature management",
-        description:
-          "Prevent hyperthermia and avoid unnecessary cooling outside CPG or receiving-facility protocols. Aim for normothermia during transport and handover.",
+        detail:
+          "Prevent hyperthermia. Avoid unnecessary cooling outside CPG or receiving-facility protocols. Aim for normothermia during transport and handover.",
       },
       {
-        title: "Plan destination & early transport",
-        description:
-          "Once stabilised, transport without delay to the most appropriate facility (e.g. PCI centre for STEMI, trauma centre for major trauma, or paediatric centre for children). Provide a structured handover highlighting pre-arrest status, arrest rhythm, downtime and ROSC times.",
+        title: "Plan destination — transport without delay",
+        detail:
+          "PCI centre for STEMI · Trauma centre for major trauma · Paediatric centre for children. Structured handover: pre-arrest status, arrest rhythm, downtime and ROSC times.",
       },
     ],
   },
 ];
 
+const COLOR_STYLES = {
+  emerald: {
+    border: "border-emerald-900/60",
+    header: "bg-emerald-950/50 border-b border-emerald-900/40",
+    icon: "bg-emerald-900/50 text-emerald-400",
+    accent: "text-emerald-400",
+    dot: "bg-emerald-500/70",
+    num: "bg-emerald-900/50 border-emerald-700/50 text-emerald-300",
+  },
+  sky: {
+    border: "border-sky-900/60",
+    header: "bg-sky-950/50 border-b border-sky-900/40",
+    icon: "bg-sky-900/50 text-sky-400",
+    accent: "text-sky-400",
+    dot: "bg-sky-500/70",
+    num: "bg-sky-900/50 border-sky-700/50 text-sky-300",
+  },
+  rose: {
+    border: "border-rose-900/60",
+    header: "bg-rose-950/50 border-b border-rose-900/40",
+    icon: "bg-rose-900/50 text-rose-400",
+    accent: "text-rose-400",
+    dot: "bg-rose-500/70",
+    num: "bg-rose-900/50 border-rose-700/50 text-rose-300",
+  },
+  violet: {
+    border: "border-violet-900/60",
+    header: "bg-violet-950/50 border-b border-violet-900/40",
+    icon: "bg-violet-900/50 text-violet-400",
+    accent: "text-violet-400",
+    dot: "bg-violet-500/70",
+    num: "bg-violet-900/50 border-violet-700/50 text-violet-300",
+  },
+};
+
+// ─── Page ────────────────────────────────────────────────────────────────────
+
 export default function RoscPage() {
   const summaryText =
-    "Post-ROSC care: airway secured, controlled ventilation avoiding hyperventilation, SpO₂ >90%, SBP >90 mmHg and MAP ≥65 mmHg (MAP 70–80 mmHg in isolated TBI; paeds SBP ≥70 + 2×age), adult fluids 250 mL boluses up to 1–2 L (≤1 L if major haemorrhage), paeds 10–20 mL/kg bolus repeated once if required, 12-lead ECG performed if cardiac cause suspected.";
+    "Post-ROSC care: confirm ROSC, stop CPR, reassess ABC. Airway secured, controlled ventilation avoiding hyperventilation, SpO₂ > 90%. Adults: SBP > 90 mmHg, MAP ≥ 65 mmHg (70–80 for TBI); fluids 250 mL boluses up to 1–2 L (≤1 L if major haemorrhage). Paeds: SBP ≥ (age×2)+70; 10–20 mL/kg bolus once if required. 12-lead ECG if cardiac cause. Transport to PCI centre for STEMI, trauma centre for trauma, paeds centre for children.";
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8 space-y-6">
-        {/* Top bar */}
-        <div className="flex items-center justify-between gap-4">
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-8">
+      {/* ── Sticky Header ── */}
+      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
+        <div className="mx-auto max-w-3xl px-4 py-3 flex items-center gap-3">
           <Link
-            href="/dashboard"
-            className="text-xs font-medium text-slate-400 hover:text-emerald-400"
+            href="/dashboard/resuscitation"
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
           >
-            ← Back to dashboard
+            <ArrowLeft className="w-4 h-4 text-slate-300" />
           </Link>
-
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
+              Resuscitation
+            </p>
+            <h1 className="text-base font-bold text-white leading-tight">
+              Post Cardiac Arrest (ROSC) Care
+            </h1>
+          </div>
           <CopySummaryButton summaryText={summaryText} />
         </div>
+      </header>
 
-        {/* Header */}
-        <header className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-400/80">
-            Resuscitation
+      <main className="mx-auto max-w-3xl px-4 pt-4 space-y-4">
+        {/* ── Key Targets Bar ── */}
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Activity className="w-4 h-4 text-amber-400" />
+            <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+              Key Targets
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <TargetChip label="SpO₂" value="> 90%" color="sky" />
+            <TargetChip label="Adult SBP" value="> 90 mmHg" color="rose" />
+            <TargetChip label="Adult MAP" value="≥ 65 mmHg" color="rose" />
+            <TargetChip label="TBI MAP" value="70–80 mmHg" color="amber" />
+          </div>
+          <p className="mt-2 text-[10px] text-slate-600">
+            Paeds SBP ≥ (age × 2) + 70 mmHg · Adults: 250 mL fluid boluses up
+            to 1–2 L · Paeds: 10–20 mL/kg bolus
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Post Cardiac Arrest (ROSC) Care
-          </h1>
-          <p className="text-sm text-slate-400 max-w-3xl">
-            Diagram-style reference for post–cardiac arrest care based on HMCAS
-            CPG 2.6 Post Cardiac Arrest (ROSC) Care. Focused on airway and
-            ventilation strategy, blood pressure and MAP targets, fluids,
-            vasopressors and transport decisions for both adults and
-            paediatrics. Always confirm doses and decisions with the full CPG
-            before clinical use.
-          </p>
-        </header>
+        </section>
 
-        {/* Sections */}
-        <section className="space-y-6">
-          {ROSC_SECTIONS.map((section) => (
-            <div
+        {/* ── Sections ── */}
+        {SECTIONS.map((section) => {
+          const s = COLOR_STYLES[section.color];
+          return (
+            <section
               key={section.id}
-              className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 md:p-5 space-y-4"
+              className={`rounded-2xl border ${s.border} bg-slate-900 overflow-hidden`}
             >
-              <div className="flex items-start justify-between gap-3">
+              {/* Section header */}
+              <div className={`flex items-center gap-3 px-4 py-3 ${s.header}`}>
+                <div
+                  className={`w-8 h-8 rounded-lg ${s.icon} flex items-center justify-center flex-shrink-0`}
+                >
+                  {section.icon}
+                </div>
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-50">
+                  <p className={`text-xs font-bold uppercase tracking-widest ${s.accent}`}>
                     {section.title}
-                  </h2>
-                  {section.subtitle && (
-                    <p className="text-xs text-slate-400 mt-1">
-                      {section.subtitle}
-                    </p>
-                  )}
+                  </p>
+                  <p className="text-[11px] text-slate-400">{section.subtitle}</p>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                {section.steps.map((step, index) => (
-                  <StepRow
-                    key={step.title}
-                    index={index + 1}
-                    title={step.title}
-                    description={step.description}
-                  />
+              {/* Steps */}
+              <div className="p-3 space-y-2">
+                {section.steps.map((step, idx) => (
+                  <div
+                    key={idx}
+                    className="flex gap-3 rounded-xl bg-slate-800 p-3"
+                  >
+                    <div
+                      className={`mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border text-[11px] font-bold ${s.num}`}
+                    >
+                      {idx + 1}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-white leading-snug">
+                        {step.title}
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-400 leading-relaxed">
+                        {step.detail}
+                      </p>
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
-          ))}
-        </section>
+            </section>
+          );
+        })}
 
-        <p className="pt-2 text-[11px] text-slate-500 max-w-4xl">
-          This tool is an educational summary of CPG 2.6 and does not replace
-          the full guideline or clinical coordination. Always integrate ROSC
-          care with the underlying cause of arrest and relevant CPGs (STEMI,
-          trauma/TBI, respiratory, sepsis, paediatrics).
+        {/* ── Transport Reminder ── */}
+        <div className="flex items-start gap-3 rounded-xl border border-amber-900/50 bg-amber-950/30 p-3">
+          <Ambulance className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-amber-300">
+            <span className="font-semibold">Transport to the right destination:</span>{" "}
+            PCI centre for STEMI · Trauma centre for major trauma · Paediatric
+            centre for children. Structured handover with pre-arrest status,
+            rhythm, downtime and ROSC times.
+          </p>
+        </div>
+
+        {/* ── Disclaimer ── */}
+        <p className="text-[11px] text-slate-600 pb-2">
+          Summary of CPG 2.6 — not a replacement for the full guideline or
+          clinical coordination. Integrate with underlying cause of arrest and
+          relevant CPGs (STEMI, trauma/TBI, respiratory, sepsis, paediatrics).
         </p>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
 
-type StepRowProps = {
-  index: number;
-  title: string;
-  description: string;
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+type TargetChipProps = {
+  label: string;
+  value: string;
+  color: "sky" | "rose" | "amber" | "emerald";
 };
 
-function StepRow({ index, title, description }: StepRowProps) {
+const CHIP_STYLES = {
+  sky: "border-sky-900/60 bg-sky-950/40 text-sky-300",
+  rose: "border-rose-900/60 bg-rose-950/40 text-rose-300",
+  amber: "border-amber-900/60 bg-amber-950/40 text-amber-300",
+  emerald: "border-emerald-900/60 bg-emerald-950/40 text-emerald-300",
+};
+
+function TargetChip({ label, value, color }: TargetChipProps) {
   return (
-    <div className="flex items-start gap-3 rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-3">
-      <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/15 border border-emerald-500/60 text-xs font-semibold text-emerald-300">
-        {index}
-      </div>
-      <div className="space-y-1">
-        <p className="text-sm font-semibold text-slate-50">{title}</p>
-        <p className="text-xs text-slate-300">{description}</p>
-      </div>
+    <div className={`rounded-xl border p-2.5 ${CHIP_STYLES[color]}`}>
+      <p className="text-[10px] text-slate-500 uppercase tracking-wider leading-none">
+        {label}
+      </p>
+      <p className="text-sm font-bold mt-1 leading-none">{value}</p>
     </div>
   );
 }

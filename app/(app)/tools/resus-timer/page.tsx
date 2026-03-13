@@ -41,11 +41,12 @@ type SpeechRecognitionInstance = {
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 
 const CYCLE_SECONDS = 120; // 2-minute CPR cycles
+const PAUSE_SECONDS = 5;   // rhythm-check gap between cycles
 const DEFAULT_BPM = 110;
 
 export default function ResuscitationTimerPage() {
   const [isRunning, setIsRunning] = useState(false);
-  const [phase] = useState<Phase>("CPR"); // reserved for future CPR/Pause phases
+  const [phase, setPhase] = useState<Phase>("CPR");
   const [cycleNumber, setCycleNumber] = useState(1);
   const [secondsRemaining, setSecondsRemaining] = useState(CYCLE_SECONDS);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -79,6 +80,8 @@ export default function ResuscitationTimerPage() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const elapsedRef = useRef(0);
   const isRunningRef = useRef(false);
+  const phaseRef = useRef<Phase>("CPR");
+  const cycleRef = useRef(1);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const shouldRestartRecognition = useRef(false);
   const lastVoiceCommandAtRef = useRef(0);
@@ -90,6 +93,14 @@ export default function ResuscitationTimerPage() {
   useEffect(() => {
     isRunningRef.current = isRunning;
   }, [isRunning]);
+
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+
+  useEffect(() => {
+    cycleRef.current = cycleNumber;
+  }, [cycleNumber]);
 
   // Persist voice preference
   useEffect(() => {
@@ -134,13 +145,6 @@ export default function ResuscitationTimerPage() {
     setLogs((prev) => [...prev, entry]);
   }, []);
 
-  const logCycleStart = useCallback(
-    (cycle: number) => {
-      addLog(`Cycle ${cycle} started (CPR)`);
-    },
-    [addLog]
-  );
-
   const playClick = useCallback(() => {
     const ctx = getAudioContext();
     if (!ctx) return;
@@ -169,31 +173,39 @@ export default function ResuscitationTimerPage() {
 
     const id = window.setInterval(() => {
       setSecondsRemaining((prev) => {
-        if (prev > 1) {
-          return prev - 1;
-        }
+        if (prev > 1) return prev - 1;
 
-        // Cycle completed -> start next
-        setCycleNumber((prevCycle) => {
-          const next = prevCycle + 1;
+        if (phaseRef.current === "CPR") {
+          // CPR cycle done → 5-second rhythm check pause
+          setPhase("Pause");
+          phaseRef.current = "Pause";
           if (startTimeRef.current) {
-            logCycleStart(next);
+            addLog(`Cycle ${cycleRef.current} complete — rhythm check`);
           }
-          return next;
-        });
-
-        return CYCLE_SECONDS;
+          return PAUSE_SECONDS;
+        } else {
+          // Pause done → start next CPR cycle
+          const next = cycleRef.current + 1;
+          setPhase("CPR");
+          phaseRef.current = "CPR";
+          setCycleNumber(next);
+          cycleRef.current = next;
+          if (startTimeRef.current) {
+            addLog(`Cycle ${next} started (CPR)`);
+          }
+          return CYCLE_SECONDS;
+        }
       });
 
       setElapsedSeconds((prev) => prev + 1);
     }, 1000);
 
     return () => window.clearInterval(id);
-  }, [isRunning, logCycleStart]);
+  }, [isRunning, addLog]);
 
-  // Metronome (100-120 bpm, fixed at DEFAULT_BPM)
+  // Metronome (100-120 bpm, fixed at DEFAULT_BPM) — silent during rhythm-check pause
   useEffect(() => {
-    if (!isRunning || !metronomeOn) return;
+    if (!isRunning || !metronomeOn || phase !== "CPR") return;
 
     const intervalMs = Math.round(60000 / DEFAULT_BPM);
 
@@ -202,7 +214,7 @@ export default function ResuscitationTimerPage() {
     }, intervalMs);
 
     return () => window.clearInterval(id);
-  }, [isRunning, metronomeOn, playClick]);
+  }, [isRunning, metronomeOn, phase, playClick]);
 
   const handleStartPause = useCallback(() => {
     if (isRunning) {
@@ -228,7 +240,10 @@ export default function ResuscitationTimerPage() {
 
   const handleReset = useCallback(() => {
     setIsRunning(false);
+    setPhase("CPR");
+    phaseRef.current = "CPR";
     setCycleNumber(1);
+    cycleRef.current = 1;
     setSecondsRemaining(CYCLE_SECONDS);
     setElapsedSeconds(0);
     startTimeRef.current = null;
@@ -459,11 +474,13 @@ export default function ResuscitationTimerPage() {
         {/* Main timer area */}
         <section className="flex flex-1 flex-col items-center justify-center">
           <div className="flex flex-col items-center gap-2">
-            <div className="rounded-3xl border border-slate-800 bg-slate-900/80 px-6 py-4 text-center shadow-lg">
-              <div className="mb-1 text-xs font-medium uppercase tracking-[0.18em] text-emerald-400">
-                Cycle {cycleNumber} {"->"} {phase}
+            <div className={`rounded-3xl border px-6 py-4 text-center shadow-lg transition-colors ${phase === "Pause" ? "border-amber-500/50 bg-amber-950/40" : "border-slate-800 bg-slate-900/80"}`}>
+              <div className={`mb-1 text-xs font-medium uppercase tracking-[0.18em] ${phase === "Pause" ? "text-amber-400" : "text-emerald-400"}`}>
+                {phase === "Pause"
+                  ? `Cycle ${cycleNumber} complete — Rhythm Check`
+                  : `Cycle ${cycleNumber} → CPR`}
               </div>
-              <div className="text-6xl font-semibold tabular-nums tracking-tight sm:text-7xl">
+              <div className={`text-6xl font-semibold tabular-nums tracking-tight sm:text-7xl ${phase === "Pause" ? "text-amber-300" : ""}`}>
                 {mainTimer}
               </div>
               <div className="mt-2 flex items-center justify-center gap-2 text-[0.7rem] text-slate-400">

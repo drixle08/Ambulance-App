@@ -1,8 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import {
+  ArrowLeft,
+  RotateCcw,
+  CheckCircle,
+  Circle,
+  Zap,
+  ShieldCheck,
+  AlertTriangle,
+  Activity,
+  XCircle,
+} from "lucide-react";
 
+// ─── Data ────────────────────────────────────────────────────────────────────
 
 type CriterionGroup = "core" | "comorbidity" | "alternative";
 
@@ -18,7 +31,7 @@ const CRITERIA: Criterion[] = [
   {
     id: "medical-arrest",
     label: "Medical cardiac arrest",
-    detail: "Non-traumatic aetiology as per CPG 2.9.",
+    detail: "Non-traumatic aetiology (CPG 2.9).",
     group: "core",
   },
   {
@@ -35,20 +48,20 @@ const CRITERIA: Criterion[] = [
   },
   {
     id: "immediate-cpr",
-    label: "Immediate bystander/paramedic CPR",
+    label: "Immediate bystander / paramedic CPR",
     detail: "CPR initiated without delay after collapse.",
     group: "core",
   },
   {
     id: "initial-rhythm",
     label: "Initial rhythm VF / VT / PEA",
-    detail: "As documented on the first available ECG rhythm check.",
+    detail: "As documented on first available ECG rhythm check.",
     group: "core",
   },
   {
     id: "time-to-ed",
-    label: "Time from arrest onset to estimated ED arrival ≤ 45 minutes",
-    detail: "Includes scene time and transport time to an ECMO-capable ED.",
+    label: "Arrest onset → estimated ED arrival ≤ 45 min",
+    detail: "Includes scene time and transport to an ECMO-capable ED.",
     group: "core",
   },
   {
@@ -58,7 +71,7 @@ const CRITERIA: Criterion[] = [
     group: "core",
   },
 
-  // Comorbidity / functional status block
+  // Comorbidity / functional status (exclusion — all must be ticked = confirmed absent)
   {
     id: "no-active-cancer",
     label: "NO active cancer or haematological disease",
@@ -67,25 +80,25 @@ const CRITERIA: Criterion[] = [
   },
   {
     id: "no-cardiac-disease",
-    label: "NO significant cardiac disease (e.g., CHF)",
-    detail: "No known severe chronic heart failure or similar end-stage cardiac disease.",
+    label: "NO significant cardiac disease (e.g. CHF)",
+    detail: "No known severe chronic heart failure or end-stage cardiac disease.",
     group: "comorbidity",
   },
   {
     id: "no-pulmonary-disease",
-    label: "NO significant pulmonary disease (e.g., COPD)",
-    detail: "No known advanced chronic lung disease limiting functional capacity.",
+    label: "NO significant pulmonary disease (e.g. COPD)",
+    detail: "No known advanced chronic lung disease limiting function.",
     group: "comorbidity",
   },
   {
     id: "no-renal-failure",
-    label: "NO renal failure and not on haemodialysis",
+    label: "NO renal failure / not on haemodialysis",
     detail: "No chronic renal failure requiring dialysis.",
     group: "comorbidity",
   },
   {
     id: "not-bedbound",
-    label: "NOT a bedbound patient",
+    label: "NOT bedbound pre-arrest",
     detail: "Pre-arrest functional status allows independent or assisted mobility.",
     group: "comorbidity",
   },
@@ -97,18 +110,17 @@ const CRITERIA: Criterion[] = [
   },
   {
     id: "no-prolonged-downtime",
-    label: "NO prolonged down-time without CPR",
-    detail: "No extended ‘no-flow’ period before CPR commenced.",
+    label: "NO prolonged downtime without CPR",
+    detail: "No extended 'no-flow' period before CPR commenced.",
     group: "comorbidity",
   },
 
-  // Alternative comorbidity pathway
+  // Alternative pathway
   {
     id: "unknown-history-assume-well",
-    label:
-      "Medical history cannot be determined but CCP reasonably assumes no significant comorbidity",
+    label: "History unknown — CCP reasonably assumes no significant comorbidity",
     detail:
-      "Treat as comorbidity free until proven otherwise, when clinical context supports this.",
+      "Treat as comorbidity-free when clinical context supports this and history cannot be obtained.",
     group: "alternative",
   },
 ];
@@ -117,63 +129,14 @@ type CriterionState = Record<string, boolean>;
 
 function buildInitialState(): CriterionState {
   const state: CriterionState = {};
-  for (const c of CRITERIA) {
-    state[c.id] = false;
-  }
+  for (const c of CRITERIA) state[c.id] = false;
   return state;
 }
 
-function ChecklistItem(props: {
-  criterion: Criterion;
-  checked: boolean;
-  onToggle: () => void;
-}) {
-  const { criterion, checked, onToggle } = props;
-
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={[
-        "flex w-full items-start gap-3 rounded-xl border px-3 py-2 text-left text-sm transition",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/80",
-        checked
-          ? "border-emerald-500/80 bg-emerald-500/10"
-          : "border-slate-200 bg-white/80 hover:border-emerald-400/70 hover:bg-emerald-500/5 dark:border-slate-700 dark:bg-slate-900/60 dark:hover:border-emerald-500/70",
-      ].join(" ")}
-    >
-      <div
-        className={[
-          "mt-1 h-4 w-4 shrink-0 rounded-md border text-xs font-semibold",
-          checked
-            ? "border-emerald-500 bg-emerald-500 text-slate-950"
-            : "border-slate-400 bg-slate-950/0 dark:border-slate-500",
-        ].join(" ")}
-      >
-        {checked && (
-          <span className="flex h-full w-full items-center justify-center">
-            ✓
-          </span>
-        )}
-      </div>
-      <div className="flex flex-col">
-        <span className="font-medium text-slate-900 dark:text-slate-50">
-          {criterion.label}
-        </span>
-        {criterion.detail && (
-          <span className="mt-0.5 text-xs text-slate-600 dark:text-slate-300/90">
-            {criterion.detail}
-          </span>
-        )}
-      </div>
-    </button>
-  );
-}
+// ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function ECMOCriteriaPage() {
-  const [checked, setChecked] = useState<CriterionState>(() =>
-    buildInitialState()
-  );
+  const [checked, setChecked] = useState<CriterionState>(buildInitialState);
 
   const coreCriteria = useMemo(
     () => CRITERIA.filter((c) => c.group === "core"),
@@ -188,16 +151,10 @@ export default function ECMOCriteriaPage() {
     []
   );
 
-  const toggleCriterion = (id: string) => {
-    setChecked((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
+  const toggle = (id: string) =>
+    setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  const resetChecklist = () => {
-    setChecked(buildInitialState());
-  };
+  const reset = () => setChecked(buildInitialState());
 
   const {
     anyChecked,
@@ -208,28 +165,22 @@ export default function ECMOCriteriaPage() {
     comorbidityTotal,
     comorbidityMet,
     alternativeSelected,
-    allInclusionMet,
+    allMet,
   } = useMemo(() => {
     const anyCheckedInner = Object.values(checked).some(Boolean);
-
     const coreTotalInner = coreCriteria.length;
-    const coreMetCountInner = coreCriteria.filter(
-      (c) => checked[c.id]
-    ).length;
+    const coreMetCountInner = coreCriteria.filter((c) => checked[c.id]).length;
     const coreMetInner = coreMetCountInner === coreTotalInner;
-
     const comorbidityTotalInner = comorbidityCriteria.length;
     const comorbidityMetCountInner = comorbidityCriteria.filter(
       (c) => checked[c.id]
     ).length;
     const comorbidityMetInner =
       comorbidityMetCountInner === comorbidityTotalInner;
-
     const alternativeSelectedInner = alternativeCriterion
       ? !!checked[alternativeCriterion.id]
       : false;
-
-    const allInclusionMetInner =
+    const allMetInner =
       coreMetInner && (comorbidityMetInner || alternativeSelectedInner);
 
     return {
@@ -241,75 +192,49 @@ export default function ECMOCriteriaPage() {
       comorbidityTotal: comorbidityTotalInner,
       comorbidityMet: comorbidityMetInner,
       alternativeSelected: alternativeSelectedInner,
-      allInclusionMet: allInclusionMetInner,
+      allMet: allMetInner,
     };
   }, [checked, coreCriteria, comorbidityCriteria, alternativeCriterion]);
 
-  let statusTitle = "Start by ticking the criteria above";
-  let statusBody: string[] = [
-    "Apply this checklist to all adult medical cardiac arrests.",
-    "Any patient meeting ALL inclusion criteria should be considered a candidate for e-CPR (CPG 2.9).",
-  ];
-  let statusTone: "neutral" | "positive" | "warning" = "neutral";
+  // Status bar content
+  type Tone = "neutral" | "positive" | "warning" | "negative";
+  let tone: Tone = "neutral";
+  let statusTitle = "Tick criteria to assess e-CPR eligibility";
+  let statusDetail = "All inclusion criteria must be met.";
 
   if (anyChecked) {
-    if (allInclusionMet) {
+    if (allMet) {
+      tone = "positive";
       statusTitle = "Meets e-CPR inclusion criteria";
-      statusBody = [
-        "Patient meets ALL ECMO CPR (e-CPR) inclusion criteria.",
-        "Treat as an e-CPR candidate and liaise early with the ECMO-capable centre as per CPG 2.9.",
-        "Maintain high-quality CPR, minimise no-flow time, and expedite transport to the designated ECMO facility.",
-      ];
-      statusTone = "positive";
+      statusDetail =
+        "Notify ECMO-capable centre early. Minimise scene time, maintain high-quality CPR and EtCO₂. Transport per CPG 2.9.";
     } else if (coreMet && !comorbidityMet && !alternativeSelected) {
-      statusTitle =
-        "Core arrest features met; comorbidity/functional criteria not fully met";
-      statusBody = [
-        "The cardiac arrest characteristics are favourable, but significant comorbidities or functional limitations may limit e-CPR benefit.",
-        "Generally, this does NOT meet the full e-CPR inclusion criteria in CPG 2.9.",
-        "Consider discussion with the on-call CCP/medical control for borderline cases.",
-      ];
-      statusTone = "warning";
+      tone = "warning";
+      statusTitle = "Core met — comorbidities not cleared";
+      statusDetail =
+        "Arrest features are favourable but significant comorbidities may limit e-CPR benefit. Consider discussion with CCP / medical control.";
     } else if (!coreMet) {
-      statusTitle = "Does NOT meet core e-CPR inclusion criteria";
-      statusBody = [
-        "One or more core inclusion criteria are not met (age, witnessed status, immediate CPR, rhythm, EtCO₂, or time to ED).",
-        "Manage as per standard cardiac arrest CPG (2.8) and ROSC care (2.6).",
-        "e-CPR is generally not indicated where core criteria are not satisfied.",
-      ];
-      statusTone = "warning";
+      tone = "negative";
+      statusTitle = "Does NOT meet core e-CPR criteria";
+      statusDetail =
+        "One or more core criteria not met. Manage per standard cardiac arrest CPG 2.8 and ROSC care CPG 2.6.";
     } else {
-      statusTitle = "Criteria partially met – does NOT meet full e-CPR checklist";
-      statusBody = [
-        "Some e-CPR checklist items are ticked, but the patient does not meet ALL inclusion criteria.",
-        "Continue standard cardiac arrest management; e-CPR is unlikely to be appropriate.",
-        "If in doubt, discuss with CCP/medical control and document the rationale.",
-      ];
-      statusTone = "warning";
+      tone = "warning";
+      statusTitle = "Partial — does NOT meet full e-CPR criteria";
+      statusDetail =
+        "Continue standard cardiac arrest management. e-CPR unlikely appropriate. Discuss with CCP / medical control if in doubt.";
     }
   }
 
   const summaryText = useMemo(() => {
-    if (!anyChecked) {
-      return (
-        "ECMO CPR (e-CPR) checklist used; criteria not yet completed at time of documentation."
-      );
-    }
-
-    if (allInclusionMet) {
-      return (
-        "ECMO CPR (e-CPR) checklist: ALL inclusion criteria met (core and comorbidity/functional) – treat as e-CPR candidate and liaise with ECMO centre as per CPG 2.9."
-      );
-    }
-
-    return (
-      `ECMO CPR (e-CPR) checklist: criteria partially met (core ${coreMetCount}/${coreTotal}, comorbidity ${comorbidityMetCount}/${comorbidityTotal}${
-        alternativeSelected ? ", history unknown but assumed comorbidity-free" : ""
-      }) – does NOT meet full e-CPR inclusion criteria; managed as standard cardiac arrest with consideration of expert consultation.`
-    );
+    if (!anyChecked)
+      return "ECMO CPR (e-CPR) checklist — criteria not yet completed at time of documentation.";
+    if (allMet)
+      return "ECMO CPR (e-CPR) checklist: ALL inclusion criteria met — treat as e-CPR candidate and liaise with ECMO centre per CPG 2.9.";
+    return `ECMO CPR (e-CPR) checklist: criteria partially met (core ${coreMetCount}/${coreTotal}, comorbidity ${comorbidityMetCount}/${comorbidityTotal}${alternativeSelected ? ", history assumed comorbidity-free" : ""}) — does NOT meet full e-CPR inclusion criteria; managed as standard cardiac arrest.`;
   }, [
     anyChecked,
-    allInclusionMet,
+    allMet,
     coreMetCount,
     coreTotal,
     comorbidityMetCount,
@@ -317,189 +242,316 @@ export default function ECMOCriteriaPage() {
     alternativeSelected,
   ]);
 
+  const toneCls = {
+    neutral:
+      "border-slate-700 bg-slate-900 text-slate-300",
+    positive:
+      "border-emerald-700 bg-emerald-950/60 text-emerald-200",
+    warning:
+      "border-amber-700 bg-amber-950/60 text-amber-200",
+    negative:
+      "border-rose-700 bg-rose-950/60 text-rose-200",
+  };
+
+  const toneIcon = {
+    neutral: <Activity className="w-4 h-4 text-slate-400 flex-shrink-0" />,
+    positive: <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />,
+    warning: <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />,
+    negative: <XCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />,
+  };
+
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 pb-20 md:px-6 lg:px-8">
-      <header className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-400">
-            Resuscitation &amp; ECMO
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-50">
-            ECMO CPR (e-CPR) Inclusion Criteria
-          </h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300/90">
-            CPG 2.9: Apply this checklist to adult medical cardiac arrests. Any
-            patient meeting{" "}
-            <span className="font-semibold">all</span> inclusion criteria
-            should be considered an e-CPR candidate and discussed with the
-            ECMO-capable centre.
-          </p>
-        </div>
-        <div className="mt-3 flex flex-col items-end gap-2 md:mt-0">
-          <CopySummaryButton summaryText={summaryText} />
-          <button
-            type="button"
-            onClick={resetChecklist}
-            className="text-xs font-medium text-slate-500 underline underline-offset-4 hover:text-slate-300 dark:text-slate-400"
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-32">
+      {/* ── Sticky Header ── */}
+      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
+        <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-3">
+          <Link
+            href="/dashboard/resuscitation"
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
           >
-            Reset checklist
-          </button>
+            <ArrowLeft className="w-4 h-4 text-slate-300" />
+          </Link>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
+              Resuscitation
+            </p>
+            <h1 className="text-base font-bold text-white leading-tight">
+              ECMO CPR (e-CPR) Criteria
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={reset}
+              className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
+              aria-label="Reset checklist"
+            >
+              <RotateCcw className="w-4 h-4 text-slate-300" />
+            </button>
+            <CopySummaryButton summaryText={summaryText} />
+          </div>
         </div>
       </header>
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            1. Core arrest features
-          </h2>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300/90">
-            Tick if the criterion is clearly met at the time of assessment.
+      <main className="mx-auto max-w-2xl px-4 pt-4 space-y-4">
+        {/* ── Context note ── */}
+        <div className="flex items-start gap-3 rounded-xl border border-emerald-900/50 bg-emerald-950/30 p-3">
+          <Zap className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-emerald-300">
+            CPG 2.9 — Apply to adult medical cardiac arrests. Patient must meet{" "}
+            <span className="font-bold">ALL</span> inclusion criteria to be
+            considered an e-CPR candidate.
           </p>
-          <div className="mt-3 space-y-2">
+        </div>
+
+        {/* ── Section 1: Core Arrest Features ── */}
+        <section className="rounded-2xl border border-emerald-900/60 bg-slate-900 overflow-hidden">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 bg-emerald-950/50 border-b border-emerald-900/40">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
+                  1. Core Arrest Features
+                </p>
+                <p className="text-[11px] text-slate-400">All must be met</p>
+              </div>
+            </div>
+            <ProgressBadge met={coreMetCount} total={coreTotal} color="emerald" />
+          </div>
+          <div className="p-3 space-y-2">
             {coreCriteria.map((c) => (
-              <ChecklistItem
+              <CriterionButton
                 key={c.id}
-                criterion={c}
+                label={c.label}
+                detail={c.detail}
                 checked={checked[c.id]}
-                onToggle={() => toggleCriterion(c.id)}
+                onToggle={() => toggle(c.id)}
+                color="emerald"
               />
             ))}
           </div>
-        </div>
+        </section>
 
-        <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            2. Comorbidities &amp; functional status
-          </h2>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300/90">
-            These criteria aim to exclude patients with poor baseline prognosis.
-          </p>
-          <div className="mt-3 space-y-2">
+        {/* ── Section 2: Comorbidities ── */}
+        <section className="rounded-2xl border border-sky-900/60 bg-slate-900 overflow-hidden">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 bg-sky-950/50 border-b border-sky-900/40">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-sky-400" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-sky-400">
+                  2. Comorbidities & Functional Status
+                </p>
+                <p className="text-[11px] text-slate-400">All exclusions must be absent</p>
+              </div>
+            </div>
+            <ProgressBadge
+              met={comorbidityMetCount}
+              total={comorbidityTotal}
+              color="sky"
+            />
+          </div>
+          <div className="p-3 space-y-2">
             {comorbidityCriteria.map((c) => (
-              <ChecklistItem
+              <CriterionButton
                 key={c.id}
-                criterion={c}
+                label={c.label}
+                detail={c.detail}
                 checked={checked[c.id]}
-                onToggle={() => toggleCriterion(c.id)}
+                onToggle={() => toggle(c.id)}
+                color="sky"
               />
             ))}
 
+            {/* OR separator */}
+            <div className="flex items-center gap-2 py-1">
+              <span className="flex-1 h-px bg-slate-700" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                OR
+              </span>
+              <span className="flex-1 h-px bg-slate-700" />
+            </div>
+
+            {/* Alternative */}
             {alternativeCriterion && (
               <>
-                <div className="mt-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                  <span className="h-px flex-1 bg-slate-300/60 dark:bg-slate-700" />
-                  <span>OR</span>
-                  <span className="h-px flex-1 bg-slate-300/60 dark:bg-slate-700" />
-                </div>
-                <ChecklistItem
-                  criterion={alternativeCriterion}
+                <CriterionButton
+                  label={alternativeCriterion.label}
+                  detail={alternativeCriterion.detail}
                   checked={checked[alternativeCriterion.id]}
-                  onToggle={() => toggleCriterion(alternativeCriterion.id)}
+                  onToggle={() => toggle(alternativeCriterion.id)}
+                  color="violet"
                 />
-                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  Only tick this alternative if there is genuinely insufficient
-                  background information but the CCP reasonably judges the
-                  patient to be comorbidity free based on the available
-                  context.
+                <p className="text-[10px] text-slate-600 px-1">
+                  Only tick if there is genuinely insufficient background
+                  information and the CCP reasonably judges the patient to be
+                  comorbidity-free.
                 </p>
               </>
             )}
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          3. Checklist status &amp; guideline interpretation
-        </h2>
-
-        <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-600 dark:text-slate-300/90">
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 dark:bg-slate-800/80">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            Core: {coreMetCount}/{coreTotal} met
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 dark:bg-slate-800/80">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            Comorbidity: {comorbidityMetCount}/{comorbidityTotal} met
-          </span>
-          {alternativeCriterion && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 dark:bg-slate-800/80">
-              <span
-                className={[
-                  "h-2 w-2 rounded-full",
-                  alternativeSelected
-                    ? "bg-emerald-500"
-                    : "bg-slate-400 dark:bg-slate-500",
-                ].join(" ")}
-              />
-              Alternative history assumption{" "}
-              {alternativeSelected ? "selected" : "not selected"}
-            </span>
-          )}
-        </div>
-
-        <div
-          className={[
-            "mt-4 rounded-xl border px-3 py-3 text-sm",
-            statusTone === "positive"
-              ? "border-emerald-500/70 bg-emerald-500/10 text-emerald-100"
-              : statusTone === "warning"
-              ? "border-amber-500/70 bg-amber-500/10 text-amber-50"
-              : "border-slate-500/60 bg-slate-900/40 text-slate-100",
-          ].join(" ")}
-        >
-          <p className="font-semibold">{statusTitle}</p>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-xs">
-            {statusBody.map((line, idx) => (
-              <li key={idx}>{line}</li>
+        {/* ── Practical triggers ── */}
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-4 space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Practical Prehospital Triggers
+          </p>
+          <p className="text-[11px] text-slate-500">
+            e-CPR is most likely appropriate when ALL of the following are present:
+          </p>
+          <ul className="space-y-1.5">
+            {[
+              "Younger adult (< 60 y) with good pre-arrest functional status and no major comorbidities.",
+              "Witnessed medical cardiac arrest with immediate, high-quality bystander or paramedic CPR.",
+              "Initial rhythm VF/VT or PEA, with EtCO₂ > 10 mmHg during resuscitation.",
+              "Collapse → ECMO-capable ED arrival expected ≤ 45 minutes.",
+              "No clear exclusion: no advanced malignancy, end-stage heart/lung/renal disease, bedbound status, or severe dementia.",
+            ].map((t, i) => (
+              <li key={i} className="flex gap-2 text-xs text-slate-300">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500/70 flex-shrink-0" />
+                {t}
+              </li>
             ))}
           </ul>
+        </section>
+
+        {/* Spacer for fixed bar */}
+        <div className="h-2" />
+      </main>
+
+      {/* ── Sticky Outcome Bar ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-800 bg-slate-950/95 backdrop-blur-sm">
+        <div className="mx-auto max-w-2xl px-4 py-3 space-y-2">
+          {/* Progress row */}
+          <div className="flex items-center gap-3 text-xs">
+            <span className="text-slate-500">Core</span>
+            <span
+              className={`font-bold tabular-nums ${coreMet ? "text-emerald-400" : "text-slate-300"}`}
+            >
+              {coreMetCount}/{coreTotal}
+            </span>
+            <span className="flex-1 h-px bg-slate-800" />
+            <span className="text-slate-500">Comorbidity</span>
+            <span
+              className={`font-bold tabular-nums ${comorbidityMet || alternativeSelected ? "text-sky-400" : "text-slate-300"}`}
+            >
+              {alternativeSelected
+                ? "assumed OK"
+                : `${comorbidityMetCount}/${comorbidityTotal}`}
+            </span>
+          </div>
+
+          {/* Status */}
+          <div className={`flex items-center gap-3 rounded-xl border p-3 ${toneCls[tone]}`}>
+            {toneIcon[tone]}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold leading-snug">{statusTitle}</p>
+              <p className="text-[11px] opacity-80 leading-snug mt-0.5">
+                {statusDetail}
+              </p>
+            </div>
+          </div>
         </div>
-
-        <p className="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
-          This tool summarises CPG 2.9 ECMO CPR pathway inclusion criteria. It
-          does not replace clinical judgement or consultation with the ECMO
-          centre/medical control. Always document your reasoning in the PRF.
-        </p>
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          4. Practical prehospital triggers to consider ECMO centre / e-CPR
-        </h2>
-        <p className="mt-2 text-xs text-slate-600 dark:text-slate-300/90">
-          In practice, ECMO CPR is most likely to be appropriate when ALL of the
-          following are present:
-        </p>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-slate-600 dark:text-slate-300/90">
-          <li>
-            Younger adult (&lt; 60 years) with previously good functional
-            status and no major comorbidities.
-          </li>
-          <li>
-            Witnessed medical cardiac arrest with immediate, high-quality
-            bystander/paramedic CPR.
-          </li>
-          <li>
-            Initial rhythm VF/VT or PEA, with EtCO₂ &gt; 10 mmHg during
-            resuscitation, suggesting effective CPR.
-          </li>
-          <li>
-            Time from collapse to arrival at an ECMO-capable ED expected to be
-            ≤ 45 minutes.
-          </li>
-          <li>
-            No clear exclusion factors such as advanced malignancy, end-stage
-            heart/lung/renal disease, bedbound status, or severe dementia.
-          </li>
-        </ul>
-        <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-          When these conditions are met, prioritise early notification of the
-          ECMO-capable facility, minimise scene time, maintain high-quality CPR
-          and EtCO₂, and follow the adult cardiac arrest (2.8) and ROSC (2.6)
-          CPGs.
-        </p>
-      </section>
+      </div>
     </div>
+  );
+}
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+type ColorKey = "emerald" | "sky" | "violet";
+
+const CRITERION_STYLES: Record<
+  ColorKey,
+  { ring: string; checkedBg: string; dotOn: string; dotOff: string }
+> = {
+  emerald: {
+    ring: "border-emerald-500/70 bg-emerald-950/40",
+    checkedBg: "border-emerald-500/70 bg-emerald-950/40",
+    dotOn: "text-emerald-400",
+    dotOff: "text-slate-600",
+  },
+  sky: {
+    ring: "border-sky-500/70 bg-sky-950/40",
+    checkedBg: "border-sky-500/70 bg-sky-950/40",
+    dotOn: "text-sky-400",
+    dotOff: "text-slate-600",
+  },
+  violet: {
+    ring: "border-violet-500/70 bg-violet-950/40",
+    checkedBg: "border-violet-500/70 bg-violet-950/40",
+    dotOn: "text-violet-400",
+    dotOff: "text-slate-600",
+  },
+};
+
+type CriterionButtonProps = {
+  label: string;
+  detail?: string;
+  checked: boolean;
+  onToggle: () => void;
+  color: ColorKey;
+};
+
+function CriterionButton({
+  label,
+  detail,
+  checked,
+  onToggle,
+  color,
+}: CriterionButtonProps) {
+  const s = CRITERION_STYLES[color];
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`w-full flex items-start gap-3 rounded-xl border p-3 text-left transition-colors active:scale-[0.99] ${
+        checked
+          ? s.checkedBg
+          : "border-slate-700 bg-slate-800 hover:border-slate-600"
+      }`}
+    >
+      <div className="mt-0.5 flex-shrink-0">
+        {checked ? (
+          <CheckCircle className={`w-5 h-5 ${s.dotOn}`} />
+        ) : (
+          <Circle className={`w-5 h-5 ${s.dotOff}`} />
+        )}
+      </div>
+      <div className="min-w-0">
+        <p
+          className={`text-sm font-semibold leading-snug ${checked ? "text-white" : "text-slate-300"}`}
+        >
+          {label}
+        </p>
+        {detail && (
+          <p className="mt-0.5 text-xs text-slate-500 leading-relaxed">
+            {detail}
+          </p>
+        )}
+      </div>
+    </button>
+  );
+}
+
+type ProgressBadgeProps = {
+  met: number;
+  total: number;
+  color: "emerald" | "sky";
+};
+
+function ProgressBadge({ met, total, color }: ProgressBadgeProps) {
+  const all = met === total;
+  const cls = all
+    ? color === "emerald"
+      ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-300"
+      : "bg-sky-500/20 border-sky-500/50 text-sky-300"
+    : "bg-slate-800 border-slate-700 text-slate-400";
+  return (
+    <span
+      className={`flex-shrink-0 rounded-lg border px-2 py-1 text-xs font-bold tabular-nums ${cls}`}
+    >
+      {met}/{total}
+    </span>
   );
 }

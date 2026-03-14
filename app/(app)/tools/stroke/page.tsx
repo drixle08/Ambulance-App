@@ -167,7 +167,7 @@ export default function StrokeBefastPage() {
       <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
         <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-3">
           <Link
-            href="/dashboard/assessment"
+            href="/dashboard/assessment-screening"
             className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 text-slate-300" />

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowLeft, Heart, Wind, Activity, Droplets, Gauge } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 
 type AgeBandId =
@@ -15,6 +17,7 @@ type AgeBandId =
 type AgeBand = {
   id: AgeBandId;
   label: string;
+  shortLabel: string;
   ageRange: string;
   weightRange?: string;
   hrRange: string;
@@ -22,353 +25,346 @@ type AgeBand = {
   sbpRange: string;
   dbpRange: string;
   spo2Target: string;
+  hypotensionThreshold?: string;
   notes: string[];
 };
 
 const AGE_BANDS: AgeBand[] = [
   {
     id: "neonate",
-    label: "Neonate (term – 2 months)",
+    label: "Neonate",
+    shortLabel: "0–2 mo",
     ageRange: "0–2 months (term newborn)",
     weightRange: "≈3–4 kg",
-    hrRange: "110–160 bpm",
-    rrRange: "35–55 /min",
-    sbpRange: "65–85 mmHg",
-    dbpRange: "45–55 mmHg",
-    spo2Target: "≥94% (low <94%)",
+    hrRange: "110–160",
+    rrRange: "35–55",
+    sbpRange: "65–85",
+    dbpRange: "45–55",
+    spo2Target: "≥94%",
     notes: [
-      "Based on the 'Term–2 months' row in the paediatric normal vital signs table.",
-      "Preterm reference (≈2 kg): HR 110–170, RR 40–70, SBP 55–75, DBP 35–45 – check CPG table if needed for very preterm neonates.",
+      "Preterm (≈2 kg): HR 110–170, RR 40–70, SBP 55–75 — check CPG if very preterm.",
+      "Treat persistent values outside range as abnormal and reassess.",
     ],
   },
   {
     id: "infant",
-    label: "Infant (3–12 months)",
+    label: "Infant",
+    shortLabel: "3–12 mo",
     ageRange: "3–12 months",
     weightRange: "≈5–11 kg",
-    // Union of 3–7 and 8–12 months rows
-    hrRange: "90–160 bpm",
-    rrRange: "22–45 /min",
-    sbpRange: "70–100 mmHg",
-    dbpRange: "50–65 mmHg",
-    spo2Target: "≥94% (low <94%)",
+    hrRange: "90–160",
+    rrRange: "22–45",
+    sbpRange: "70–100",
+    dbpRange: "50–65",
+    spo2Target: "≥94%",
     notes: [
-      "Ranges merged from 3–7 months and 8–12 months rows (min–max across both).",
-      "Treat persistent values outside these ranges as abnormal for age and reassess.",
+      "Ranges merged from 3–7 months and 8–12 months CPG rows.",
     ],
   },
   {
     id: "toddler",
-    label: "Toddler (1–3 years)",
+    label: "Toddler",
+    shortLabel: "1–3 yr",
     ageRange: "1–3 years",
     weightRange: "≈12–15 kg",
-    hrRange: "80–150 bpm",
-    rrRange: "22–30 /min",
-    sbpRange: "90–105 mmHg",
-    dbpRange: "55–70 mmHg",
-    spo2Target: "≥94% (low <94%)",
+    hrRange: "80–150",
+    rrRange: "22–30",
+    sbpRange: "90–105",
+    dbpRange: "55–70",
+    spo2Target: "≥94%",
+    hypotensionThreshold: "SBP < (age×2)+70",
     notes: [
-      "Directly from the '1–3 years' row of the paediatric normal vital signs table.",
-      "Remember age-based hypotension threshold for shock is SBP < (age × 2) + 70.",
+      "Age-based hypotension threshold for shock: SBP < (age × 2) + 70.",
     ],
   },
   {
     id: "preschool",
-    label: "Preschool (4–5 years)",
+    label: "Preschool",
+    shortLabel: "4–5 yr",
     ageRange: "4–5 years",
     weightRange: "≈16–21 kg",
-    hrRange: "70–120 bpm",
-    rrRange: "20–24 /min",
-    sbpRange: "95–110 mmHg",
-    dbpRange: "60–75 mmHg",
-    spo2Target: "≥94% (low <94%)",
+    hrRange: "70–120",
+    rrRange: "20–24",
+    sbpRange: "95–110",
+    dbpRange: "60–75",
+    spo2Target: "≥94%",
+    hypotensionThreshold: "SBP < (age×2)+70",
     notes: [
-      "Directly from the '4–5 years' row of the paediatric normal vital signs table.",
-      "Persistently high RR or HR for age should trigger a search for sepsis, respiratory distress, or shock.",
+      "Persistently elevated HR or RR for age — consider sepsis, respiratory distress, or shock.",
     ],
   },
   {
     id: "school",
-    label: "School-age (6–11 years)",
+    label: "School-age",
+    shortLabel: "6–11 yr",
     ageRange: "6–11 years",
     weightRange: "≈22–40 kg",
-    // Union of 6–7, 8–9, 10–11 years rows
-    hrRange: "60–120 bpm",
-    rrRange: "16–24 /min",
-    sbpRange: "95–120 mmHg",
-    dbpRange: "60–75 mmHg",
-    spo2Target: "≥94% (low <94%)",
+    hrRange: "60–120",
+    rrRange: "16–24",
+    sbpRange: "95–120",
+    dbpRange: "60–75",
+    spo2Target: "≥94%",
+    hypotensionThreshold: "SBP < (age×2)+70",
     notes: [
-      "Ranges merged from 6–7, 8–9 and 10–11 years rows.",
-      "In sepsis screening, RR and HR outside the normal age band plus low SBP or SpO₂ <94% elevate risk.",
+      "Ranges merged from 6–7, 8–9 and 10–11 years CPG rows.",
     ],
   },
   {
     id: "adolescent",
-    label: "Adolescent (12–15 years)",
+    label: "Adolescent",
+    shortLabel: "12–15 yr",
     ageRange: "12–15 years",
     weightRange: "≈41–50 kg",
-    // 12–13 and ≥14 rows share the same range
-    hrRange: "60–100 bpm",
-    rrRange: "12–20 /min",
-    sbpRange: "110–135 mmHg",
-    dbpRange: "65–85 mmHg",
-    spo2Target: "≥94% (low <94%)",
+    hrRange: "60–100",
+    rrRange: "12–20",
+    sbpRange: "110–135",
+    dbpRange: "65–85",
+    spo2Target: "≥94%",
     notes: [
-      "Uses the 12–13 and ≥14 years rows from the paediatric normal vital signs table.",
-      "Physiology is approaching adult; treat persistent tachycardia, tachypnoea or borderline SBP as red flags.",
+      "Physiology approaching adult — treat persistent tachycardia, tachypnoea, or borderline SBP as red flags.",
     ],
   },
   {
     id: "adult",
-    label: "Adult (≥16 years)",
+    label: "Adult",
+    shortLabel: "≥16 yr",
     ageRange: "≥16 years",
-    hrRange: "50–99 bpm",
-    rrRange: "12–20 /min",
-    sbpRange: "110–140 mmHg",
-    dbpRange: "60–90 mmHg",
+    hrRange: "50–99",
+    rrRange: "12–20",
+    sbpRange: "110–140",
+    dbpRange: "60–90",
     spo2Target: "≥94% (88–92% if COPD)",
     notes: [
-      "Adult normal ranges from the 'NORMAL VITAL SIGNS RANGE FOR ADULTS' table.",
-      "In most adults and APO, aim for SpO₂ ≥94%. In COPD exacerbations, target SpO₂ 88–92% as per COPD CPG.",
-      "Hypotension for sepsis/qSOFA is SBP ≤100 mmHg; also consider MAP and clinical context.",
+      "COPD exacerbation: target SpO₂ 88–92% as per COPD CPG.",
+      "Sepsis/qSOFA hypotension: SBP ≤100 mmHg.",
     ],
   },
 ];
 
-function classNames(...classes: Array<string | boolean | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
+type VitalCard = {
+  key: keyof AgeBand;
+  label: string;
+  unit: string;
+  icon: React.ReactNode;
+  color: string;
+  bg: string;
+};
+
+const VITAL_CARDS: VitalCard[] = [
+  {
+    key: "hrRange",
+    label: "Heart Rate",
+    unit: "bpm",
+    icon: <Heart className="w-5 h-5" />,
+    color: "text-red-400",
+    bg: "bg-red-500/10 border-red-500/30",
+  },
+  {
+    key: "rrRange",
+    label: "Resp Rate",
+    unit: "/min",
+    icon: <Wind className="w-5 h-5" />,
+    color: "text-sky-400",
+    bg: "bg-sky-500/10 border-sky-500/30",
+  },
+  {
+    key: "sbpRange",
+    label: "Systolic BP",
+    unit: "mmHg",
+    icon: <Activity className="w-5 h-5" />,
+    color: "text-orange-400",
+    bg: "bg-orange-500/10 border-orange-500/30",
+  },
+  {
+    key: "dbpRange",
+    label: "Diastolic BP",
+    unit: "mmHg",
+    icon: <Droplets className="w-5 h-5" />,
+    color: "text-violet-400",
+    bg: "bg-violet-500/10 border-violet-500/30",
+  },
+  {
+    key: "spo2Target",
+    label: "SpO₂ Target",
+    unit: "",
+    icon: <Gauge className="w-5 h-5" />,
+    color: "text-emerald-400",
+    bg: "bg-emerald-500/10 border-emerald-500/30",
+  },
+];
 
 export default function VitalsByAgePage() {
+  const router = useRouter();
   const [selectedId, setSelectedId] = useState<AgeBandId>("adult");
 
-  const selectedBand =
-    AGE_BANDS.find((band) => band.id === selectedId) ?? AGE_BANDS[0];
+  const band = AGE_BANDS.find((b) => b.id === selectedId) ?? AGE_BANDS[AGE_BANDS.length - 1];
 
-  const summaryText = `Normal vitals for ${selectedBand.label} (${selectedBand.ageRange}): HR ${selectedBand.hrRange}, RR ${selectedBand.rrRange}, SBP ${selectedBand.sbpRange}, SpO₂ ${selectedBand.spo2Target}.`;
-
-  function handleReset() {
-    setSelectedId("adult");
-  }
+  const summaryText = `Normal vitals — ${band.label} (${band.ageRange}): HR ${band.hrRange} bpm, RR ${band.rrRange}/min, SBP ${band.sbpRange} mmHg, DBP ${band.dbpRange} mmHg, SpO₂ ${band.spo2Target}.`;
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
-      {/* Header */}
-      <header className="space-y-2">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
-              Reference
-            </p>
-            <h1 className="text-2xl md:text-3xl font-semibold text-slate-900 dark:text-slate-50">
-              Normal Vitals by Age
-            </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-              Age-specific heart rate, respiratory rate, and blood pressure ranges
-              based on the HMCAS CPG normal vital sign tables (adult and paediatric).
-              Use alongside your primary assessment, sepsis screening, and perfusion
-              status tools.
-            </p>
-          </div>
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-8">
+      {/* Sticky header */}
+      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <button
             type="button"
-            onClick={handleReset}
-            className="h-9 px-3 rounded-lg border border-slate-300 bg-slate-50 text-xs font-medium text-slate-700 shadow-sm hover:border-emerald-500 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-500 dark:hover:text-emerald-300"
+            onClick={() => router.back()}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
           >
-            Reset
+            <ArrowLeft className="w-5 h-5" />
           </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-amber-400">
+              Reference
+            </p>
+            <h1 className="text-base font-bold leading-tight text-slate-100 truncate">
+              Normal Vitals by Age
+            </h1>
+          </div>
+          <CopySummaryButton summaryText={summaryText} />
         </div>
       </header>
 
-      {/* Main layout: selector + selected band */}
-      <section className="grid gap-6 md:grid-cols-3">
+      <div className="max-w-2xl mx-auto px-4 pt-5 space-y-5">
+
         {/* Age band selector */}
-        <div className="md:col-span-1">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
-              Age bands
-            </p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              Tap a band to see the CPG-based normal ranges for that age group.
-            </p>
-            <div className="mt-3 space-y-2">
-              {AGE_BANDS.map((band) => {
-                const isActive = band.id === selectedId;
-                return (
-                  <button
-                    key={band.id}
-                    type="button"
-                    onClick={() => setSelectedId(band.id)}
-                    className={classNames(
-                      "w-full rounded-xl px-3 py-2 text-left text-sm border transition",
-                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70",
-                      isActive
-                        ? "border-emerald-500 bg-emerald-100 text-emerald-800 dark:border-emerald-500 dark:bg-emerald-500/10 dark:text-emerald-100"
-                        : "border-slate-300 bg-slate-50 text-slate-800 hover:border-slate-400 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500"
-                    )}
-                  >
-                    <div className="font-medium">{band.label}</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {band.ageRange}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Selected band detail */}
-        <div className="md:col-span-2">
-          <div className="h-full rounded-2xl border border-slate-200 bg-slate-50 p-4 md:p-5 flex flex-col gap-3 dark:border-slate-800 dark:bg-slate-950/60">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.3em] text-emerald-400 uppercase">
-                  Selected band
-                </p>
-                <h2 className="mt-1 text-lg md:text-xl font-semibold text-slate-900 dark:text-slate-50">
-                  {selectedBand.label}
-                </h2>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
-                  {selectedBand.ageRange}
-                  {selectedBand.weightRange ? ` • ${selectedBand.weightRange}` : null}
-                </p>
-              </div>
-              <CopySummaryButton summaryText={summaryText} />
-            </div>
-
-            <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mt-2">
-              <div className="rounded-xl bg-slate-100 border border-slate-200 p-3 dark:bg-slate-900/80 dark:border-slate-800">
-                <dt className="text-[0.65rem] tracking-[0.2em] uppercase text-slate-500 dark:text-slate-400">
-                  Heart Rate
-                </dt>
-                <dd className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-50">
-                  {selectedBand.hrRange}
-                </dd>
-              </div>
-              <div className="rounded-xl bg-slate-100 border border-slate-200 p-3 dark:bg-slate-900/80 dark:border-slate-800">
-                <dt className="text-[0.65rem] tracking-[0.2em] uppercase text-slate-500 dark:text-slate-400">
-                  Respiratory Rate
-                </dt>
-                <dd className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-50">
-                  {selectedBand.rrRange}
-                </dd>
-              </div>
-              <div className="rounded-xl bg-slate-100 border border-slate-200 p-3 dark:bg-slate-900/80 dark:border-slate-800">
-                <dt className="text-[0.65rem] tracking-[0.2em] uppercase text-slate-500 dark:text-slate-400">
-                  Systolic BP
-                </dt>
-                <dd className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-50">
-                  {selectedBand.sbpRange}
-                </dd>
-              </div>
-              <div className="rounded-xl bg-slate-100 border border-slate-200 p-3 dark:bg-slate-900/80 dark:border-slate-800">
-                <dt className="text-[0.65rem] tracking-[0.2em] uppercase text-slate-500 dark:text-slate-400">
-                  Diastolic BP
-                </dt>
-                <dd className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-50">
-                  {selectedBand.dbpRange}
-                </dd>
-              </div>
-            </dl>
-
-            <div className="mt-3 rounded-xl bg-slate-100 border border-slate-200 p-3 text-sm text-slate-700 dark:bg-slate-900/80 dark:border-slate-800 dark:text-slate-300">
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <p className="text-[0.65rem] tracking-[0.2em] uppercase text-slate-500 dark:text-slate-400">
-                    Oxygen Saturation Target
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-50">
-                    {selectedBand.spo2Target}
-                  </p>
-                </div>
-              </div>
-              {selectedBand.notes.length > 0 && (
-                <ul className="mt-3 space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
-                  {selectedBand.notes.map((note, idx) => (
-                    <li key={idx} className="flex gap-2">
-                      <span className="mt-[0.3rem] h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400/70" />
-                      <span>{note}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Compact all-bands table */}
-      <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4 md:p-5 space-y-3 dark:border-slate-800 dark:bg-slate-950/60">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-semibold tracking-[0.3em] text-slate-500 dark:text-slate-400 uppercase">
-            All age bands overview
+        <section>
+          <p className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-slate-500 mb-3">
+            Select Age Band
           </p>
-          <p className="text-[0.65rem] text-slate-500 dark:text-slate-500">
-            Values from CPG normal vital sign tables (adult & paediatric).
-          </p>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-xs md:text-sm border-separate border-spacing-y-1">
-            <thead>
-              <tr className="text-[0.65rem] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                <th className="text-left px-2 py-2">Age band</th>
-                <th className="text-left px-2 py-2">Age range</th>
-                <th className="text-left px-2 py-2">HR (bpm)</th>
-                <th className="text-left px-2 py-2">RR (/min)</th>
-                <th className="text-left px-2 py-2">SBP (mmHg)</th>
-                <th className="text-left px-2 py-2">DBP (mmHg)</th>
-                <th className="text-left px-2 py-2">SpO₂ target</th>
-              </tr>
-            </thead>
-            <tbody>
-              {AGE_BANDS.map((band) => (
-                <tr
-                  key={band.id}
-                  className={classNames(
-                    "rounded-xl",
-                    band.id === selectedId
-                      ? "bg-emerald-50 dark:bg-emerald-500/5"
-                      : "bg-slate-50 dark:bg-slate-900/80"
-                  )}
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+            {AGE_BANDS.map((b) => {
+              const isActive = b.id === selectedId;
+              return (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => setSelectedId(b.id)}
+                  className={[
+                    "flex flex-col items-center justify-center rounded-xl px-1 py-3 border text-center transition-all active:scale-95",
+                    isActive
+                      ? "border-amber-500 bg-amber-500/15 text-amber-300"
+                      : "border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-500 hover:text-slate-200",
+                  ].join(" ")}
                 >
-                  <td className="px-2 py-2 rounded-l-xl align-top">
-                    <div className="font-medium text-slate-900 dark:text-slate-50">
-                      {band.label}
-                    </div>
-                  </td>
-                  <td className="px-2 py-2 align-top text-slate-700 dark:text-slate-300">
-                    {band.ageRange}
-                  </td>
-                  <td className="px-2 py-2 align-top text-slate-700 dark:text-slate-300">
-                    {band.hrRange}
-                  </td>
-                  <td className="px-2 py-2 align-top text-slate-700 dark:text-slate-300">
-                    {band.rrRange}
-                  </td>
-                  <td className="px-2 py-2 align-top text-slate-700 dark:text-slate-300">
-                    {band.sbpRange}
-                  </td>
-                  <td className="px-2 py-2 align-top text-slate-700 dark:text-slate-300">
-                    {band.dbpRange}
-                  </td>
-                  <td className="px-2 py-2 rounded-r-xl align-top text-slate-700 dark:text-slate-300">
-                    {band.spo2Target}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  <span className={["text-[0.7rem] font-bold leading-tight", isActive ? "text-amber-200" : "text-slate-300"].join(" ")}>
+                    {b.label}
+                  </span>
+                  <span className="text-[0.6rem] mt-0.5 leading-tight">
+                    {b.shortLabel}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
-        <p className="text-[0.7rem] text-slate-600 dark:text-slate-500">
-          Always interpret vital signs in context: perfusion, mental status, temperature,
-          sepsis screening, and specific CPGs such as respiratory, shock, and cardiac
-          guidelines.
+        {/* Selected band info */}
+        <section className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3 flex flex-wrap items-center gap-x-5 gap-y-1">
+          <div>
+            <p className="text-lg font-bold text-amber-300">{band.label}</p>
+            <p className="text-xs text-slate-400">{band.ageRange}</p>
+          </div>
+          {band.weightRange && (
+            <div className="text-xs">
+              <span className="text-slate-500">Est. weight</span>{" "}
+              <span className="font-semibold text-slate-200">{band.weightRange}</span>
+            </div>
+          )}
+          {band.hypotensionThreshold && (
+            <div className="ml-auto flex items-center gap-1.5 rounded-lg bg-red-500/10 border border-red-500/30 px-3 py-1.5">
+              <span className="text-[0.65rem] font-bold uppercase tracking-wider text-red-400">Hypotension</span>
+              <span className="text-xs font-mono font-semibold text-red-300">{band.hypotensionThreshold}</span>
+            </div>
+          )}
+        </section>
+
+        {/* Vital sign cards */}
+        <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {VITAL_CARDS.map((card) => {
+            const value = band[card.key] as string;
+            return (
+              <div
+                key={card.key as string}
+                className={["rounded-xl border p-4 flex flex-col gap-2", card.bg].join(" ")}
+              >
+                <div className={["flex items-center gap-2", card.color].join(" ")}>
+                  {card.icon}
+                  <span className="text-[0.65rem] font-bold uppercase tracking-wider">{card.label}</span>
+                </div>
+                <p className="text-2xl font-black text-slate-100 leading-none">{value}</p>
+                {card.unit && (
+                  <p className="text-[0.65rem] text-slate-500 font-medium">{card.unit}</p>
+                )}
+              </div>
+            );
+          })}
+        </section>
+
+        {/* Notes */}
+        {band.notes.length > 0 && (
+          <section className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 space-y-1.5">
+            <p className="text-[0.65rem] font-bold uppercase tracking-widest text-slate-500">Notes</p>
+            {band.notes.map((note, i) => (
+              <div key={i} className="flex gap-2 items-start">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400/60" />
+                <p className="text-sm text-slate-300">{note}</p>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {/* All bands overview table */}
+        <section className="rounded-xl border border-slate-800 bg-slate-900 overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-800">
+            <p className="text-[0.65rem] font-bold uppercase tracking-widest text-slate-500">All Age Bands Overview</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-slate-800">
+                  <th className="text-left px-3 py-2 text-[0.6rem] uppercase tracking-wider text-slate-500 font-semibold">Age</th>
+                  <th className="text-left px-3 py-2 text-[0.6rem] uppercase tracking-wider text-slate-500 font-semibold">HR</th>
+                  <th className="text-left px-3 py-2 text-[0.6rem] uppercase tracking-wider text-slate-500 font-semibold">RR</th>
+                  <th className="text-left px-3 py-2 text-[0.6rem] uppercase tracking-wider text-slate-500 font-semibold">SBP</th>
+                  <th className="text-left px-3 py-2 text-[0.6rem] uppercase tracking-wider text-slate-500 font-semibold">DBP</th>
+                  <th className="text-left px-3 py-2 text-[0.6rem] uppercase tracking-wider text-slate-500 font-semibold">SpO₂</th>
+                </tr>
+              </thead>
+              <tbody>
+                {AGE_BANDS.map((b) => (
+                  <tr
+                    key={b.id}
+                    onClick={() => setSelectedId(b.id)}
+                    className={[
+                      "border-b border-slate-800/50 last:border-0 cursor-pointer transition-colors",
+                      b.id === selectedId
+                        ? "bg-amber-500/10"
+                        : "hover:bg-slate-800/50",
+                    ].join(" ")}
+                  >
+                    <td className="px-3 py-2">
+                      <span className={["font-semibold", b.id === selectedId ? "text-amber-300" : "text-slate-300"].join(" ")}>
+                        {b.label}
+                      </span>
+                      <div className="text-[0.6rem] text-slate-600">{b.shortLabel}</div>
+                    </td>
+                    <td className="px-3 py-2 text-slate-300 font-mono">{b.hrRange}</td>
+                    <td className="px-3 py-2 text-slate-300 font-mono">{b.rrRange}</td>
+                    <td className="px-3 py-2 text-slate-300 font-mono">{b.sbpRange}</td>
+                    <td className="px-3 py-2 text-slate-300 font-mono">{b.dbpRange}</td>
+                    <td className="px-3 py-2 text-slate-300">{b.spo2Target}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <p className="text-[0.65rem] text-slate-600 text-center pb-2">
+          Interpret vital signs in clinical context — perfusion, mental status, temperature, and relevant CPGs.
         </p>
-      </section>
+      </div>
     </div>
   );
 }

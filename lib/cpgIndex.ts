@@ -716,6 +716,67 @@ export const CPG_ENTRIES: CpgEntry[] = [
   },
 ];
 
+// ─── Formulary / Medication entries ──────────────────────────────────────────
+
+export type MedicationEntry = {
+  name: string;
+  aliases: string[];   // common synonyms / trade names
+  formularyPage: number; // printed page in CPG formulary
+  class?: string;      // drug class hint for display
+};
+
+/** Exact formulary page numbers sourced from CPG v2.4 (2025) p.268 index. */
+export const MEDICATION_ENTRIES: MedicationEntry[] = [
+  { name: "Adenosine", aliases: ["adenocard", "svt"], formularyPage: 269, class: "Antiarrhythmic" },
+  { name: "Adrenaline", aliases: ["epinephrine", "epi", "adrenalin"], formularyPage: 272, class: "Sympathomimetic" },
+  { name: "Amiodarone", aliases: ["cordarone"], formularyPage: 276, class: "Antiarrhythmic" },
+  { name: "Aspirin", aliases: ["acetylsalicylic acid", "asa", "aspro"], formularyPage: 279, class: "Antiplatelet" },
+  { name: "Atropine", aliases: ["atropine sulfate"], formularyPage: 281, class: "Anticholinergic" },
+  { name: "Budesonide", aliases: ["pulmicort", "rhinocort"], formularyPage: 284, class: "Corticosteroid" },
+  { name: "Calcium Chloride", aliases: ["calcium", "cacl2"], formularyPage: 286, class: "Electrolyte" },
+  { name: "Clopidogrel", aliases: ["plavix"], formularyPage: 288, class: "Antiplatelet" },
+  { name: "Dexamethasone", aliases: ["dexamethasone", "dex", "decadron"], formularyPage: 290, class: "Corticosteroid" },
+  { name: "Dextrose", aliases: ["glucose", "d50", "d10", "d5w", "dextrose 50%", "dextrose 10%"], formularyPage: 293, class: "Glucose" },
+  { name: "Diclofenac", aliases: ["voltaren", "nsaid"], formularyPage: 296, class: "NSAID" },
+  { name: "Diphenhydramine", aliases: ["benadryl", "antihistamine"], formularyPage: 298, class: "Antihistamine" },
+  { name: "Droperidol", aliases: ["inapsine", "dridol"], formularyPage: 301, class: "Antiemetic / Sedative" },
+  { name: "Fentanyl", aliases: ["sublimaze"], formularyPage: 304, class: "Opioid" },
+  { name: "Furosemide", aliases: ["lasix", "frusemide"], formularyPage: 308, class: "Loop Diuretic" },
+  { name: "Glucagon", aliases: ["glucagen"], formularyPage: 310, class: "Glucose" },
+  { name: "Glycerol Trinitrate", aliases: ["gtn", "nitroglycerin", "nitro", "ntg", "anginine"], formularyPage: 313, class: "Nitrate" },
+  { name: "Hydrocortisone", aliases: ["solu-cortef", "cortisol"], formularyPage: 315, class: "Corticosteroid" },
+  { name: "Ibuprofen", aliases: ["nurofen", "brufen", "nsaid"], formularyPage: 318, class: "NSAID" },
+  { name: "Ipratropium Bromide", aliases: ["atrovent", "ipratropium"], formularyPage: 321, class: "Bronchodilator" },
+  { name: "Ketamine", aliases: ["ketalar", "ket"], formularyPage: 324, class: "Dissociative Anaesthetic" },
+  { name: "Ketorolac", aliases: ["toradol"], formularyPage: 329, class: "NSAID" },
+  { name: "Magnesium Sulphate", aliases: ["magnesium sulfate", "mg", "mag", "magnesium"], formularyPage: 332, class: "Electrolyte / Bronchodilator" },
+  { name: "Methoxyflurane", aliases: ["penthrox", "green whistle", "penthrox inhaler"], formularyPage: 335, class: "Analgesic" },
+  { name: "Metoclopramide", aliases: ["maxolon", "reglan"], formularyPage: 337, class: "Antiemetic" },
+  { name: "Midazolam", aliases: ["versed", "hypnovel", "midaz"], formularyPage: 339, class: "Benzodiazepine" },
+  { name: "Naloxone", aliases: ["narcan", "naxalone"], formularyPage: 342, class: "Opioid Antagonist" },
+  { name: "Noradrenaline", aliases: ["norepinephrine", "levophed", "norepi"], formularyPage: 345, class: "Vasopressor" },
+  { name: "Ondansetron", aliases: ["zofran", "ondan"], formularyPage: 347, class: "Antiemetic" },
+  { name: "Paracetamol", aliases: ["acetaminophen", "panadol", "perfalgan", "tylenol"], formularyPage: 350, class: "Analgesic / Antipyretic" },
+  { name: "Phenylephrine", aliases: ["neosynephrine", "neo-synephrine"], formularyPage: 353, class: "Vasopressor" },
+  { name: "Prochlorperazine", aliases: ["stemetil", "compazine"], formularyPage: 355, class: "Antiemetic" },
+  { name: "Rocuronium", aliases: ["zemuron", "esmeron", "roc"], formularyPage: 357, class: "Neuromuscular Blocker" },
+  { name: "Salbutamol", aliases: ["albuterol", "ventolin", "salbutol"], formularyPage: 360, class: "Bronchodilator" },
+  { name: "Succinylcholine", aliases: ["suxamethonium", "sux", "anectine"], formularyPage: 363, class: "Neuromuscular Blocker" },
+  { name: "Tranexamic Acid", aliases: ["txa", "cyklokapron"], formularyPage: 365, class: "Antifibrinolytic" },
+  { name: "Vecuronium", aliases: ["norcuron", "vec"], formularyPage: 368, class: "Neuromuscular Blocker" },
+];
+
+export function searchMedications(query: string): MedicationEntry[] {
+  if (!query.trim()) return [];
+  const q = query.toLowerCase().trim();
+  return MEDICATION_ENTRIES.filter(
+    (m) =>
+      m.name.toLowerCase().includes(q) ||
+      m.aliases.some((a) => a.toLowerCase().includes(q)) ||
+      (m.class ?? "").toLowerCase().includes(q)
+  ).slice(0, 8);
+}
+
 /**
  * Normalize a slug or code string into a comparable identifier.
  * - Lowercases

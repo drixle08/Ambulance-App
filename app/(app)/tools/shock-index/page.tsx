@@ -1,14 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import { ArrowLeft, Activity, Heart, Droplets, AlertTriangle, CheckCircle, AlertCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 
-function classNames(...classes: Array<string | boolean | null | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
-
 export default function ShockIndexPage() {
+  const router = useRouter();
   const [sbp, setSbp] = useState<string>("");
   const [dbp, setDbp] = useState<string>("");
   const [hr, setHr] = useState<string>("");
@@ -38,7 +36,6 @@ export default function ShockIndexPage() {
     return (sbpNum + 2 * dbpNum) / 3;
   }, [sbpNum, dbpNum]);
 
-  // Basic banding – this is generic SI data; adjust if your CPG has specific numbers.
   let siBand: "normal" | "borderline" | "high" | "invalid" = "invalid";
   if (Number.isFinite(shockIndex)) {
     if (shockIndex < 0.7) siBand = "normal";
@@ -46,49 +43,50 @@ export default function ShockIndexPage() {
     else siBand = "high";
   }
 
-  const siLabel =
-    siBand === "normal"
-      ? "Within usual range"
-      : siBand === "borderline"
-      ? "Elevated – monitor closely"
-      : siBand === "high"
-      ? "High – concerning for shock"
-      : "Insufficient data";
-
-  const siColour =
-    siBand === "normal"
-      ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/60 dark:bg-emerald-500/10 dark:text-emerald-100"
-      : siBand === "borderline"
-      ? "bg-amber-500/15 text-amber-700 border-amber-500/60 dark:bg-amber-500/10 dark:text-amber-100"
-      : siBand === "high"
-      ? "bg-rose-500/15 text-rose-700 border-rose-500/60 dark:bg-rose-500/10 dark:text-rose-100"
-      : "bg-slate-500/10 text-slate-700 border-slate-400/60 dark:bg-slate-700/40 dark:text-slate-100";
-
-  const mapText = Number.isFinite(map) ? `${Math.round(map)} mmHg` : "—";
+  const siConfig = {
+    normal: {
+      label: "Within Normal Range",
+      sub: "SI < 0.7 — stable perfusion",
+      icon: <CheckCircle className="w-6 h-6" />,
+      bar: "bg-emerald-500",
+      card: "border-emerald-500/40 bg-emerald-500/10",
+      text: "text-emerald-400",
+      badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+    },
+    borderline: {
+      label: "Elevated — Monitor Closely",
+      sub: "SI 0.7–0.9 — possible early compromise",
+      icon: <AlertCircle className="w-6 h-6" />,
+      bar: "bg-amber-500",
+      card: "border-amber-500/40 bg-amber-500/10",
+      text: "text-amber-400",
+      badge: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+    },
+    high: {
+      label: "HIGH — Concerning for Shock",
+      sub: "SI ≥ 0.9 — treat as time-critical",
+      icon: <AlertTriangle className="w-6 h-6" />,
+      bar: "bg-rose-500",
+      card: "border-rose-500/40 bg-rose-500/10",
+      text: "text-rose-400",
+      badge: "bg-rose-500/20 text-rose-300 border-rose-500/30",
+    },
+    invalid: {
+      label: "Awaiting Data",
+      sub: "Enter HR and SBP to calculate",
+      icon: <Activity className="w-6 h-6" />,
+      bar: "bg-slate-700",
+      card: "border-slate-700 bg-slate-900",
+      text: "text-slate-400",
+      badge: "bg-slate-800 text-slate-400 border-slate-700",
+    },
+  }[siBand];
 
   const hasEnoughData = Number.isFinite(shockIndex);
 
   const summaryText = hasEnoughData
-    ? (() => {
-        const parts: string[] = [];
-        parts.push(
-          `Shock index: HR ${Number.isFinite(hrNum) ? Math.round(hrNum) : "?"}/min, SBP ${
-            Number.isFinite(sbpNum) ? Math.round(sbpNum) : "?"
-          } mmHg → SI ${shockIndex.toFixed(2)} (${siLabel.toLowerCase()})`
-        );
-        if (Number.isFinite(map)) {
-          parts.push(`MAP approx ${Math.round(map)} mmHg`);
-        }
-        const escalation =
-          siBand === "high"
-            ? "Treat as time-critical — consider occult shock, follow sepsis/trauma/shock CPG, and prenotify receiving hospital."
-            : siBand === "borderline"
-            ? "Elevated SI — monitor trends, repeat vitals, and be alert for early shock."
-            : "SI not elevated — continue routine monitoring and reassessment.";
-        parts.push(escalation);
-        return `${parts.join(". ")} (Shock index quick ref; thresholds based on generic evidence — confirm with local CPG).`;
-      })()
-    : "Shock index tool used – insufficient data entered to calculate SI. (Enter HR and SBP to generate a PRF summary.)";
+    ? `Shock index: HR ${Math.round(hrNum)}/min, SBP ${Math.round(sbpNum)} mmHg → SI ${shockIndex.toFixed(2)} (${siConfig.label.toLowerCase()}).${Number.isFinite(map) ? ` MAP ≈ ${Math.round(map)} mmHg.` : ""} ${siBand === "high" ? "Treat as time-critical — consider occult shock, follow sepsis/trauma/shock CPG, prenotify receiving hospital." : siBand === "borderline" ? "Elevated SI — monitor trends, repeat vitals, be alert for early shock." : "SI not elevated — continue routine monitoring."}`
+    : "Shock index tool used — insufficient data to calculate SI. Enter HR and SBP to generate summary.";
 
   const handleReset = () => {
     setSbp("");
@@ -96,181 +94,214 @@ export default function ShockIndexPage() {
     setHr("");
   };
 
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-6 md:py-8 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-emerald-500">
-            Reference
-          </p>
-          <h1 className="mt-1 text-xl md:text-2xl font-semibold text-slate-900 dark:text-slate-50">
-            Shock Index & MAP quick calculator
-          </h1>
-          <p className="mt-1 text-xs md:text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-            Calculates Shock Index (HR ÷ SBP) and estimated MAP from entered vitals to support early
-            recognition of occult shock. Use alongside trauma, sepsis and shock CPGs. This tool does
-            not replace clinical judgement or local protocols.
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <CopySummaryButton summaryText={summaryText} />
-          <Link
-            href="/dashboard"
-            className="text-[0.7rem] text-emerald-700 hover:text-emerald-600 dark:text-emerald-300 dark:hover:text-emerald-200"
-          >
-            ← Back to tools
-          </Link>
-        </div>
-      </div>
+  // Visual SI gauge: max display at SI=1.5
+  const siGaugeWidth = Number.isFinite(shockIndex)
+    ? Math.min((shockIndex / 1.5) * 100, 100)
+    : 0;
 
-      {/* Main grid */}
-      <section className="grid gap-4 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1.6fr)] items-start">
-        {/* Input card */}
-        <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70 space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-              Patient vitals
-            </h2>
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-24">
+      {/* Sticky header */}
+      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-amber-400">
+              Reference
+            </p>
+            <h1 className="text-base font-bold leading-tight text-slate-100 truncate">
+              Shock Index & MAP Calculator
+            </h1>
+          </div>
+          <CopySummaryButton summaryText={summaryText} />
+        </div>
+      </header>
+
+      <div className="max-w-2xl mx-auto px-4 pt-5 space-y-4">
+
+        {/* Vitals input */}
+        <section className="rounded-xl border border-slate-800 bg-slate-900 p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-[0.65rem] font-bold uppercase tracking-widest text-slate-500">Patient Vitals</p>
             <button
               type="button"
               onClick={handleReset}
-              className="text-[0.7rem] rounded-full border border-slate-300 bg-slate-50 px-2 py-1 text-slate-600 hover:border-emerald-400 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:text-emerald-300"
+              className="text-xs text-slate-500 hover:text-slate-300 transition-colors px-2 py-1 rounded-lg hover:bg-slate-800"
             >
               Reset
             </button>
           </div>
 
-          <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="space-y-1.5">
-              <label className="block text-[0.7rem] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                SBP
-                <span className="ml-1 text-[0.65rem] font-normal normal-case text-slate-400 dark:text-slate-500">
-                  (mmHg)
-                </span>
-              </label>
+          <div className="grid grid-cols-3 gap-3">
+            {/* SBP */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5 text-orange-400" />
+                <label className="text-[0.65rem] font-bold uppercase tracking-wider text-slate-400">
+                  SBP
+                </label>
+              </div>
               <input
                 type="number"
                 inputMode="numeric"
                 min={0}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50"
                 value={sbp}
                 onChange={(e) => setSbp(e.target.value)}
                 placeholder="e.g. 90"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-3 text-lg font-bold text-slate-100 outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 placeholder:text-slate-600 transition-colors"
               />
+              <p className="text-[0.6rem] text-slate-600 text-center">mmHg</p>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-[0.7rem] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                DBP
-                <span className="ml-1 text-[0.65rem] font-normal normal-case text-slate-400 dark:text-slate-500">
-                  (mmHg, optional)
-                </span>
-              </label>
+            {/* DBP */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Droplets className="w-3.5 h-3.5 text-violet-400" />
+                <label className="text-[0.65rem] font-bold uppercase tracking-wider text-slate-400">
+                  DBP
+                </label>
+              </div>
               <input
                 type="number"
                 inputMode="numeric"
                 min={0}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50"
                 value={dbp}
                 onChange={(e) => setDbp(e.target.value)}
                 placeholder="e.g. 60"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-3 text-lg font-bold text-slate-100 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 placeholder:text-slate-600 transition-colors"
               />
+              <p className="text-[0.6rem] text-slate-600 text-center">mmHg (optional)</p>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-[0.7rem] font-medium uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                Heart rate
-                <span className="ml-1 text-[0.65rem] font-normal normal-case text-slate-400 dark:text-slate-500">
-                  (/min)
-                </span>
-              </label>
+            {/* HR */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Heart className="w-3.5 h-3.5 text-red-400" />
+                <label className="text-[0.65rem] font-bold uppercase tracking-wider text-slate-400">
+                  HR
+                </label>
+              </div>
               <input
                 type="number"
                 inputMode="numeric"
                 min={0}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50"
                 value={hr}
                 onChange={(e) => setHr(e.target.value)}
                 placeholder="e.g. 120"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-3 text-lg font-bold text-slate-100 outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 placeholder:text-slate-600 transition-colors"
               />
+              <p className="text-[0.6rem] text-slate-600 text-center">/min</p>
             </div>
           </div>
+        </section>
 
-          <p className="mt-3 text-[0.7rem] text-slate-500 dark:text-slate-400">
-            Shock Index is most commonly used in adults. In paediatric patients, interpret in
-            conjunction with age-adjusted vitals, clinical picture, and paediatric shock CPG.
-          </p>
-        </div>
-
-        {/* Output / interpretation card */}
-        <div className="rounded-2xl border border-slate-200 bg-slate-50/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/70 space-y-4">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-            Calculated values & interpretation
-          </h2>
-
-          <div className="grid grid-cols-2 gap-3 text-xs md:text-sm">
-            <div className="rounded-2xl border border-slate-200 bg-white/80 p-3 dark:border-slate-700 dark:bg-slate-900/80">
-              <p className="text-[0.65rem] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                Shock Index (SI)
-              </p>
-              <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">
-                {Number.isFinite(shockIndex) ? shockIndex.toFixed(2) : "—"}
-              </p>
-              <p className="mt-1 text-[0.75rem] text-slate-600 dark:text-slate-400">
-                HR ÷ SBP. Elevated SI may indicate occult shock even when SBP is &quot;normal&quot;.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white/80 p-3 dark:border-slate-700 dark:bg-slate-900/80">
-              <p className="text-[0.65rem] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-                MAP (if DBP entered)
-              </p>
-              <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">
-                {mapText}
-              </p>
-              <p className="mt-1 text-[0.75rem] text-slate-600 dark:text-slate-400">
-                Estimated mean arterial pressure using (SBP + 2×DBP) ÷ 3. Compare with target MAP
-                ranges in relevant CPGs (e.g. trauma, TBI, shock).
-              </p>
-            </div>
-          </div>
-
-          <div
-            className={classNames(
-              "rounded-2xl border px-3 py-2.5 text-xs md:text-sm",
-              siColour
-            )}
-          >
-            <p className="text-[0.7rem] uppercase tracking-[0.18em] mb-1">
-              Shock Index band
+        {/* Result cards */}
+        <div className="grid grid-cols-2 gap-3">
+          {/* Shock Index result */}
+          <div className={["rounded-xl border p-4 space-y-2", siConfig.card].join(" ")}>
+            <p className="text-[0.65rem] font-bold uppercase tracking-widest text-slate-500">Shock Index</p>
+            <p className={["text-4xl font-black", siConfig.text].join(" ")}>
+              {Number.isFinite(shockIndex) ? shockIndex.toFixed(2) : "—"}
             </p>
-            <p className="font-semibold">{siLabel}</p>
-            <ul className="mt-1.5 list-disc pl-4 space-y-0.5">
-              <li>SI &lt; 0.7: usually within normal range in stable adults.</li>
-              <li>
-                SI 0.7–0.9: may reflect early compromise – monitor trends, repeat vitals, and use
-                QEWS/sepsis tools.
-              </li>
-              <li>
-                SI ≥ 0.9: concerning for shock – treat as time-critical and follow relevant CPG
-                (trauma, sepsis, haemorrhage, cardiogenic shock, etc.).
-              </li>
-            </ul>
+            <p className="text-[0.65rem] text-slate-500">HR ÷ SBP</p>
+          </div>
+
+          {/* MAP result */}
+          <div className="rounded-xl border border-slate-700 bg-slate-900 p-4 space-y-2">
+            <p className="text-[0.65rem] font-bold uppercase tracking-widest text-slate-500">MAP</p>
+            <p className="text-4xl font-black text-slate-100">
+              {Number.isFinite(map) ? Math.round(map) : "—"}
+            </p>
+            <p className="text-[0.65rem] text-slate-500">
+              {Number.isFinite(map) ? "mmHg · (SBP + 2×DBP) ÷ 3" : "Enter SBP + DBP"}
+            </p>
           </div>
         </div>
-      </section>
 
-      {/* Summary strip */}
-      <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 text-xs shadow-sm dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-        <div>
-          <p className="text-[0.7rem] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-            PRF summary
-          </p>
-          <p className="mt-1 text-xs md:text-sm">{summaryText}</p>
+        {/* SI gauge bar */}
+        <section className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 space-y-2">
+          <div className="flex items-center justify-between text-[0.6rem] text-slate-600 font-mono">
+            <span>0.0</span>
+            <span>0.7</span>
+            <span>0.9</span>
+            <span>1.5+</span>
+          </div>
+          <div className="relative h-3 rounded-full bg-slate-800 overflow-hidden">
+            {/* Zone bands */}
+            <div className="absolute inset-y-0 left-0 w-[47%] bg-emerald-500/20" />
+            <div className="absolute inset-y-0 left-[47%] w-[13%] bg-amber-500/20" />
+            <div className="absolute inset-y-0 left-[60%] right-0 bg-rose-500/20" />
+            {/* Value bar */}
+            <div
+              className={["absolute inset-y-0 left-0 rounded-full transition-all duration-300", siConfig.bar].join(" ")}
+              style={{ width: `${siGaugeWidth}%` }}
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className={["flex items-center gap-1.5 rounded-lg border px-3 py-1.5 flex-1 justify-center", siConfig.badge].join(" ")}>
+              <span className={siConfig.text}>{siConfig.icon}</span>
+              <div>
+                <p className="text-xs font-bold leading-tight">{siConfig.label}</p>
+                <p className="text-[0.6rem] opacity-70">{siConfig.sub}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SI reference thresholds */}
+        <section className="rounded-xl border border-slate-800 bg-slate-900 divide-y divide-slate-800 overflow-hidden">
+          <div className="px-4 py-2.5">
+            <p className="text-[0.65rem] font-bold uppercase tracking-widest text-slate-500">SI Reference Thresholds</p>
+          </div>
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-slate-200">SI &lt; 0.7</p>
+              <p className="text-xs text-slate-500">Usually within normal range in stable adults</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-slate-200">SI 0.7–0.9</p>
+              <p className="text-xs text-slate-500">May reflect early compromise — monitor trends, repeat vitals, use QEWS/sepsis tools</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-slate-200">SI ≥ 0.9</p>
+              <p className="text-xs text-slate-500">Concerning for shock — treat as time-critical, follow trauma/sepsis/haemorrhage CPG</p>
+            </div>
+          </div>
+        </section>
+
+        <p className="text-[0.65rem] text-slate-600 text-center pb-2">
+          SI is most validated in adults. In paediatrics, interpret with age-adjusted vitals and paediatric shock CPG.
+        </p>
+      </div>
+
+      {/* Sticky outcome bar */}
+      {hasEnoughData && (
+        <div className={["fixed bottom-0 left-0 right-0 z-30 border-t backdrop-blur-sm px-4 py-3", siConfig.card, "border-t"].join(" ")}>
+          <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className={siConfig.text}>{siConfig.icon}</span>
+              <div className="min-w-0">
+                <p className={["text-xs font-bold truncate", siConfig.text].join(" ")}>{siConfig.label}</p>
+                <p className="text-[0.65rem] text-slate-400 truncate">SI {shockIndex.toFixed(2)}{Number.isFinite(map) ? ` · MAP ${Math.round(map)} mmHg` : ""}</p>
+              </div>
+            </div>
+            <CopySummaryButton summaryText={summaryText} />
+          </div>
         </div>
-        <CopySummaryButton summaryText={summaryText} />
-      </section>
+      )}
     </div>
   );
 }

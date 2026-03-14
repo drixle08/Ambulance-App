@@ -1,7 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/tools/stroke)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/tools/stroke)",
+      "Bash(sed -i 's|href=\"\"/dashboard/respiratory\"\"|href=\"\"/dashboard/respiratory-airway\"\"|g' \"app/\\(app\\)/tools/asthma/page.tsx\" \"app/\\(app\\)/tools/mwcs/page.tsx\")",
+      "Bash(sed -i 's|href=\"\"/dashboard/assessment\"\"|href=\"\"/dashboard/assessment-screening\"\"|g' \"app/\\(app\\)/tools/stroke/page.tsx\" \"app/\\(app\\)/tools/gcs/page.tsx\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/dashboard/respiratory-airway)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/dashboard/assessment-screening)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost:3000/dashboard/respiratory-airway\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost:3000/dashboard/assessment-screening\")",
+      "Bash(npx next:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep -rn \"protocol finder\\\\|Protocol Finder\\\\|protocolFinder\\\\|cpg-finder\\\\|finder\" c:/Dev/my-first-app/app --include=*.tsx --include=*.ts -l)",
+      "Bash(grep -rn \"cpg\\\\|CPG\" c:/Dev/my-first-app/app --include=*.tsx --include=*.ts -l)",
+      "Bash(cat \"c:/Dev/my-first-app/app/\\(app\\)/dashboard/page.tsx\")",
+      "Bash(cat \"c:/Dev/my-first-app/app/\\(app\\)/dashboard/[group]/page.tsx\")"
     ]
   }
 }

@@ -378,7 +378,7 @@ export default function PedsArrestPage() {
       </main>
 
       {/* ── Sticky Bottom Bar ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-800 bg-slate-950/95 backdrop-blur-sm">
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-30 border-t border-slate-800 bg-slate-950/95 backdrop-blur-sm">
         <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-4">
           <div className="flex-1">
             <p className="text-[10px] text-slate-500 uppercase tracking-widest">

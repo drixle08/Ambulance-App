@@ -97,7 +97,7 @@ export default function GroupPage({ params }: GroupPageProps) {
             <Link
               key={tool.href}
               href={tool.href}
-              className={`group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm transition-all ${color.hover} hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80 dark:hover:bg-slate-900`}
+              className={`group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/90 px-4 py-4 shadow-sm transition-all ${color.hover} hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80 dark:hover:bg-slate-900`}
             >
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${color.bg}`}>
                 <ToolIcon className={`h-5 w-5 ${color.icon}`} />

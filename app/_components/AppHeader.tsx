@@ -6,7 +6,7 @@ import { Info } from "lucide-react";
 
 export function AppHeader() {
   return (
-    <header className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white/80 px-4 py-2.5 text-slate-900 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-50">
+    <header className="hidden md:flex items-center justify-between gap-2 border-b border-slate-200 bg-white/80 px-4 py-2.5 text-slate-900 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-50">
       <Link href="/dashboard" className="flex items-center gap-2">
         <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-500/15 text-xs font-semibold text-emerald-300">
           AP

@@ -315,7 +315,7 @@ export default function BurnsToolPage() {
       </main>
 
       {/* ── Sticky outcome bar ───────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 px-4 pb-4 pt-2 bg-slate-950/90 backdrop-blur-sm border-t border-slate-800">
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-30 px-4 pb-4 pt-2 bg-slate-950/90 backdrop-blur-sm border-t border-slate-800">
         <div className={`mx-auto max-w-2xl rounded-2xl border px-4 py-3 transition-colors ${outcomeStyle.bar}`}>
           {/* Progress bar */}
           <div className="mb-2 h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">

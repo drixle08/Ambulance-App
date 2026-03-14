@@ -327,7 +327,7 @@ export default function GcsPage() {
       </main>
 
       {/* ── Sticky Outcome Bar ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-800 bg-slate-950/95 backdrop-blur-sm">
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-30 border-t border-slate-800 bg-slate-950/95 backdrop-blur-sm">
         <div className="mx-auto max-w-2xl px-4 py-3">
           <div className={`rounded-xl border p-3 ${bs.border} ${bs.bg}`}>
             <div className="flex items-center gap-4">

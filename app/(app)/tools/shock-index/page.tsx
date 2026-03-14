@@ -289,7 +289,7 @@ export default function ShockIndexPage() {
 
       {/* Sticky outcome bar */}
       {hasEnoughData && (
-        <div className={["fixed bottom-0 left-0 right-0 z-30 border-t backdrop-blur-sm px-4 py-3", siConfig.card, "border-t"].join(" ")}>
+        <div className={["fixed bottom-16 md:bottom-0 left-0 right-0 z-30 border-t backdrop-blur-sm px-4 py-3", siConfig.card, "border-t"].join(" ")}>
           <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
               <span className={siConfig.text}>{siConfig.icon}</span>

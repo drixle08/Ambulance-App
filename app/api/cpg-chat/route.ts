@@ -11,11 +11,43 @@ type Source = {
   label: string;
 };
 
+type HistoryMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 const DEFAULT_MODEL = "gpt-4o-mini";
+
+// ─── System prompt ────────────────────────────────────────────────────────────
+// Directive, paramedic-focused, no fluff sections.
+const SYSTEM_PROMPT = `You are the CPG copilot embedded in the HMCAS Ambulance Paramedic Toolkit.
+Your only reference is the HMCAS Clinical Practice Guidelines (CPG) v2.4 (2025).
+The retrieved CPG passages are provided in each prompt — answer using those passages only.
+
+RESPONSE FORMAT (always follow this order):
+1. Direct answer — 1–3 sentences stating the answer plainly
+2. Key details — bullet points for doses, thresholds, criteria, or steps
+   - Drug bullets must include: drug name · dose · route · frequency · duration (if specified)
+   - Include any Do NOT or contraindications as a WARNING bullet
+3. Sources (CPG): CPG p.XX [; CPG p.XX ...] — always on its own line at the end
+
+FORMATTING RULES:
+- Use **bold** for drug names, doses, and critical thresholds (e.g. **1 mg IV**, **SBP < 90 mmHg**)
+- WARNING: prefix for contraindications or critical cautions (e.g. "WARNING: Do not give X if...")
+- Keep answers under 280 words — paramedics need fast answers, not essays
+- Use plain bullet points (- item), no numbered lists unless steps must be sequential
+- No decorative symbols, no preamble, no "Great question!"
+
+BOUNDARIES:
+- If the retrieved passages do not cover the question: respond exactly "This specific detail is not covered in the retrieved CPG pages — please check the full CPG PDF directly."
+- Never invent doses, protocols, or thresholds not present in the passages
+- Do not give general medical advice beyond the CPG passages provided
+- Do not reference external guidelines (JRCALC, AHA, etc.) unless they appear in the CPG passages`;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function buildSources(chunks: CpgChunk[]): Source[] {
   const seenPages = new Set<number>();
-
   return chunks
     .filter((chunk) => {
       if (seenPages.has(chunk.printedPage)) return false;
@@ -31,55 +63,57 @@ function buildSources(chunks: CpgChunk[]): Source[] {
     }));
 }
 
-function buildSourceLine(sources: Source[]): string {
-  if (sources.length === 0) return "";
-  const parts = sources.map((source) => source.label).filter(Boolean);
-  const uniqueParts = Array.from(new Set(parts));
-  return uniqueParts.length
-    ? `Sources (CPG): ${uniqueParts.join("; ")}`
-    : "";
-}
-
-function buildPrompt(query: string, chunks: CpgChunk[], sources: Source[]) {
-  const sourceLine = buildSourceLine(sources);
-  const context = chunks
+function buildContext(chunks: CpgChunk[]): string {
+  return chunks
     .map((chunk) => {
       const cleaned = chunk.text.replace(/\s+/g, " ").trim();
-      const snippet =
-        cleaned.length > 600 ? `${cleaned.slice(0, 600)}...` : cleaned;
-      return `Page ${chunk.printedPage}: ${snippet}`;
+      // Increased from 600 → 900 chars per chunk for richer context
+      const snippet = cleaned.length > 900 ? `${cleaned.slice(0, 900)}…` : cleaned;
+      return `[CPG p.${chunk.printedPage}]: ${snippet}`;
     })
     .join("\n\n");
-
-  return [
-    "You are the AI clinical assistant inside the Ambulance Paramedic Toolkit app. Primary reference: HMCAS Clinical Practice Guidelines (CPG) v2.4 (2025).",
-    "Give concise, clinically useful answers for pre-hospital clinicians. Use the retrieved CPG passages as background, but answer in your own words.",
-    "Use this structure with plain headings and minimal bullets:",
-    "Summary",
-    "Immediate Priorities",
-    "Assessment",
-    "Management / Treatment",
-    "Transport & Handover",
-    "Notes / Limitations",
-    "Style: clean, professional, no decorative symbols or heavy markdown. Short paragraphs; bullets only when needed (especially for meds with dose/route/frequency/cautions, include Do NOT if present).",
-    "Do not paste long blocks of guideline text. If the CPG does not clearly support a detail, say so and avoid inventing local policy.",
-    'Finish with one compact sources line, e.g., "Sources (CPG): CPG p.80; CPG p.81". Do not include source excerpts.',
-    "",
-    `Question: ${query}`,
-    "",
-    "Context from CPG (paraphrase; do not paste):",
-    context || "None",
-    "",
-    "Use the following for the sources line:",
-    sourceLine || "None",
-  ].join("\n");
 }
 
-async function callOpenAI(prompt: string) {
+function buildSourceLine(sources: Source[]): string {
+  const parts = Array.from(new Set(sources.map((s) => s.label)));
+  return parts.length ? `Sources (CPG): ${parts.join("; ")}` : "";
+}
+
+// ─── OpenAI call with multi-turn history ─────────────────────────────────────
+
+async function callOpenAI(
+  query: string,
+  context: string,
+  sourceLine: string,
+  history: HistoryMessage[]
+): Promise<string | null> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return null;
 
   const model = process.env.OPENAI_MODEL || DEFAULT_MODEL;
+
+  // Build the user message for this turn, including retrieved context
+  const userContent = [
+    `Question: ${query}`,
+    "",
+    "Retrieved CPG passages (answer from these only — do not paste, paraphrase):",
+    context || "None retrieved.",
+    "",
+    "Use this exact sources line at the end of your answer:",
+    sourceLine || "None",
+  ].join("\n");
+
+  // Compose messages: system + trimmed history + current user turn
+  const messages = [
+    { role: "system" as const, content: SYSTEM_PROMPT },
+    // Include prior turns for conversational follow-ups (max 3 exchanges = 6 messages)
+    ...history.slice(-6).map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    })),
+    { role: "user" as const, content: userContent },
+  ];
+
   const resp = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -88,19 +122,9 @@ async function callOpenAI(prompt: string) {
     },
     body: JSON.stringify({
       model,
-      temperature: 0.2,
-      max_tokens: 400,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are the AI clinical assistant in the Ambulance Paramedic Toolkit for HMCAS crews. Primary reference: HMCAS CPG v2.4 (2025). Provide concise, clinically useful answers using the retrieved CPG content as background, but answer in your own words. Use the headings: Summary; Immediate Priorities; Assessment; Management / Treatment; Transport & Handover; Notes / Limitations. Keep formatting plain (no decorative symbols), use short paragraphs and bullets only where helpful (especially for drugs with dose/route/frequency/cautions and any Do NOT guidance). Do not paste long guideline text. If details are unclear or absent, say so without inventing policy. End every answer with a single compact sources line like \"Sources (CPG): CPG p.80; CPG p.81\" and do not include source excerpts. Never include identifying information.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
+      temperature: 0.1,        // Low temp for factual CPG answers
+      max_tokens: 700,          // Raised from 400 → 700 for complete answers
+      messages,
     }),
   });
 
@@ -111,59 +135,63 @@ async function callOpenAI(prompt: string) {
   }
 
   const data = await resp.json();
-  const answer =
-    data?.choices?.[0]?.message?.content?.trim() ?? null;
-  return answer;
+  return data?.choices?.[0]?.message?.content?.trim() ?? null;
 }
+
+// ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const query = typeof body?.query === "string" ? body.query.trim() : "";
 
   if (!query) {
-    return NextResponse.json(
-      { error: "Missing query" },
-      {
-        status: 400,
-      }
-    );
+    return NextResponse.json({ error: "Missing query" }, { status: 400 });
   }
 
-  const topChunks = await searchCpgChunks(query, 6);
+  // Validate and sanitise history
+  const rawHistory: unknown[] = Array.isArray(body?.history) ? body.history : [];
+  const history: HistoryMessage[] = rawHistory
+    .filter(
+      (m): m is { role: string; content: string } =>
+        typeof m === "object" &&
+        m !== null &&
+        typeof (m as Record<string, unknown>).role === "string" &&
+        typeof (m as Record<string, unknown>).content === "string"
+    )
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }))
+    .slice(-6); // Keep last 3 exchanges max
+
+  // Retrieve — increased from 6 → 8 chunks for broader coverage
+  const topChunks = await searchCpgChunks(query, 8);
 
   if (topChunks.length === 0) {
     return NextResponse.json({
       answer:
-        "I can only answer questions covered in the CPG. Please ask about a protocol, threshold, dose, or pathway from the guideline.",
+        "I can only answer questions covered by the CPG. Please ask about a protocol, dose, threshold, or clinical pathway from the HMCAS guidelines.",
       sources: [],
     });
   }
 
   const sources = buildSources(topChunks);
   const sourceLine = buildSourceLine(sources);
-  const prompt = buildPrompt(query, topChunks, sources);
-  const answer = await callOpenAI(prompt);
+  const context = buildContext(topChunks);
 
-  const finalAnswer =
-    sourceLine && answer && !answer.toLowerCase().includes("sources (cpg")
-      ? `${answer.trim()}\n\n${sourceLine}`
-      : answer;
+  const answer = await callOpenAI(query, context, sourceLine, history);
+
+  // Ensure sources line is always appended if missing from model output
+  const finalAnswer = (() => {
+    if (!answer) return null;
+    if (answer.toLowerCase().includes("sources (cpg")) return answer;
+    return sourceLine ? `${answer.trim()}\n\n${sourceLine}` : answer;
+  })();
 
   if (!finalAnswer) {
-    const fallbackAnswer = sourceLine
-      ? `I could not generate an answer right now. ${sourceLine}`
-      : "I could not generate an answer right now. Please review the relevant CPG pages in the PDF.";
-
-    return NextResponse.json({
-      answer: fallbackAnswer,
-      sources,
-      sourceLine,
-    });
+    const fallback = sourceLine
+      ? `Unable to generate a response right now.\n\n${sourceLine}`
+      : "Unable to generate a response right now. Please review the CPG PDF directly.";
+    return NextResponse.json({ answer: fallback, sources, sourceLine });
   }
 
-  return NextResponse.json({
-    answer: finalAnswer,
-    sources,
-    sourceLine,
-  });
+  return NextResponse.json({ answer: finalAnswer, sources, sourceLine });
 }

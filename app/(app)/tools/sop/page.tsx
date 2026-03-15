@@ -4,16 +4,22 @@ import { useEffect, useRef, useState } from "react";
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const SOP_PATH = "/reference/sop/sop-hmcas-2025.pdf";
 
 export default function SopPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const initialPage = (() => {
+    const p = Number(searchParams.get("page"));
+    return Number.isFinite(p) && p > 0 ? p : 1;
+  })();
 
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState(1);
+  const [pageNumber, setPageNumber] = useState(initialPage);
   const [error, setError] = useState<string | null>(null);
   const [jumpInput, setJumpInput] = useState("");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);

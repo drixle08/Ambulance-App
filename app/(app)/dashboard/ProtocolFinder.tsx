@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Pill, Search } from "lucide-react";
+import { Pill, Search, ClipboardCheck } from "lucide-react";
 import {
   CPG_ENTRIES,
   normalizeCpgSlug,
@@ -9,6 +9,7 @@ import {
   type CpgEntry,
   type MedicationEntry,
 } from "@/lib/cpgIndex";
+import { searchSopEntries, type SopEntry } from "@/lib/sopIndex";
 import { useDevice } from "@/app/_components/DeviceProvider";
 
 const PDF_PATH = "/reference/cpg/cpg-v2.4-2025.pdf";
@@ -26,7 +27,7 @@ export function ProtocolFinder() {
     numericQuery > 0 &&
     numericQuery < 1000;
 
-  // Protocol results
+  // CPG protocol results
   const protocolResults = useMemo((): CpgEntry[] => {
     if (!normalizedQuery) return [];
     return CPG_ENTRIES.filter((entry) => {
@@ -39,7 +40,7 @@ export function ProtocolFinder() {
         normalizedKeywords.some((k) => k.includes(normalizedQuery)) ||
         (isNumericQuery && entry.printedPage === Math.round(numericQuery))
       );
-    }).slice(0, 6);
+    }).slice(0, 5);
   }, [normalizedQuery, isNumericQuery, numericQuery]);
 
   // Medication / formulary results
@@ -48,7 +49,17 @@ export function ProtocolFinder() {
     return searchMedications(normalizedQuery);
   }, [normalizedQuery, isNumericQuery]);
 
-  const hasResults = protocolResults.length > 0 || medResults.length > 0 || isNumericQuery;
+  // SOP results
+  const sopResults = useMemo((): SopEntry[] => {
+    if (!normalizedQuery || isNumericQuery) return [];
+    return searchSopEntries(normalizedQuery);
+  }, [normalizedQuery, isNumericQuery]);
+
+  const hasResults =
+    protocolResults.length > 0 ||
+    medResults.length > 0 ||
+    sopResults.length > 0 ||
+    isNumericQuery;
 
   // ─── Navigation helpers ───────────────────────────────────────────────────
 
@@ -78,7 +89,6 @@ export function ProtocolFinder() {
   const openMedication = (med: MedicationEntry) => {
     const targetPdfPage = med.formularyPage + PDF_PAGE_OFFSET;
     if (isMobile) {
-      // Re-use the CPG viewer with a formulary slug
       const slug = `formulary-${med.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")}`;
       window.location.assign(
         `/cpg/${encodeURIComponent(slug)}?code=Formulary&page=${med.formularyPage}&pdfPage=${targetPdfPage}`
@@ -86,6 +96,11 @@ export function ProtocolFinder() {
     } else {
       window.open(`${PDF_PATH}#page=${targetPdfPage}`, "_blank", "noopener,noreferrer");
     }
+    setQuery("");
+  };
+
+  const openSop = (entry: SopEntry) => {
+    window.location.assign(`/tools/sop?page=${entry.printedPage}`);
     setQuery("");
   };
 
@@ -109,11 +124,12 @@ export function ProtocolFinder() {
               }
               if (protocolResults[0]) openEntry(protocolResults[0]);
               else if (medResults[0]) openMedication(medResults[0]);
+              else if (sopResults[0]) openSop(sopResults[0]);
             }
           }}
-          placeholder="Search protocol or medication…"
+          placeholder="Search CPG, SOP, or medication…"
           className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
-          aria-label="Search protocol or medication"
+          aria-label="Search protocol, SOP, or medication"
         />
       </div>
 
@@ -145,12 +161,12 @@ export function ProtocolFinder() {
                 </li>
               )}
 
-              {/* Protocol results */}
+              {/* CPG Protocol results */}
               {protocolResults.length > 0 && (
                 <>
                   <li className="px-4 py-1.5 bg-slate-50 dark:bg-slate-800/50">
                     <span className="text-[0.6rem] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                      Protocols
+                      CPG Protocols
                     </span>
                   </li>
                   {protocolResults.map((entry) => (
@@ -169,6 +185,41 @@ export function ProtocolFinder() {
                           </p>
                         </div>
                         <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                          {entry.code}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </>
+              )}
+
+              {/* SOP results */}
+              {sopResults.length > 0 && (
+                <>
+                  <li className="px-4 py-1.5 bg-amber-50 dark:bg-amber-500/10">
+                    <span className="text-[0.6rem] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
+                      Standard Operating Procedures
+                    </span>
+                  </li>
+                  {sopResults.map((entry) => (
+                    <li key={entry.code}>
+                      <button
+                        type="button"
+                        onClick={() => openSop(entry)}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-amber-50 dark:hover:bg-amber-500/10"
+                      >
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                          <ClipboardCheck className="h-3.5 w-3.5" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
+                            {entry.title}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {entry.section} · p.{entry.printedPage}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-500/20 dark:text-amber-400">
                           {entry.code}
                         </span>
                       </button>
@@ -215,7 +266,7 @@ export function ProtocolFinder() {
             </ul>
           ) : (
             <div className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
-              No matching protocols or medications. Try another term.
+              No matching protocols, SOPs, or medications. Try another term.
             </div>
           )}
         </div>

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, MessageCircle, Pill, Search, Timer, X } from "lucide-react";
+import { Home, LayoutGrid, MessageCircle, Pill, Search, Timer, X } from "lucide-react";
 import {
   CPG_ENTRIES,
   searchMedications,
@@ -175,6 +175,7 @@ export function BottomNav() {
   }, [pathname]);
 
   // Active tab detection
+  const isHome = pathname === "/";
   const isTools =
     pathname.startsWith("/dashboard") ||
     (pathname.startsWith("/tools") &&
@@ -195,6 +196,15 @@ export function BottomNav() {
         className="fixed bottom-0 left-0 right-0 z-40 flex md:hidden border-t border-slate-800 bg-slate-950/98 backdrop-blur-md"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
+        {/* Home */}
+        <Link
+          href="/"
+          className={`${tabBase} ${isHome ? active : inactive}`}
+        >
+          <Home className="h-5 w-5" />
+          <span className="text-[0.6rem] font-semibold tracking-wide">Home</span>
+        </Link>
+
         {/* Tools */}
         <Link
           href="/dashboard"

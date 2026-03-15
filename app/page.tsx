@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ThemeToggle } from "@/app/_components/ThemeToggle";
 import { StandaloneRedirect } from "@/app/_components/StandaloneRedirect";
 import { CpgChatBubble } from "@/app/_components/CpgChatBubble";
+import { BottomNav } from "@/app/_components/BottomNav";
 import {
   Menu,
   ActivitySquare,
@@ -260,7 +261,7 @@ const MobileHome: React.FC = () => {
         </div>
       </header>
 
-      <main className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pb-20 pt-4">
+      <main className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pb-24 pt-4">
         <section className="space-y-3">
           <div className="rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
             <div className="flex items-start gap-3">
@@ -326,7 +327,8 @@ const MobileHome: React.FC = () => {
         <AboutCard compact />
       </main>
 
-      <div className="fixed bottom-4 right-4 z-40 md:bottom-6 md:right-6">
+      <BottomNav />
+      <div className="fixed bottom-20 right-4 z-40">
         <InstallHint />
       </div>
       <CpgChatBubble />

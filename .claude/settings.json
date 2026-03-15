@@ -13,7 +13,8 @@
       "Bash(grep -rn \"protocol finder\\\\|Protocol Finder\\\\|protocolFinder\\\\|cpg-finder\\\\|finder\" c:/Dev/my-first-app/app --include=*.tsx --include=*.ts -l)",
       "Bash(grep -rn \"cpg\\\\|CPG\" c:/Dev/my-first-app/app --include=*.tsx --include=*.ts -l)",
       "Bash(cat \"c:/Dev/my-first-app/app/\\(app\\)/dashboard/page.tsx\")",
-      "Bash(cat \"c:/Dev/my-first-app/app/\\(app\\)/dashboard/[group]/page.tsx\")"
+      "Bash(cat \"c:/Dev/my-first-app/app/\\(app\\)/dashboard/[group]/page.tsx\")",
+      "Bash(cat -n \"c:/Dev/my-first-app/app/\\(app\\)/layout.tsx\")"
     ]
   }
 }

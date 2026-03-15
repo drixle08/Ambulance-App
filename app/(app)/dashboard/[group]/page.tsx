@@ -5,7 +5,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   ShieldAlert, HeartPulse, Wind, Brain, BookOpen,
   Shield, Flame, Timer, HeartOff, Eye, Baby, GitBranch,
-  TrendingUp, Syringe, Stethoscope, ClipboardList, Gauge,
+  TrendingUp, Syringe, Stethoscope, ClipboardList, ClipboardCheck, Gauge,
   FileText, MessageCircle, Zap,
 } from "lucide-react";
 import { TOOL_GROUPS } from "../data";
@@ -13,7 +13,7 @@ import { TOOL_GROUPS } from "../data";
 const ICON_MAP: Record<string, LucideIcon> = {
   ShieldAlert, HeartPulse, Wind, Brain, BookOpen,
   Shield, Flame, Timer, HeartOff, Eye, Baby, GitBranch,
-  TrendingUp, Syringe, Stethoscope, ClipboardList, Gauge,
+  TrendingUp, Syringe, Stethoscope, ClipboardList, ClipboardCheck, Gauge,
   FileText, MessageCircle, Zap,
 };
 

@@ -181,6 +181,13 @@ export const TOOL_GROUPS: ToolGroup[] = [
         meta: "Reference - Time-critical",
         icon: "Zap",
       },
+      {
+        name: "Standard Operating Procedures",
+        href: "/tools/sop",
+        tagline: "HMCAS SOP document — browse and jump to any page in-app.",
+        meta: "SOP 2025",
+        icon: "ClipboardCheck",
+      },
     ],
   },
 ];

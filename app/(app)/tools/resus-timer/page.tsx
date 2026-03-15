@@ -194,7 +194,13 @@ export default function ResuscitationTimerPage() {
       elapsedRef.current = nowElapsed;
 
       setSecondsRemaining((prev) => {
-        if (prev > 1) return prev - 1;
+        if (prev > 1) {
+          // 5-second heads-up before CPR cycle ends
+          if (phaseRef.current === "CPR" && prev - 1 === 5) {
+            speak("5 seconds. Prepare for rhythm check.");
+          }
+          return prev - 1;
+        }
 
         if (phaseRef.current === "CPR") {
           setPhase("Pause");

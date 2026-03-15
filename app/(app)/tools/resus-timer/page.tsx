@@ -43,6 +43,7 @@ type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 const CYCLE_SECONDS = 120; // 2-minute CPR cycles
 const PAUSE_SECONDS = 5;   // rhythm-check gap between cycles
 const DEFAULT_BPM = 110;
+const ADRENALINE_INTERVAL = 240; // every 4 minutes per CPG
 
 export default function ResuscitationTimerPage() {
   const [isRunning, setIsRunning] = useState(false);
@@ -54,6 +55,9 @@ export default function ResuscitationTimerPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [otherDialogOpen, setOtherDialogOpen] = useState(false);
   const [otherText, setOtherText] = useState("");
+  // Drug tracking
+  const [lastAdrenalineAt, setLastAdrenalineAt] = useState<number | null>(null);
+  const [amiodaroneDose, setAmiodaroneDose] = useState<0 | 1 | 2>(0);
   const voiceSupported = useMemo(() => {
     if (typeof window === "undefined") return false;
     const SpeechRec: SpeechRecognitionConstructor | undefined =
@@ -85,6 +89,9 @@ export default function ResuscitationTimerPage() {
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const shouldRestartRecognition = useRef(false);
   const lastVoiceCommandAtRef = useRef(0);
+  // Drug refs (avoid stale closures in setInterval)
+  const lastAdrenalineAtRef = useRef<number | null>(null);
+  const amiodaroneDoseRef = useRef<0 | 1 | 2>(0);
 
   useEffect(() => {
     elapsedRef.current = elapsedSeconds;
@@ -126,6 +133,16 @@ export default function ResuscitationTimerPage() {
     const ctx = new AudioCtx();
     audioCtxRef.current = ctx;
     return ctx;
+  }, []);
+
+  const speak = useCallback((text: string) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.88;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    window.speechSynthesis.speak(utterance);
   }, []);
 
   const addLog = useCallback((message: string) => {
@@ -172,11 +189,14 @@ export default function ResuscitationTimerPage() {
     if (!isRunning) return;
 
     const id = window.setInterval(() => {
+      // Advance elapsed ref directly so drug checks read the current value
+      const nowElapsed = elapsedRef.current + 1;
+      elapsedRef.current = nowElapsed;
+
       setSecondsRemaining((prev) => {
         if (prev > 1) return prev - 1;
 
         if (phaseRef.current === "CPR") {
-          // CPR cycle done → 5-second rhythm check pause
           setPhase("Pause");
           phaseRef.current = "Pause";
           if (startTimeRef.current) {
@@ -184,7 +204,6 @@ export default function ResuscitationTimerPage() {
           }
           return PAUSE_SECONDS;
         } else {
-          // Pause done → start next CPR cycle
           const next = cycleRef.current + 1;
           setPhase("CPR");
           phaseRef.current = "CPR";
@@ -197,11 +216,25 @@ export default function ResuscitationTimerPage() {
         }
       });
 
-      setElapsedSeconds((prev) => prev + 1);
+      setElapsedSeconds(nowElapsed);
+
+      // ── Adrenaline due check ───────────────────────────────────────────────
+      const lastAdren = lastAdrenalineAtRef.current;
+      if (lastAdren !== null) {
+        const since = nowElapsed - lastAdren;
+        if (since === ADRENALINE_INTERVAL - 30) {
+          speak("Adrenaline due in 30 seconds");
+        } else if (since === ADRENALINE_INTERVAL) {
+          speak("Adrenaline due now");
+          // Reset timer for the next repeating reminder
+          lastAdrenalineAtRef.current = nowElapsed;
+          setLastAdrenalineAt(nowElapsed);
+        }
+      }
     }, 1000);
 
     return () => window.clearInterval(id);
-  }, [isRunning, addLog]);
+  }, [isRunning, addLog, speak]);
 
   // Metronome (100-120 bpm, fixed at DEFAULT_BPM) — silent during rhythm-check pause
   useEffect(() => {
@@ -246,15 +279,47 @@ export default function ResuscitationTimerPage() {
     cycleRef.current = 1;
     setSecondsRemaining(CYCLE_SECONDS);
     setElapsedSeconds(0);
+    elapsedRef.current = 0;
     startTimeRef.current = null;
     setStartTime(null);
     setLogs([]);
+    // Clear drug state
+    lastAdrenalineAtRef.current = null;
+    setLastAdrenalineAt(null);
+    amiodaroneDoseRef.current = 0;
+    setAmiodaroneDose(0);
+    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     addLog("Timer reset");
   }, [addLog]);
 
   const handleShock = () => addLog("Shock delivered");
-  const handleAdrenaline = () => addLog("Adrenaline given");
-  const handleAmiodarone = () => addLog("Amiodarone given");
+
+  const handleAdrenaline = useCallback(() => {
+    const now = elapsedRef.current;
+    lastAdrenalineAtRef.current = now;
+    setLastAdrenalineAt(now);
+    addLog("Adrenaline 1mg IV given");
+    speak("Adrenaline given. Next dose in 4 minutes.");
+  }, [addLog, speak]);
+
+  const handleAmiodarone = useCallback(() => {
+    const current = amiodaroneDoseRef.current;
+    if (current >= 2) {
+      addLog("Amiodarone — max doses already given");
+      speak("Maximum amiodarone doses already given.");
+      return;
+    }
+    const next = (current + 1) as 1 | 2;
+    amiodaroneDoseRef.current = next;
+    setAmiodaroneDose(next);
+    if (next === 1) {
+      addLog("Amiodarone 300mg IV given (1st dose — after 3rd shock)");
+      speak("Amiodarone 300 milligrams given. Next dose: 150 milligrams after the next shock.");
+    } else {
+      addLog("Amiodarone 150mg IV given (2nd dose — after 4th shock)");
+      speak("Amiodarone 150 milligrams given. Maximum doses reached.");
+    }
+  }, [addLog, speak]);
 
   const handleOtherConfirm = () => {
     const trimmed = otherText.trim();
@@ -530,6 +595,60 @@ export default function ResuscitationTimerPage() {
             </ul>
           )}
         </section>
+
+        {/* Drug reminders */}
+        {(lastAdrenalineAt !== null || amiodaroneDose > 0) && (() => {
+          const adrSecs = lastAdrenalineAt !== null
+            ? Math.max(0, ADRENALINE_INTERVAL - (elapsedSeconds - lastAdrenalineAt))
+            : null;
+          const adrOverdue = adrSecs === 0;
+          const adrUrgent = adrSecs !== null && adrSecs <= 30 && !adrOverdue;
+
+          return (
+            <section className="rounded-2xl border border-slate-800 bg-slate-900/70 px-3 py-3 space-y-2">
+              <span className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Drug reminders
+              </span>
+
+              {/* Adrenaline countdown */}
+              {adrSecs !== null && (
+                <div className={`rounded-xl border px-3 py-2 transition-colors ${adrOverdue ? "border-red-500/60 bg-red-500/15 animate-pulse" : adrUrgent ? "border-orange-400/60 bg-orange-500/10" : "border-amber-500/30 bg-amber-500/5"}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-xs font-bold ${adrOverdue ? "text-red-300" : adrUrgent ? "text-orange-300" : "text-amber-300"}`}>
+                      Adrenaline 1mg IV
+                    </span>
+                    <span className={`font-mono text-sm font-bold ${adrOverdue ? "text-red-300" : adrUrgent ? "text-orange-300" : "text-amber-200"}`}>
+                      {adrOverdue ? "DUE NOW" : formatSeconds(adrSecs)}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-[0.6rem] text-slate-500">Next dose · CPG: every 4 min</p>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-800">
+                    <div
+                      className={`h-full rounded-full transition-all duration-1000 ${adrOverdue ? "bg-red-500" : adrUrgent ? "bg-orange-500" : "bg-amber-500"}`}
+                      style={{ width: `${adrOverdue ? 100 : ((ADRENALINE_INTERVAL - adrSecs) / ADRENALINE_INTERVAL) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Amiodarone next dose reminder */}
+              {amiodaroneDose === 1 && (
+                <div className="rounded-xl border border-violet-500/30 bg-violet-500/5 px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-violet-300">Amiodarone 150mg IV</span>
+                    <span className="text-[0.65rem] font-semibold text-violet-400">2nd dose</span>
+                  </div>
+                  <p className="mt-0.5 text-[0.6rem] text-slate-500">Due after next shock · CPG: after 4th shock</p>
+                </div>
+              )}
+              {amiodaroneDose >= 2 && (
+                <div className="rounded-xl border border-slate-700 bg-slate-800/40 px-3 py-2">
+                  <span className="text-xs text-slate-400">Amiodarone — max doses given (450mg total)</span>
+                </div>
+              )}
+            </section>
+          );
+        })()}
 
         {/* Event buttons */}
         <section className="space-y-2">

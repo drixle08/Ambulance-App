@@ -54,7 +54,11 @@ export function ProtocolFinder() {
 
   const openPrintedPage = (printedPage: number) => {
     const clamped = Math.max(printedPage + PDF_PAGE_OFFSET, 1);
-    window.location.assign(`${PDF_PATH}#page=${clamped}`);
+    if (isMobile) {
+      window.location.assign(`/cpg/page?page=${clamped}&pdfPage=${clamped}`);
+    } else {
+      window.open(`${PDF_PATH}#page=${clamped}`, "_blank", "noopener,noreferrer");
+    }
     setQuery("");
   };
 

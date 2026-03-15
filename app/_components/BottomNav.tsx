@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useDevice } from "@/app/_components/DeviceProvider";
 import { Home, LayoutGrid, MessageCircle, Pill, Search, Timer, X } from "lucide-react";
 import {
   CPG_ENTRIES,
+  normalizeCpgSlug,
   searchMedications,
   type CpgEntry,
   type MedicationEntry,
@@ -18,9 +20,11 @@ const PDF_PATH = "/reference/cpg/cpg-v2.4-2025.pdf";
 function SearchResults({
   query,
   onClose,
+  isMobile,
 }: {
   query: string;
   onClose: () => void;
+  isMobile: boolean;
 }) {
   const q = query.toLowerCase().trim();
   const numericQuery = Number(query.trim());
@@ -45,8 +49,38 @@ function SearchResults({
 
   const hasResults = protocols.length > 0 || meds.length > 0 || isNumericQuery;
 
-  const open = (url: string) => {
-    window.location.assign(url);
+  // On mobile: route to the in-app PDF viewer so the page fragment works.
+  // On desktop: open the PDF directly in a new tab.
+  const openPage = (printedPage: number) => {
+    if (isMobile) {
+      window.location.assign(`/cpg/page?page=${printedPage}&pdfPage=${printedPage}`);
+    } else {
+      window.open(`${PDF_PATH}#page=${printedPage}`, "_blank", "noopener,noreferrer");
+    }
+    onClose();
+  };
+
+  const openEntry = (entry: CpgEntry) => {
+    if (isMobile) {
+      const slug = normalizeCpgSlug(entry.code);
+      window.location.assign(
+        `/cpg/${encodeURIComponent(slug)}?code=${encodeURIComponent(entry.code)}&page=${entry.printedPage}&pdfPage=${entry.printedPage}`
+      );
+    } else {
+      window.open(`${PDF_PATH}#page=${entry.printedPage}`, "_blank", "noopener,noreferrer");
+    }
+    onClose();
+  };
+
+  const openMed = (med: MedicationEntry) => {
+    if (isMobile) {
+      const slug = `formulary-${med.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")}`;
+      window.location.assign(
+        `/cpg/${encodeURIComponent(slug)}?code=Formulary&page=${med.formularyPage}&pdfPage=${med.formularyPage}`
+      );
+    } else {
+      window.open(`${PDF_PATH}#page=${med.formularyPage}`, "_blank", "noopener,noreferrer");
+    }
     onClose();
   };
 
@@ -73,7 +107,7 @@ function SearchResults({
       {isNumericQuery && (
         <button
           type="button"
-          onClick={() => open(`${PDF_PATH}#page=${Math.round(numericQuery)}`)}
+          onClick={() => openPage(Math.round(numericQuery))}
           className="flex w-full items-center justify-between px-5 py-4 hover:bg-slate-800/40 active:bg-slate-800"
         >
           <div className="text-left">
@@ -100,7 +134,7 @@ function SearchResults({
             <button
               key={entry.code}
               type="button"
-              onClick={() => open(`${PDF_PATH}#page=${entry.printedPage}`)}
+              onClick={() => openEntry(entry)}
               className="flex w-full items-center gap-3 px-5 py-4 text-left hover:bg-slate-800/40 active:bg-slate-800"
             >
               <div className="min-w-0 flex-1">
@@ -129,7 +163,7 @@ function SearchResults({
             <button
               key={med.name}
               type="button"
-              onClick={() => open(`${PDF_PATH}#page=${med.formularyPage}`)}
+              onClick={() => openMed(med)}
               className="flex w-full items-center gap-3 px-5 py-4 text-left hover:bg-violet-500/5 active:bg-violet-500/10"
             >
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-500/15 text-violet-400">
@@ -156,6 +190,7 @@ function SearchResults({
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { isMobile } = useDevice();
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -271,7 +306,7 @@ export function BottomNav() {
 
           {/* Results */}
           <div className="flex-1 overflow-y-auto overscroll-contain">
-            <SearchResults query={query} onClose={() => setSearchOpen(false)} />
+            <SearchResults query={query} onClose={() => setSearchOpen(false)} isMobile={isMobile} />
           </div>
         </div>
       )}

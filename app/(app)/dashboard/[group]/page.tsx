@@ -51,13 +51,14 @@ const COLOR_MAP: Record<string, { bg: string; icon: string; hover: string }> = {
 };
 
 type GroupPageProps = {
-  params: {
+  params: Promise<{
     group: string;
-  };
+  }>;
 };
 
-export default function GroupPage({ params }: GroupPageProps) {
-  const group = TOOL_GROUPS.find((g) => g.slug === params.group);
+export default async function GroupPage({ params }: GroupPageProps) {
+  const { group: groupSlug } = await params;
+  const group = TOOL_GROUPS.find((g) => g.slug === groupSlug);
 
   if (!group) {
     notFound();

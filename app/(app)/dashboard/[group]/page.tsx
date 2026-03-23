@@ -6,7 +6,7 @@ import {
   ShieldAlert, HeartPulse, Wind, Brain, BookOpen,
   Shield, Flame, Timer, HeartOff, Eye, Baby, GitBranch,
   TrendingUp, Syringe, Stethoscope, ClipboardList, ClipboardCheck, Gauge,
-  FileText, MessageCircle, Zap, Bot,
+  FileText, MessageCircle, Zap, Bot, Activity,
 } from "lucide-react";
 import { TOOL_GROUPS } from "../data";
 
@@ -14,7 +14,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   ShieldAlert, HeartPulse, Wind, Brain, BookOpen,
   Shield, Flame, Timer, HeartOff, Eye, Baby, GitBranch,
   TrendingUp, Syringe, Stethoscope, ClipboardList, ClipboardCheck, Gauge,
-  FileText, MessageCircle, Zap, Bot,
+  FileText, MessageCircle, Zap, Bot, Activity,
 };
 
 const COLOR_MAP: Record<string, { bg: string; icon: string; hover: string }> = {
@@ -42,6 +42,11 @@ const COLOR_MAP: Record<string, { bg: string; icon: string; hover: string }> = {
     bg: "bg-amber-500/10 dark:bg-amber-500/15",
     icon: "text-amber-600 dark:text-amber-300",
     hover: "hover:border-amber-400/50",
+  },
+  teal: {
+    bg: "bg-teal-500/10 dark:bg-teal-500/15",
+    icon: "text-teal-600 dark:text-teal-300",
+    hover: "hover:border-teal-400/50",
   },
 };
 

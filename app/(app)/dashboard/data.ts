@@ -147,6 +147,14 @@ export const TOOL_GROUPS: ToolGroup[] = [
     ],
   },
   {
+    title: "CCP / CCA",
+    slug: "ccp-cca",
+    description: "Critical care paramedic and critical care assistant clinical tools.",
+    icon: "Activity",
+    color: "teal",
+    tools: [],
+  },
+  {
     title: "Reference",
     slug: "reference",
     description: "Vitals, CPG guidelines, and quick calculators.",

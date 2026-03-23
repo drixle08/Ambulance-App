@@ -6,6 +6,7 @@ import {
   Wind,
   Brain,
   BookOpen,
+  Activity,
 } from "lucide-react";
 import { ProtocolFinder } from "./ProtocolFinder";
 import { TOOL_GROUPS } from "./data";
@@ -17,6 +18,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Wind,
   Brain,
   BookOpen,
+  Activity,
 };
 
 const COLOR_MAP: Record<string, { bg: string; icon: string; hover: string; ring: string }> = {
@@ -25,6 +27,7 @@ const COLOR_MAP: Record<string, { bg: string; icon: string; hover: string; ring:
   sky: { bg: "bg-sky-500/10 dark:bg-sky-500/15", icon: "text-sky-600 dark:text-sky-300", hover: "hover:border-sky-400/60 dark:hover:border-sky-400/50", ring: "group-hover:ring-sky-400/30" },
   violet: { bg: "bg-violet-500/10 dark:bg-violet-500/15", icon: "text-violet-600 dark:text-violet-300", hover: "hover:border-violet-400/60 dark:hover:border-violet-400/50", ring: "group-hover:ring-violet-400/30" },
   amber: { bg: "bg-amber-500/10 dark:bg-amber-500/15", icon: "text-amber-600 dark:text-amber-300", hover: "hover:border-amber-400/60 dark:hover:border-amber-400/50", ring: "group-hover:ring-amber-400/30" },
+  teal: { bg: "bg-teal-500/10 dark:bg-teal-500/15", icon: "text-teal-600 dark:text-teal-300", hover: "hover:border-teal-400/60 dark:hover:border-teal-400/50", ring: "group-hover:ring-teal-400/30" },
 };
 
 export default function DashboardPage() {

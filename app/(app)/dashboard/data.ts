@@ -152,7 +152,15 @@ export const TOOL_GROUPS: ToolGroup[] = [
     description: "Critical care paramedic and critical care assistant clinical tools.",
     icon: "Activity",
     color: "teal",
-    tools: [],
+    tools: [
+      {
+        name: "Care Bundles",
+        href: "/tools/care-bundles",
+        tagline: "Interactive checklist for APO, Critical, Sedated, Anaphylaxis, Asthma, COVID-19, Trauma, STEMI, and Stroke care bundles.",
+        meta: "CCA Handbook",
+        icon: "ClipboardCheck",
+      },
+    ],
   },
   {
     title: "Reference",

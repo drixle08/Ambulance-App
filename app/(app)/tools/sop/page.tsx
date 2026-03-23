@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import type { PDFDocumentProxy } from "pdfjs-dist";
-import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
+import { ArrowLeft, Bot, ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 const SOP_PATH = "/reference/sop/sop-hmcas-2025.pdf";
@@ -128,6 +129,13 @@ export default function SopPage() {
               Standard Operating Procedures
             </h1>
           </div>
+          <Link
+            href="/tools/sop-chat"
+            className="flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-400 hover:bg-amber-500/20 transition-colors shrink-0"
+          >
+            <Bot className="w-3.5 h-3.5" />
+            SOP Chat
+          </Link>
           {numPages && (
             <span className="text-xs font-mono text-slate-400 shrink-0">
               {pageNumber} / {numPages}

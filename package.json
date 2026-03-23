@@ -9,7 +9,8 @@
     "lint": "eslint",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
-    "build:cpg-index": "node scripts/build-cpg-index.mjs"
+    "build:cpg-index": "node scripts/build-cpg-index.mjs",
+    "build:sop-index": "node scripts/build-sop-index.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.555.0",

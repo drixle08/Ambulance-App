@@ -188,6 +188,13 @@ export const TOOL_GROUPS: ToolGroup[] = [
         meta: "SOP 2025",
         icon: "ClipboardCheck",
       },
+      {
+        name: "SOP Assistant (beta)",
+        href: "/tools/sop-chat",
+        tagline: "Ask SOP questions and get AI answers with direct page references.",
+        meta: "SOP 2025",
+        icon: "Bot",
+      },
     ],
   },
 ];

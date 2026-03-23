@@ -130,11 +130,11 @@ export default function SopPage() {
             </h1>
           </div>
           <Link
-            href="/tools/sop-chat"
+            href="/tools/cpg-chat"
             className="flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-400 hover:bg-amber-500/20 transition-colors shrink-0"
           >
             <Bot className="w-3.5 h-3.5" />
-            SOP Chat
+            Ask AI
           </Link>
           {numPages && (
             <span className="text-xs font-mono text-slate-400 shrink-0">

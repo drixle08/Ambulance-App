@@ -168,10 +168,10 @@ export const TOOL_GROUPS: ToolGroup[] = [
         icon: "FileText",
       },
       {
-        name: "CPG Chat (beta)",
+        name: "Clinical Assistant (beta)",
         href: "/tools/cpg-chat",
-        tagline: "Ask CPG questions and get answers with citations and PDF links.",
-        meta: "Reference",
+        tagline: "Ask CPG or SOP questions — AI answers with direct page references.",
+        meta: "CPG + SOP",
         icon: "MessageCircle",
       },
       {
@@ -187,13 +187,6 @@ export const TOOL_GROUPS: ToolGroup[] = [
         tagline: "HMCAS SOP document — browse and jump to any page in-app.",
         meta: "SOP 2025",
         icon: "ClipboardCheck",
-      },
-      {
-        name: "SOP Assistant (beta)",
-        href: "/tools/sop-chat",
-        tagline: "Ask SOP questions and get AI answers with direct page references.",
-        meta: "SOP 2025",
-        icon: "Bot",
       },
     ],
   },

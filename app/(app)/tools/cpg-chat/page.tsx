@@ -5,7 +5,9 @@ import {
   ArrowLeft,
   BookOpen,
   Check,
+  ClipboardCheck,
   Copy,
+  ExternalLink,
   Loader2,
   MessageCircle,
   Plus,
@@ -23,6 +25,7 @@ type SourceDoc = {
   printedPage: number;
   pdfUrl: string;
   label: string;
+  type: "cpg" | "sop";
 };
 
 type ChatMessage = {
@@ -36,11 +39,11 @@ type ChatMessage = {
 
 const EXAMPLES = [
   "Adrenaline dose in adult cardiac arrest?",
-  "When to apply a pelvic binder?",
+  "What is the uniform policy for paramedics?",
   "Post-ROSC BP targets and ventilation?",
+  "How do I report a needlestick injury?",
   "Paediatric asthma — salbutamol dose by weight?",
-  "When to bypass to a trauma centre?",
-  "TBI MAP targets pre-hospital?",
+  "What are the red rules in ambulance service?",
 ];
 
 // ─── Response renderer ───────────────────────────────────────────────────────
@@ -72,12 +75,23 @@ function ResponseRenderer({ text }: { text: string }) {
       continue;
     }
 
-    // Sources line
+    // CPG Sources line
     if (/^sources?\s*\(cpg\)/i.test(trimmed)) {
       nodes.push(
         <div key={keyIdx++} className="mt-3 pt-2 border-t border-slate-700/60 flex items-start gap-1.5">
           <BookOpen className="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-400" />
           <span className="text-xs text-emerald-400">{trimmed}</span>
+        </div>
+      );
+      continue;
+    }
+
+    // SOP Sources line
+    if (/^sources?\s*\(sop\)/i.test(trimmed)) {
+      nodes.push(
+        <div key={keyIdx++} className="mt-1 flex items-start gap-1.5">
+          <ClipboardCheck className="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-400" />
+          <span className="text-xs text-amber-400">{trimmed}</span>
         </div>
       );
       continue;
@@ -119,7 +133,7 @@ function ResponseRenderer({ text }: { text: string }) {
       }
     }
 
-    // Section heading — ALL CAPS or Title Case short line ending with optional colon
+    // Section heading
     const isHeading =
       (trimmed === trimmed.toUpperCase() && trimmed.length < 50 && /[A-Z]/.test(trimmed)) ||
       (/^[A-Z][A-Za-z\s\/&]+:?\s*$/.test(trimmed) && trimmed.length < 50);
@@ -144,18 +158,18 @@ function ResponseRenderer({ text }: { text: string }) {
   return <div className="space-y-1">{nodes}</div>;
 }
 
-// ─── Sources chips ────────────────────────────────────────────────────────────
+// ─── Source chips ─────────────────────────────────────────────────────────────
 
 function SourceChips({ sources }: { sources: SourceDoc[] }) {
   if (!sources.length) return null;
 
-  const deduped = Array.from(
-    new Map(sources.map((s) => [s.label, s])).values()
-  );
+  const deduped = Array.from(new Map(sources.map((s) => [s.label, s])).values());
+  const cpg = deduped.filter((s) => s.type === "cpg");
+  const sop = deduped.filter((s) => s.type === "sop");
 
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
-      {deduped.map((s) => (
+      {cpg.map((s) => (
         <a
           key={s.label}
           href={s.pdfUrl || undefined}
@@ -164,6 +178,16 @@ function SourceChips({ sources }: { sources: SourceDoc[] }) {
           className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-colors"
         >
           <BookOpen className="w-3 h-3" />
+          {s.label}
+        </a>
+      ))}
+      {sop.map((s) => (
+        <a
+          key={s.label}
+          href={s.pdfUrl}
+          className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-amber-400 hover:bg-amber-500/20 transition-colors"
+        >
+          <ExternalLink className="w-3 h-3" />
           {s.label}
         </a>
       ))}
@@ -192,7 +216,6 @@ export default function CpgChatPage() {
     setCanShare(typeof navigator !== "undefined" && "share" in navigator);
   }, []);
 
-  // Auto-grow textarea
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
@@ -218,7 +241,7 @@ export default function CpgChatPage() {
   const handleShare = async (msg: ChatMessage) => {
     if (!canShare) return;
     try {
-      await navigator.share({ title: "CPG Chat", text: msg.content });
+      await navigator.share({ title: "Clinical Assistant", text: msg.content });
     } catch (err) {
       if ((err as Error).name !== "AbortError") setError("Share failed.");
     }
@@ -238,7 +261,6 @@ export default function CpgChatPage() {
     setMessages((prev) => [...prev, userMsg]);
     setIsSending(true);
 
-    // Build history for multi-turn context (last 6 messages)
     const history = [...messages, userMsg]
       .slice(-6)
       .map((m) => ({ role: m.role, content: m.content }));
@@ -253,12 +275,13 @@ export default function CpgChatPage() {
       const data = await resp.json();
 
       const sources: SourceDoc[] = Array.isArray(data?.sources)
-        ? data.sources.map((s: { id?: unknown; page?: unknown; printedPage?: unknown; pdfUrl?: unknown; label?: unknown }) => ({
+        ? data.sources.map((s: { id?: unknown; page?: unknown; printedPage?: unknown; pdfUrl?: unknown; label?: unknown; type?: unknown }) => ({
             id: String(s?.id ?? crypto.randomUUID()),
             page: Number(s?.page ?? 0),
             printedPage: Number(s?.printedPage ?? 0),
             pdfUrl: typeof s?.pdfUrl === "string" ? s.pdfUrl : "",
-            label: typeof s?.label === "string" ? s.label : "CPG",
+            label: typeof s?.label === "string" ? s.label : "Source",
+            type: s?.type === "sop" ? "sop" : "cpg",
           }))
         : [];
 
@@ -309,7 +332,7 @@ export default function CpgChatPage() {
             </span>
             <div>
               <p className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-emerald-400 leading-none">Reference</p>
-              <h1 className="text-sm font-bold text-slate-100 leading-tight">CPG Chat</h1>
+              <h1 className="text-sm font-bold text-slate-100 leading-tight">Clinical Assistant</h1>
             </div>
           </div>
           {!isEmpty && (
@@ -337,15 +360,25 @@ export default function CpgChatPage() {
                   <MessageCircle className="w-4.5 h-4.5" />
                 </span>
                 <div>
-                  <p className="text-sm font-bold text-slate-100">HMCAS CPG Assistant</p>
-                  <p className="text-[0.65rem] text-slate-500">Answers grounded in CPG v2.4 (2025)</p>
+                  <p className="text-sm font-bold text-slate-100">HMCAS Clinical Assistant</p>
+                  <p className="text-[0.65rem] text-slate-500">CPG v2.4 (2025) · SOP v4.4 (2024)</p>
                 </div>
               </div>
               <p className="text-sm text-slate-400">
-                Ask about drug doses, thresholds, clinical pathways, transport criteria, or
-                protocol steps. Answers are based only on the retrieved CPG content and
-                include source page references.
+                Ask about clinical protocols, drug doses, transport criteria, operational
+                procedures, HR policies, or safety requirements. Answers are grounded in
+                the CPG and SOP and include direct page references.
               </p>
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-emerald-400">
+                  <BookOpen className="w-3 h-3" />
+                  CPG
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-amber-400">
+                  <ClipboardCheck className="w-3 h-3" />
+                  SOP
+                </span>
+              </div>
             </div>
 
             <div>
@@ -370,7 +403,6 @@ export default function CpgChatPage() {
         {messages.map((msg) => (
           <div key={msg.id} className={msg.role === "user" ? "flex justify-end" : "flex justify-start"}>
             {msg.role === "user" ? (
-              /* User bubble */
               <div className="max-w-[85%] space-y-1">
                 <div className="flex items-center justify-end gap-1.5 mb-1">
                   <span className="text-[0.6rem] uppercase tracking-wider text-slate-600">You</span>
@@ -381,11 +413,10 @@ export default function CpgChatPage() {
                 </div>
               </div>
             ) : (
-              /* Assistant bubble */
               <div className="max-w-[95%] space-y-1.5 w-full">
                 <div className="flex items-center gap-1.5 mb-1">
                   <MessageCircle className="w-3 h-3 text-emerald-400" />
-                  <span className="text-[0.6rem] uppercase tracking-wider text-emerald-500">CPG Chat</span>
+                  <span className="text-[0.6rem] uppercase tracking-wider text-emerald-500">Clinical Assistant</span>
                 </div>
                 <div className="rounded-2xl rounded-tl-sm bg-slate-900 border border-slate-800 px-4 py-3 space-y-1">
                   <ResponseRenderer text={msg.content} />
@@ -450,7 +481,7 @@ export default function CpgChatPage() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               rows={1}
-              placeholder="Ask a CPG question… (Enter to send, Shift+Enter for new line)"
+              placeholder="Ask a CPG or SOP question… (Enter to send)"
               disabled={isSending}
               className="flex-1 resize-none rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors disabled:opacity-50 max-h-36 overflow-y-auto"
             />
@@ -468,7 +499,7 @@ export default function CpgChatPage() {
             </button>
           </form>
           <p className="text-[0.6rem] text-slate-700 mt-1.5 text-center">
-            Answers grounded in HMCAS CPG v2.4 (2025) only — always verify with the full guideline
+            Grounded in HMCAS CPG v2.4 (2025) &amp; SOP v4.4 (2024) — always verify with the full document
           </p>
         </div>
       </div>

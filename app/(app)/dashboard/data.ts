@@ -160,6 +160,13 @@ export const TOOL_GROUPS: ToolGroup[] = [
         meta: "CCA Handbook",
         icon: "ClipboardCheck",
       },
+      {
+        name: "Drug Infusion Calculator",
+        href: "/tools/drug-calculator",
+        tagline: "Flow rate, draw-up volume and mixing guide for Adrenaline, Amiodarone, Fentanyl, GTN, Ketamine, MgSO4, Noradrenaline, Phenylephrine and TXA.",
+        meta: "CCA Handbook / Medical Math",
+        icon: "FlaskConical",
+      },
     ],
   },
   {

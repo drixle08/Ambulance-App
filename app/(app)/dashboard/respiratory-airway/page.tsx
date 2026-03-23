@@ -1,5 +1,5 @@
 import GroupPage from "../[group]/page";
 
 export default function RespiratoryAirwayPage() {
-  return <GroupPage params={{ group: "respiratory-airway" }} />;
+  return <GroupPage params={Promise.resolve({ group: "respiratory-airway" })} />;
 }

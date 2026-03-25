@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Plus, ChevronDown, ChevronUp, Pencil, Trash2, X } from "lucide-react";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 
@@ -149,7 +149,9 @@ const STAGES: StageDef[] = [
     id: "apgar-stage", title: "APGAR Score", color: "teal",
     onlyFor: ["newborn"],
     items: [
-      { id: "apgar-1-5", label: "APGAR score", sub: "1 min and 5 min (repeat at 10 min if < 7)", specialType: "apgar" },
+      { id: "apgar-1min", label: "APGAR — 1 min",  sub: "Scored immediately after birth",                   specialType: "apgar" },
+      { id: "apgar-5min", label: "APGAR — 5 min",  sub: "Routine repeat at 5 minutes",                      specialType: "apgar" },
+      { id: "apgar-7min", label: "APGAR — 7 min",  sub: "Repeat at 7 min if 5-min score < 7",               specialType: "apgar" },
     ],
   },
   {
@@ -530,21 +532,11 @@ const APGAR_CATS = [
   { key: "R", label: "Respiration", opts: ["Absent", "Weak / irregular", "Strong cry"] },
 ];
 
-type ApgarTimePoint = "1min" | "5min" | "10min";
-
 function ApgarScoreSelector({ onSelect }: { onSelect: (value: string) => void }) {
-  const [tp, setTp] = useState<ApgarTimePoint>("1min");
-  const [s1, setS1] = useState<Record<string, number>>({});
-  const [s5, setS5] = useState<Record<string, number>>({});
-  const [s10, setS10] = useState<Record<string, number>>({});
+  const [scores, setScores] = useState<Record<string, number>>({});
 
-  const scoreMap: Record<ApgarTimePoint, Record<string, number>> = { "1min": s1, "5min": s5, "10min": s10 };
-  const setMap: Record<ApgarTimePoint, React.Dispatch<React.SetStateAction<Record<string, number>>>> = { "1min": setS1, "5min": setS5, "10min": setS10 };
-
-  const cur = scoreMap[tp];
-  const setCur = setMap[tp];
-  const total = Object.values(cur).reduce((a, b) => a + b, 0);
-  const complete = Object.keys(cur).length === 5;
+  const total = Object.values(scores).reduce((a, b) => a + b, 0);
+  const complete = Object.keys(scores).length === 5;
 
   function apgarInterp(score: number) {
     if (score >= 7) return { text: "Normal", cls: "text-emerald-400" };
@@ -552,48 +544,20 @@ function ApgarScoreSelector({ onSelect }: { onSelect: (value: string) => void })
     return { text: "Requires resuscitation", cls: "text-rose-400" };
   }
 
-  function buildSummary() {
-    const parts: string[] = [];
-    if (Object.keys(s1).length === 5)  parts.push(`1 min: ${Object.values(s1).reduce((a,b)=>a+b,0)}/10`);
-    if (Object.keys(s5).length === 5)  parts.push(`5 min: ${Object.values(s5).reduce((a,b)=>a+b,0)}/10`);
-    if (Object.keys(s10).length === 5) parts.push(`10 min: ${Object.values(s10).reduce((a,b)=>a+b,0)}/10`);
-    return parts.length > 0 ? `APGAR — ${parts.join(" | ")}` : "";
-  }
-
   return (
     <div className="px-4 pb-3 pt-2 space-y-3 border-t border-slate-800 bg-slate-950/50">
-      {/* Timepoint tabs */}
-      <div className="flex gap-1.5">
-        {(["1min", "5min", "10min"] as ApgarTimePoint[]).map((t) => {
-          const scored = Object.keys(scoreMap[t]).length === 5;
-          const tScore = scored ? Object.values(scoreMap[t]).reduce((a,b)=>a+b,0) : null;
-          return (
-            <button key={t} type="button" onClick={() => setTp(t)}
-              className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
-                tp === t ? "bg-teal-700 text-teal-100" : "bg-slate-800 text-slate-400 hover:bg-slate-700"
-              }`}
-            >
-              {t === "1min" ? "1 min" : t === "5min" ? "5 min" : "10 min"}
-              {tScore !== null && <span className={`rounded-full px-1 text-[0.6rem] font-bold ${tp === t ? "bg-teal-900/60" : "bg-slate-700"}`}>{tScore}</span>}
-            </button>
-          );
-        })}
-      </div>
-
       {/* Categories */}
       <div className="space-y-2">
-        <p className="text-[0.6rem] font-semibold uppercase tracking-widest text-slate-600">
-          APGAR — {tp === "1min" ? "1 Minute" : tp === "5min" ? "5 Minutes" : "10 Minutes"}
-        </p>
+        <p className="text-[0.6rem] font-semibold uppercase tracking-widest text-slate-600">APGAR</p>
         {APGAR_CATS.map((cat) => (
           <div key={cat.key} className="space-y-1">
             <p className="text-[0.65rem] font-bold text-slate-400">{cat.label}</p>
             <div className="flex gap-1">
               {cat.opts.map((opt, i) => (
                 <button key={i} type="button"
-                  onClick={() => setCur((p) => ({ ...p, [cat.key]: i }))}
+                  onClick={() => setScores((p) => ({ ...p, [cat.key]: i }))}
                   className={`flex-1 rounded-lg px-1 py-1.5 text-[0.6rem] leading-tight text-center transition-all ${
-                    cur[cat.key] === i ? "bg-teal-700 text-teal-100" : "bg-slate-800 text-slate-500 hover:bg-slate-700"
+                    scores[cat.key] === i ? "bg-teal-700 text-teal-100" : "bg-slate-800 text-slate-500 hover:bg-slate-700"
                   }`}
                 >
                   <span className="block font-bold">{i}</span>
@@ -615,10 +579,10 @@ function ApgarScoreSelector({ onSelect }: { onSelect: (value: string) => void })
               <span className={`ml-2 text-xs ${interp.cls}`}>{interp.text}</span>
             </div>
             <button type="button"
-              onClick={() => { const s = buildSummary(); if (s) onSelect(s); }}
+              onClick={() => onSelect(`${total}/10`)}
               className="rounded-xl bg-teal-700 px-3 py-2 text-sm font-bold text-white hover:bg-teal-600 active:scale-95 transition-all"
             >
-              Record APGAR
+              Record
             </button>
           </div>
         );

@@ -151,6 +151,13 @@ export const TOOL_GROUPS: ToolGroup[] = [
         meta: "Sedation / CCA",
         icon: "Activity",
       },
+      {
+        name: "Treatment Log",
+        href: "/tools/treatment-log",
+        tagline: "Real-time management tracker using LOCABC / CCLOCABC. Tap interventions as you perform them — generates a timestamped handover summary.",
+        meta: "Clinical Management",
+        icon: "Stethoscope",
+      },
     ],
   },
   {

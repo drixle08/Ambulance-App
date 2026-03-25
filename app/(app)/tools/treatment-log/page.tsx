@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Plus, ChevronDown, ChevronUp, Pencil, Trash2, X } from "lucide-react";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 
 /* ════════════════════════════════════════════════════════════
    TYPES
 ════════════════════════════════════════════════════════════ */
-type PatientType = "medical" | "trauma" | "paeds" | "obstetric";
+type PatientType = "medical" | "trauma" | "paeds" | "obstetric" | "newborn";
 
-type SpecialType = "avpu" | "painScore" | "noteRequired";
+type SpecialType = "avpu" | "painScore" | "noteRequired" | "apgar";
 
 interface ItemDef {
   id: string;
@@ -66,9 +66,13 @@ const PRIMARY_ITEMS: ItemDef[] = [
   { id: "pri-cc-tq",      label: "Tourniquet applied",                    sub: "Document time of application",              framework: "CC",      onlyFor: ["trauma"] },
   { id: "pri-cc-pack",    label: "Wound packing / haemostatic dressing",  sub: "Direct pressure maintained",                framework: "CC",      onlyFor: ["trauma"] },
   { id: "pri-cc-binder",  label: "Pelvic binder considered / applied",    sub: "If pelvic instability suspected",           framework: "CC",      onlyFor: ["trauma"] },
-  // L — Level of Consciousness (all types) — AVPU selector
-  { id: "pri-l-loc",      label: "Level of consciousness",                sub: "AVPU",                                      framework: "L",       specialType: "avpu" },
-  { id: "pri-l-bleed",    label: "Life-threatening haemorrhage identified",sub: "Controlled / ongoing",                     framework: "L" },
+  // L — Level of Consciousness (all except newborn) — AVPU selector
+  { id: "pri-l-loc",      label: "Level of consciousness",                sub: "AVPU",                                      framework: "L",       specialType: "avpu",        onlyFor: ["medical", "trauma", "paeds", "obstetric"] },
+  { id: "pri-l-bleed",    label: "Life-threatening haemorrhage identified",sub: "Controlled / ongoing",                     framework: "L",                                   onlyFor: ["medical", "trauma", "paeds", "obstetric"] },
+  // L — Newborn initial assessment (NRP)
+  { id: "pri-nb-term",    label: "Term gestation (≥37 weeks)?",           sub: "Confirm with mother if possible",           framework: "L",       specialType: "noteRequired", noteHint: "e.g. 39 weeks", onlyFor: ["newborn"] },
+  { id: "pri-nb-tone",    label: "Muscle tone",                           sub: "Good / reduced / limp",                    framework: "L",       specialType: "noteRequired", noteHint: "e.g. good tone", onlyFor: ["newborn"] },
+  { id: "pri-nb-cry",     label: "Breathing / crying",                    sub: "Crying / breathing / absent",              framework: "L",       specialType: "noteRequired", noteHint: "e.g. crying strongly", onlyFor: ["newborn"] },
   // C-spine — Trauma only
   { id: "pri-cs-mils",    label: "Manual inline stabilisation (MILS)",    sub: "Maintained throughout",                     framework: "C-spine", onlyFor: ["trauma"] },
   { id: "pri-cs-collar",  label: "Cervical collar applied",                                                                 framework: "C-spine", onlyFor: ["trauma"] },
@@ -90,12 +94,12 @@ const PRIMARY_ITEMS: ItemDef[] = [
    FRAMEWORK LABELS
 ════════════════════════════════════════════════════════════ */
 const FRAMEWORK_LABELS: Record<string, Record<PatientType, string | null>> = {
-  CC:       { medical: null,                           trauma: "CC — Catastrophic Haemorrhage",    paeds: null,                           obstetric: null },
-  L:        { medical: "L — Level of Consciousness",  trauma: "L — Level of Consciousness",       paeds: "L — Level of Consciousness",   obstetric: "L — Level of Consciousness" },
-  "C-spine":{ medical: null,                           trauma: "C — Cervical Spine",               paeds: null,                           obstetric: null },
-  A:        { medical: "A — Airway",                  trauma: "A — Airway",                       paeds: "A — Airway",                   obstetric: "A — Airway" },
-  B:        { medical: "B — Breathing",               trauma: "B — Breathing",                    paeds: "B — Breathing",                obstetric: "B — Breathing" },
-  C:        { medical: "C — Circulation",             trauma: "C — Circulation",                  paeds: "C — Circulation",              obstetric: "C — Circulation" },
+  CC:       { medical: null,                           trauma: "CC — Catastrophic Haemorrhage",    paeds: null,                           obstetric: null,   newborn: null },
+  L:        { medical: "L — Level of Consciousness",  trauma: "L — Level of Consciousness",       paeds: "L — Level of Consciousness",   obstetric: "L — Level of Consciousness", newborn: "L — Initial Assessment" },
+  "C-spine":{ medical: null,                           trauma: "C — Cervical Spine",               paeds: null,                           obstetric: null,   newborn: null },
+  A:        { medical: "A — Airway",                  trauma: "A — Airway",                       paeds: "A — Airway",                   obstetric: "A — Airway", newborn: "A — Airway" },
+  B:        { medical: "B — Breathing",               trauma: "B — Breathing",                    paeds: "B — Breathing",                obstetric: "B — Breathing", newborn: "B — Breathing" },
+  C:        { medical: "C — Circulation",             trauma: "C — Circulation",                  paeds: "C — Circulation",              obstetric: "C — Circulation", newborn: "C — Circulation" },
 };
 
 /* ════════════════════════════════════════════════════════════
@@ -113,6 +117,8 @@ const STAGES: StageDef[] = [
       { id: "sc-bystander", label: "Bystanders / witnesses spoken to" },
       { id: "sc-broselow",  label: "Weight-based reference used (Broselow / formula)", onlyFor: ["paeds"] },
       { id: "sc-ga",        label: "Gestational age confirmed",                         onlyFor: ["obstetric"] },
+      { id: "sc-nb-time",   label: "Time of delivery noted",                            onlyFor: ["newborn"] },
+      { id: "sc-nb-circ",   label: "Delivery circumstances documented",                 sub: "Location, attendants, complications", onlyFor: ["newborn"], specialType: "noteRequired", noteHint: "e.g. unassisted home delivery" },
     ],
   },
   {
@@ -131,7 +137,7 @@ const STAGES: StageDef[] = [
       { id: "vt-temp",     label: "Temperature" },
       { id: "vt-pupils",   label: "Pupils (PEARL)" },
       { id: "vt-rr",       label: "Respiratory rate (manual count)" },
-      { id: "vt-pain",     label: "Pain score",                        specialType: "painScore" },
+      { id: "vt-pain",     label: "Pain score",                        specialType: "painScore", onlyFor: ["medical", "trauma", "paeds", "obstetric"] },
       { id: "vt-gcs",      label: "GCS documented" },
       { id: "vt-rass",     label: "Sedation score (RASS)" },
       { id: "vt-weight",   label: "Weight estimated / confirmed" },
@@ -140,6 +146,7 @@ const STAGES: StageDef[] = [
   },
   {
     id: "history", title: "History — SAMPLE", color: "amber",
+    onlyFor: ["medical", "trauma", "paeds", "obstetric"],
     items: [
       { id: "hx-s", label: "S — Signs & Symptoms",           sub: "Onset, character, severity, radiation, associations" },
       { id: "hx-a", label: "A — Allergies",                  sub: "Medications, latex, environmental" },
@@ -178,6 +185,22 @@ const STAGES: StageDef[] = [
       { id: "ob-memb",   label: "Membranes",                           sub: "Intact / ruptured (SROM/PROM) — time",          specialType: "noteRequired", noteHint: "e.g. SROM at 14:20" },
       { id: "ob-pres",   label: "Foetal presentation",                 sub: "Cephalic / breech / unknown",                   specialType: "noteRequired", noteHint: "e.g. cephalic, crowning noted" },
       { id: "ob-crown",  label: "Crowning assessed" },
+    ],
+  },
+  /* ── Newborn Assessment — newborn only ── */
+  {
+    id: "newborn-assess", title: "Newborn Assessment", color: "teal",
+    onlyFor: ["newborn"],
+    items: [
+      { id: "nb-dry",      label: "Dry and stimulate",                    sub: "Vigorous drying with warm towel; assess response" },
+      { id: "nb-warm",     label: "Maintain warmth",                      sub: "Skin-to-skin / warm towels / polyethylene wrap if <32 weeks" },
+      { id: "nb-position", label: "Head in neutral / sniffing position",   sub: "Avoid hyperextension or flexion" },
+      { id: "nb-suction",  label: "Suction performed if required",        sub: "Mouth then nose; only if airway obstructed" },
+      { id: "nb-meconium", label: "Meconium-stained liquor noted",        sub: "Assess for vigorous cry; intubation if not vigorous", specialType: "noteRequired", noteHint: "e.g. thick meconium, not vigorous" },
+      { id: "nb-cord",     label: "Cord clamped and cut",                 sub: "Delayed ≥60 sec if stable and well" },
+      { id: "nb-apgar",    label: "APGAR score",                          sub: "1 min and 5 min (repeat at 10 min if < 7)",  specialType: "apgar" },
+      { id: "nb-vitk",     label: "Vitamin K offered / administered",     sub: "0.5 mg (≤1 kg) or 1 mg (>1 kg) IM" },
+      { id: "nb-id",       label: "Identity band / labelling applied" },
     ],
   },
   {
@@ -248,6 +271,7 @@ const STAGES: StageDef[] = [
   },
   {
     id: "immob", title: "Immobilisation & Wound Care", color: "amber",
+    onlyFor: ["medical", "trauma", "paeds", "obstetric"],
     items: [
       { id: "im-collar",   label: "Cervical collar applied" },
       { id: "im-vacuum",   label: "Vacuum mattress / scoop stretcher" },
@@ -302,6 +326,7 @@ const DRUG_DOSES: Record<string, { dose: string; route: string }[]> = {
   "Oxytocin":           [{ dose: "5 IU", route: "IM" }, { dose: "10 IU", route: "IM" }],
   "Salbutamol":         [{ dose: "5 mg", route: "NEB" }, { dose: "2.5 mg", route: "NEB" }],
   "TXA":                [{ dose: "1 g", route: "IV" }, { dose: "15 mg/kg", route: "IV" }],
+  "Vitamin K":          [{ dose: "0.5 mg", route: "IM" }, { dose: "1 mg", route: "IM" }],
 };
 
 const PRESET_DRUGS = Object.keys(DRUG_DOSES).concat(["Other"]);
@@ -336,6 +361,7 @@ const PT_META = {
   trauma:    { label: "Trauma",     sub: "CCLOCABC" },
   paeds:     { label: "Paediatric", sub: "LOCABC + Paeds" },
   obstetric: { label: "Obstetric",  sub: "LOCABC + OB" },
+  newborn:   { label: "Newborn",    sub: "NRP + APGAR" },
 };
 
 const PT_CLR: Record<PatientType, { active: string }> = {
@@ -343,6 +369,7 @@ const PT_CLR: Record<PatientType, { active: string }> = {
   trauma:    { active: "bg-rose-900/70 text-rose-300 border-rose-700" },
   paeds:     { active: "bg-amber-900/70 text-amber-300 border-amber-700" },
   obstetric: { active: "bg-pink-900/70 text-pink-300 border-pink-700" },
+  newborn:   { active: "bg-emerald-900/70 text-emerald-300 border-emerald-700" },
 };
 
 /* ════════════════════════════════════════════════════════════
@@ -487,6 +514,114 @@ function PainScoreSelector({
 }
 
 /* ════════════════════════════════════════════════════════════
+   APGAR SCORE SUB-COMPONENT
+════════════════════════════════════════════════════════════ */
+const APGAR_CATS = [
+  { key: "A", label: "Appearance",  opts: ["Blue / pale all over", "Pink body, blue extremities", "Pink all over"] },
+  { key: "P", label: "Pulse",       opts: ["Absent", "< 100 bpm", "≥ 100 bpm"] },
+  { key: "G", label: "Grimace",     opts: ["No response", "Grimace", "Cry / cough / sneeze"] },
+  { key: "M", label: "Activity",    opts: ["None / limp", "Some flexion", "Active motion"] },
+  { key: "R", label: "Respiration", opts: ["Absent", "Weak / irregular", "Strong cry"] },
+];
+
+type ApgarTimePoint = "1min" | "5min" | "10min";
+
+function ApgarScoreSelector({ onSelect }: { onSelect: (value: string) => void }) {
+  const [tp, setTp] = useState<ApgarTimePoint>("1min");
+  const [s1, setS1] = useState<Record<string, number>>({});
+  const [s5, setS5] = useState<Record<string, number>>({});
+  const [s10, setS10] = useState<Record<string, number>>({});
+
+  const scoreMap: Record<ApgarTimePoint, Record<string, number>> = { "1min": s1, "5min": s5, "10min": s10 };
+  const setMap: Record<ApgarTimePoint, React.Dispatch<React.SetStateAction<Record<string, number>>>> = { "1min": setS1, "5min": setS5, "10min": setS10 };
+
+  const cur = scoreMap[tp];
+  const setCur = setMap[tp];
+  const total = Object.values(cur).reduce((a, b) => a + b, 0);
+  const complete = Object.keys(cur).length === 5;
+
+  function apgarInterp(score: number) {
+    if (score >= 7) return { text: "Normal", cls: "text-emerald-400" };
+    if (score >= 4) return { text: "Moderate concern", cls: "text-amber-400" };
+    return { text: "Requires resuscitation", cls: "text-rose-400" };
+  }
+
+  function buildSummary() {
+    const parts: string[] = [];
+    if (Object.keys(s1).length === 5)  parts.push(`1 min: ${Object.values(s1).reduce((a,b)=>a+b,0)}/10`);
+    if (Object.keys(s5).length === 5)  parts.push(`5 min: ${Object.values(s5).reduce((a,b)=>a+b,0)}/10`);
+    if (Object.keys(s10).length === 5) parts.push(`10 min: ${Object.values(s10).reduce((a,b)=>a+b,0)}/10`);
+    return parts.length > 0 ? `APGAR — ${parts.join(" | ")}` : "";
+  }
+
+  return (
+    <div className="px-4 pb-3 pt-2 space-y-3 border-t border-slate-800 bg-slate-950/50">
+      {/* Timepoint tabs */}
+      <div className="flex gap-1.5">
+        {(["1min", "5min", "10min"] as ApgarTimePoint[]).map((t) => {
+          const scored = Object.keys(scoreMap[t]).length === 5;
+          const tScore = scored ? Object.values(scoreMap[t]).reduce((a,b)=>a+b,0) : null;
+          return (
+            <button key={t} type="button" onClick={() => setTp(t)}
+              className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors ${
+                tp === t ? "bg-teal-700 text-teal-100" : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+              }`}
+            >
+              {t === "1min" ? "1 min" : t === "5min" ? "5 min" : "10 min"}
+              {tScore !== null && <span className={`rounded-full px-1 text-[0.6rem] font-bold ${tp === t ? "bg-teal-900/60" : "bg-slate-700"}`}>{tScore}</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Categories */}
+      <div className="space-y-2">
+        <p className="text-[0.6rem] font-semibold uppercase tracking-widest text-slate-600">
+          APGAR — {tp === "1min" ? "1 Minute" : tp === "5min" ? "5 Minutes" : "10 Minutes"}
+        </p>
+        {APGAR_CATS.map((cat) => (
+          <div key={cat.key} className="space-y-1">
+            <p className="text-[0.65rem] font-bold text-slate-400">{cat.label}</p>
+            <div className="flex gap-1">
+              {cat.opts.map((opt, i) => (
+                <button key={i} type="button"
+                  onClick={() => setCur((p) => ({ ...p, [cat.key]: i }))}
+                  className={`flex-1 rounded-lg px-1 py-1.5 text-[0.6rem] leading-tight text-center transition-all ${
+                    cur[cat.key] === i ? "bg-teal-700 text-teal-100" : "bg-slate-800 text-slate-500 hover:bg-slate-700"
+                  }`}
+                >
+                  <span className="block font-bold">{i}</span>
+                  <span>{opt}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Score + record */}
+      {complete && (() => {
+        const interp = apgarInterp(total);
+        return (
+          <div className="flex items-center justify-between pt-1">
+            <div>
+              <span className="text-lg font-bold text-white">{total}/10</span>
+              <span className={`ml-2 text-xs ${interp.cls}`}>{interp.text}</span>
+            </div>
+            <button type="button"
+              onClick={() => { const s = buildSummary(); if (s) onSelect(s); }}
+              className="rounded-xl bg-teal-700 px-3 py-2 text-sm font-bold text-white hover:bg-teal-600 active:scale-95 transition-all"
+            >
+              Record APGAR
+            </button>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
    HANDOVER TEXT
 ════════════════════════════════════════════════════════════ */
 function buildHandover(pt: PatientType, startTime: Date | null, checked: CheckedMap, meds: MedEntry[]): string {
@@ -575,8 +710,8 @@ export default function TreatmentLogPage() {
 
   /* ─── Item handlers ─── */
   function handleItemTap(item: ItemDef) {
-    if (item.specialType === "painScore") {
-      // Toggle pain selector open/closed; don't auto-check
+    if (item.specialType === "painScore" || item.specialType === "apgar") {
+      // Toggle selector open/closed; don't auto-check
       setPainOpen((p) => (p === item.id ? null : item.id));
       setEditingId(null);
       return;
@@ -861,6 +996,41 @@ export default function TreatmentLogPage() {
                               {isChecked && isEditing && (
                                 <div className="border-t border-slate-800 bg-slate-950/60 px-4 pb-3 pt-2 space-y-2">
                                   <PainScoreSelector pt={pt} onSelect={(v) => { setChecked((p) => ({ ...p, [item.id]: { ...p[item.id], note: v } })); setEditingId(null); }} />
+                                  <button type="button" onClick={() => handleUncheck(item.id)} className="flex items-center gap-1 text-xs text-rose-400">
+                                    <X className="h-3 w-3" /> Remove
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* ── APGAR selector ── */}
+                          {item.specialType === "apgar" && (
+                            <div>
+                              <button
+                                type="button"
+                                onClick={() => handleItemTap(item)}
+                                className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${isChecked ? "bg-slate-900/60" : "hover:bg-slate-900/30"}`}
+                              >
+                                <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${isChecked ? `${clr.pill} border-transparent` : "border-slate-700"}`}>
+                                  {isChecked && <div className="h-2.5 w-2.5 rounded-full bg-current opacity-80" />}
+                                </div>
+                                <div className="flex-1">
+                                  <p className={`text-sm ${isChecked ? "text-slate-300" : "text-slate-400"}`}>{item.label}</p>
+                                  {item.sub && <p className="text-[0.65rem] text-slate-600">{item.sub}</p>}
+                                  {isChecked && checked[item.id].note && (
+                                    <p className={`text-[0.65rem] mt-0.5 ${clr.text}`}>{checked[item.id].note}</p>
+                                  )}
+                                </div>
+                                {!isChecked && <span className="text-[0.65rem] text-slate-600">Tap to score</span>}
+                                {isChecked && <span className={`shrink-0 rounded-full px-2 py-0.5 text-[0.6rem] font-mono font-semibold ${clr.pill}`}>{checked[item.id].time}</span>}
+                              </button>
+                              {isPainOpen && !isChecked && (
+                                <ApgarScoreSelector onSelect={(v) => handlePainSelect(item.id, v)} />
+                              )}
+                              {isChecked && isEditing && (
+                                <div className="border-t border-slate-800 bg-slate-950/60 px-4 pb-3 pt-2 space-y-2">
+                                  <ApgarScoreSelector onSelect={(v) => { setChecked((p) => ({ ...p, [item.id]: { ...p[item.id], note: v } })); setEditingId(null); }} />
                                   <button type="button" onClick={() => handleUncheck(item.id)} className="flex items-center gap-1 text-xs text-rose-400">
                                     <X className="h-3 w-3" /> Remove
                                   </button>

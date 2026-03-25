@@ -144,6 +144,14 @@ const STAGES: StageDef[] = [
       { id: "vt-fhr",      label: "Foetal heart rate",                 onlyFor: ["obstetric"] },
     ],
   },
+  /* ── APGAR — newborn only ── */
+  {
+    id: "apgar-stage", title: "APGAR Score", color: "teal",
+    onlyFor: ["newborn"],
+    items: [
+      { id: "apgar-1-5", label: "APGAR score", sub: "1 min and 5 min (repeat at 10 min if < 7)", specialType: "apgar" },
+    ],
+  },
   {
     id: "history", title: "History — SAMPLE", color: "amber",
     onlyFor: ["medical", "trauma", "paeds", "obstetric"],
@@ -198,8 +206,6 @@ const STAGES: StageDef[] = [
       { id: "nb-suction",  label: "Suction performed if required",        sub: "Mouth then nose; only if airway obstructed" },
       { id: "nb-meconium", label: "Meconium-stained liquor noted",        sub: "Assess for vigorous cry; intubation if not vigorous", specialType: "noteRequired", noteHint: "e.g. thick meconium, not vigorous" },
       { id: "nb-cord",     label: "Cord clamped and cut",                 sub: "Delayed ≥60 sec if stable and well" },
-      { id: "nb-apgar",    label: "APGAR score",                          sub: "1 min and 5 min (repeat at 10 min if < 7)",  specialType: "apgar" },
-      { id: "nb-vitk",     label: "Vitamin K offered / administered",     sub: "0.5 mg (≤1 kg) or 1 mg (>1 kg) IM" },
       { id: "nb-id",       label: "Identity band / labelling applied" },
     ],
   },

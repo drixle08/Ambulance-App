@@ -144,6 +144,13 @@ export const TOOL_GROUPS: ToolGroup[] = [
         meta: "Neuro assessment",
         icon: "ClipboardList",
       },
+      {
+        name: "Sedation Assessment (RASS)",
+        href: "/tools/rass",
+        tagline: "Richmond Agitation-Sedation Scale with guided assessment, clinical targets, and zone-based management guidance.",
+        meta: "Sedation / CCA",
+        icon: "Activity",
+      },
     ],
   },
   {

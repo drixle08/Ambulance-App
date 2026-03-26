@@ -198,6 +198,13 @@ export const TOOL_GROUPS: ToolGroup[] = [
         meta: "DHP / MOPH Qatar",
         icon: "BadgeCheck",
       },
+      {
+        name: "CPD / CME Points",
+        href: "https://dhpportal.moph.gov.qa/en/_layouts/15/LogIn.aspx?ReturnUrl=%2fen%2f_layouts%2f15%2fAuthenticate.aspx%3fSource%3d%252Fen%252F&Source=%2Fen%2F",
+        tagline: "DHP Portal — log and track your CPD/CME points.",
+        meta: "DHP Portal",
+        icon: "GraduationCap",
+      },
     ],
   },
   {

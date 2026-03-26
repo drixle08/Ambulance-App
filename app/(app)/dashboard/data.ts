@@ -193,9 +193,9 @@ export const TOOL_GROUPS: ToolGroup[] = [
     tools: [
       {
         name: "License Renewal",
-        href: "https://www.ahpra.gov.au",
-        tagline: "AHPRA — renew your paramedic registration.",
-        meta: "AHPRA",
+        href: "https://dhp.moph.gov.qa/en/Pages/Registration.aspx",
+        tagline: "DHP — renew your paramedic registration.",
+        meta: "DHP / MOPH Qatar",
         icon: "BadgeCheck",
       },
     ],

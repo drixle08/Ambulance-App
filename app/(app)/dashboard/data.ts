@@ -184,6 +184,23 @@ export const TOOL_GROUPS: ToolGroup[] = [
     ],
   },
   {
+    title: "External Links",
+    shortTitle: "Links",
+    slug: "external-links",
+    description: "Useful external resources — opens in browser.",
+    icon: "Globe",
+    color: "blue",
+    tools: [
+      {
+        name: "License Renewal",
+        href: "https://www.ahpra.gov.au",
+        tagline: "AHPRA — renew your paramedic registration.",
+        meta: "AHPRA",
+        icon: "BadgeCheck",
+      },
+    ],
+  },
+  {
     title: "Reference",
     slug: "reference",
     description: "Vitals, CPG guidelines, and quick calculators.",

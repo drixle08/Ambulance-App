@@ -7,6 +7,7 @@ import {
   Shield, Flame, Timer, HeartOff, Eye, Baby, GitBranch,
   TrendingUp, Syringe, Stethoscope, ClipboardList, ClipboardCheck, Gauge,
   FileText, MessageCircle, Zap, Bot, Activity, FlaskConical,
+  Link2, BadgeCheck, RefreshCcw, GraduationCap, Globe,
 } from "lucide-react";
 import { TOOL_GROUPS } from "../data";
 
@@ -15,6 +16,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Shield, Flame, Timer, HeartOff, Eye, Baby, GitBranch,
   TrendingUp, Syringe, Stethoscope, ClipboardList, ClipboardCheck, Gauge,
   FileText, MessageCircle, Zap, Bot, Activity, FlaskConical,
+  Link2, BadgeCheck, RefreshCcw, GraduationCap, Globe,
 };
 
 const COLOR_MAP: Record<string, { bg: string; icon: string; hover: string }> = {
@@ -47,6 +49,11 @@ const COLOR_MAP: Record<string, { bg: string; icon: string; hover: string }> = {
     bg: "bg-teal-500/10 dark:bg-teal-500/15",
     icon: "text-teal-600 dark:text-teal-300",
     hover: "hover:border-teal-400/50",
+  },
+  blue: {
+    bg: "bg-blue-500/10 dark:bg-blue-500/15",
+    icon: "text-blue-600 dark:text-blue-300",
+    hover: "hover:border-blue-400/50",
   },
 };
 
@@ -97,18 +104,14 @@ export default async function GroupPage({ params }: GroupPageProps) {
       <div className="flex flex-col gap-2">
         {group.tools.map((tool) => {
           const ToolIcon = ICON_MAP[tool.icon] ?? FileText;
-          const isPdf = tool.href.endsWith(".pdf");
+          const isExternal = tool.href.startsWith("http");
+          const cardClass = `group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/90 px-4 py-4 shadow-sm transition-all ${color.hover} hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80 dark:hover:bg-slate-900`;
 
-          return (
-            <Link
-              key={tool.href}
-              href={tool.href}
-              className={`group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/90 px-4 py-4 shadow-sm transition-all ${color.hover} hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80 dark:hover:bg-slate-900`}
-            >
+          const inner = (
+            <>
               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${color.bg}`}>
                 <ToolIcon className={`h-5 w-5 ${color.icon}`} />
               </div>
-
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
                   {tool.name}
@@ -119,12 +122,21 @@ export default async function GroupPage({ params }: GroupPageProps) {
                   </span>
                 )}
               </div>
-
-              {isPdf ? (
+              {isExternal ? (
                 <ExternalLink className="h-4 w-4 shrink-0 text-slate-400" />
               ) : (
                 <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5" />
               )}
+            </>
+          );
+
+          return isExternal ? (
+            <a key={tool.href} href={tool.href} target="_blank" rel="noopener noreferrer" className={cardClass}>
+              {inner}
+            </a>
+          ) : (
+            <Link key={tool.href} href={tool.href} className={cardClass}>
+              {inner}
             </Link>
           );
         })}

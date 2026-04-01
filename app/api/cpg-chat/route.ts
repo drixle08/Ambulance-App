@@ -66,7 +66,7 @@ function buildCpgSources(chunks: CpgChunk[]): Source[] {
       id: chunk.id,
       page: chunk.page,
       printedPage: chunk.printedPage,
-      pdfUrl: `/reference/cpg/cpg-v2.4-2025.pdf#page=${chunk.page}`,
+      pdfUrl: `/tools/cpg?page=${chunk.page}`,
       label: `CPG p.${chunk.printedPage}`,
       type: "cpg" as const,
     }));

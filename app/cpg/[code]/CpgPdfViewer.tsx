@@ -7,7 +7,7 @@ import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import type { CpgEntry } from "@/lib/cpgIndex";
 
 // Path to the bundled PDF in /public. Adjust if the filename or location changes.
-const PDF_PATH = "/reference/cpg/cpg-v2.4-2025.pdf";
+const PDF_PATH = "/reference/cpg/cpg-v2.5-2026.pdf";
 // If the PDF's actual page numbering differs from the printed page numbers in the CPG index,
 // set this to (viewerPage - printedPage). Example: if printed page 58 shows as 61 in the viewer, set to 3.
 const PDF_PAGE_OFFSET = 0;

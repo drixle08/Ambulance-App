@@ -390,8 +390,8 @@ const BUNDLES: Bundle[] = [
       {
         id: "trauma-txa",
         label: "TXA IV",
-        sublabel: "1 g in 100 mL NaCl over 10 min",
-        detail: "1 g tranexamic acid IV in 100 mL NaCl 0.9% infused over 10 minutes. Antifibrinolytic — reduces mortality in haemorrhagic trauma when given early.",
+        sublabel: "2 g in 100 mL NaCl over 10 min",
+        detail: "2 g tranexamic acid IV/IO in 100 mL NaCl 0.9% infused over 10 minutes for adult traumatic major haemorrhage or TBI with GCS ≤12.",
         caution: "Must be given WITHIN 3 hours of injury. Possible harm if given after 3 hours.",
       },
     ],
@@ -417,9 +417,9 @@ const BUNDLES: Bundle[] = [
       {
         id: "stemi-clop",
         label: "Clopidogrel",
-        sublabel: "600 mg PO (PCI)  |  300 mg PO (no PCI)",
-        detail: "600 mg loading dose if primary PCI planned. 300 mg if thrombolysis or no reperfusion. P2Y₁₂ inhibitor — dual antiplatelet therapy with aspirin.",
-        caution: "Hold if: surgery likely within 5 days · active major bleeding",
+        sublabel: "600 mg PO — STEMI only",
+        detail: "600 mg PO single loading dose for identified STEMI. AP administration should follow Clinical Desk advice.",
+        caution: "Withhold for suspected STEMI when the initial ECG does not meet STEMI criteria, and hold if active major bleeding or true contraindication.",
       },
       {
         id: "stemi-defib",

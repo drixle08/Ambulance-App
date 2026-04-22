@@ -7,7 +7,7 @@ const PDF_PATH = path.join(
   "public",
   "reference",
   "cpg",
-  "cpg-v2.4-2025.pdf"
+  "cpg-v2.5-2026.pdf"
 );
 const OUTPUT_PATH = path.join(process.cwd(), "public", "cpg-index.json");
 
@@ -82,7 +82,7 @@ async function main() {
   const chunks = await extractChunks();
   const payload = {
     createdAt: new Date().toISOString(),
-    source: "cpg-v2.4-2025.pdf",
+    source: "cpg-v2.5-2026.pdf",
     chunkCharLength: TARGET_CHARS,
     chunkOverlap: OVERLAP_CHARS,
     chunkCount: chunks.length,

@@ -7,7 +7,7 @@ import { ArrowLeft, Bot, ChevronLeft, ChevronRight, Loader2, Search } from "luci
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const CPG_PATH = "/reference/cpg/cpg-v2.4-2025.pdf";
+const CPG_PATH = "/reference/cpg/cpg-v2.5-2026.pdf";
 
 export default function CpgPage() {
   const router = useRouter();
@@ -118,7 +118,7 @@ export default function CpgPage() {
           </button>
           <div className="flex-1 min-w-0">
             <p className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-emerald-400">
-              Reference · CPG v2.4 (2025)
+              Reference · CPG v2.5 (2026)
             </p>
             <h1 className="text-base font-bold leading-tight text-slate-100 truncate">
               Clinical Practice Guidelines

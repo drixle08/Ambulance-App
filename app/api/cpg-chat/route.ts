@@ -24,7 +24,7 @@ const DEFAULT_MODEL = "gpt-4o-mini";
 // ─── System prompt ────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are the Clinical Assistant embedded in the HMCAS Ambulance Paramedic Toolkit.
 You have access to two reference documents:
-- CPG (Clinical Practice Guidelines v2.4, 2025): clinical protocols, drug doses, thresholds, transport criteria
+- CPG (Clinical Practice Guidelines v2.5, 2026): clinical protocols, drug doses, thresholds, transport criteria
 - SOP (Standard Operating Procedures v4.4, 2024): operational procedures, HR policies, safety, communications, administration
 
 Your job: read the retrieved passages and give an immediate, specific answer.

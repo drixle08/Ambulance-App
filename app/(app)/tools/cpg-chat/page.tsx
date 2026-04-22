@@ -361,7 +361,7 @@ export default function CpgChatPage() {
                 </span>
                 <div>
                   <p className="text-sm font-bold text-slate-100">HMCAS Clinical Assistant</p>
-                  <p className="text-[0.65rem] text-slate-500">CPG v2.4 (2025) · SOP v4.4 (2024)</p>
+                  <p className="text-[0.65rem] text-slate-500">CPG v2.5 (2026) · SOP v4.4 (2024)</p>
                 </div>
               </div>
               <p className="text-sm text-slate-400">
@@ -499,7 +499,7 @@ export default function CpgChatPage() {
             </button>
           </form>
           <p className="text-[0.6rem] text-slate-700 mt-1.5 text-center">
-            Grounded in HMCAS CPG v2.4 (2025) &amp; SOP v4.4 (2024) — always verify with the full document
+            Grounded in HMCAS CPG v2.5 (2026) &amp; SOP v4.4 (2024) — always verify with the full document
           </p>
         </div>
       </div>

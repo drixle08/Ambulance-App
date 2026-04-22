@@ -14,7 +14,7 @@ import {
 } from "@/lib/cpgIndex";
 import { searchSopEntries, type SopEntry } from "@/lib/sopIndex";
 
-const PDF_PATH = "/reference/cpg/cpg-v2.4-2025.pdf";
+const PDF_PATH = "/reference/cpg/cpg-v2.5-2026.pdf";
 
 // ─── Inline search result components ─────────────────────────────────────────
 
@@ -236,19 +236,17 @@ export function BottomNav() {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setQuery("");
+  };
+
   // Auto-focus search input when sheet opens
   useEffect(() => {
     if (searchOpen) {
       setTimeout(() => inputRef.current?.focus(), 80);
-    } else {
-      setQuery("");
     }
   }, [searchOpen]);
-
-  // Close search sheet on route change
-  useEffect(() => {
-    setSearchOpen(false);
-  }, [pathname]);
 
   // Active tab detection
   const isHome = pathname === "/";
@@ -338,7 +336,7 @@ export function BottomNav() {
             />
             <button
               type="button"
-              onClick={() => setSearchOpen(false)}
+              onClick={closeSearch}
               className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100 transition-colors"
             >
               <X className="h-5 w-5" />
@@ -347,7 +345,7 @@ export function BottomNav() {
 
           {/* Results */}
           <div className="flex-1 overflow-y-auto overscroll-contain">
-            <SearchResults query={query} onClose={() => setSearchOpen(false)} isMobile={isMobile} />
+            <SearchResults query={query} onClose={closeSearch} isMobile={isMobile} />
           </div>
         </div>
       )}

@@ -318,7 +318,7 @@ export default function AdultArrestReferencePage() {
           </section>
         )}
 
-        {/* ── H's & T's quick reference ─────────────────────────────── */}
+        {/* ── H&apos;s & T&apos;s quick reference ─────────────────────────────── */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden">
           <button
             type="button"
@@ -326,7 +326,7 @@ export default function AdultArrestReferencePage() {
             className="flex w-full items-center justify-between px-4 py-3 text-left"
           >
             <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-slate-400">
-              Reversible causes — H's &amp; T's
+              Reversible causes — H&apos;s &amp; T&apos;s
             </p>
             {htsOpen
               ? <ChevronUp className="h-4 w-4 text-slate-500" />
@@ -335,7 +335,7 @@ export default function AdultArrestReferencePage() {
           {htsOpen && (
             <div className="border-t border-slate-800 grid grid-cols-2 divide-x divide-slate-800">
               <div className="p-3 space-y-1.5">
-                <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">H's</p>
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">H&apos;s</p>
                 {HS_AND_TS.map((row, i) => (
                   <p key={i} className="text-xs text-slate-300 flex gap-2">
                     <span className="text-slate-600 shrink-0">·</span>{row.h}
@@ -343,7 +343,7 @@ export default function AdultArrestReferencePage() {
                 ))}
               </div>
               <div className="p-3 space-y-1.5">
-                <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">T's</p>
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">T&apos;s</p>
                 {HS_AND_TS.map((row, i) => (
                   <p key={i} className="text-xs text-slate-300 flex gap-2">
                     <span className="text-slate-600 shrink-0">·</span>{row.t}

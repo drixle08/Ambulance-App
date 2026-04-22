@@ -11,12 +11,12 @@ export default function AboutPage() {
         Mobile-first PWA for ambulance crews. Dark-mode by default, designed for
         use in the back of the truck and during inter-facility transfers.
         Provides quick calculators, assessment aids and reference cards
-        aligned with HMCAS Clinical Practice Guideline v2.4 (2025).
+        aligned with HMCAS Clinical Practice Guideline v2.5 (2026).
       </p>
       <section className="space-y-2 text-xs text-slate-300">
         <p>
           This toolkit is a teaching and decision-support aid for HMCAS-style
-          ambulance practice. It mirrors wording and thresholds from CPG v2.4
+          ambulance practice. It mirrors wording and thresholds from CPG v2.5
           where possible.
         </p>
         <p>

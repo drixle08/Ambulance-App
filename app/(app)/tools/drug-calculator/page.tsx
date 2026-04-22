@@ -14,7 +14,8 @@ type ModeType =
   | "mcg/min"
   | "mg"
   | "g"
-  | "push_mcg";
+  | "push_mcg"
+  | "topical_mg";
 
 interface DoseMode {
   id: string;
@@ -96,7 +97,7 @@ const DRUGS: Drug[] = [
         id: "adult",
         label: "Adult Loading",
         description: "300 mg over 15 min",
-        type: "mg",
+        type: "topical_mg",
         doseMin: 300,
         doseMax: 300,
         doseDefault: 300,
@@ -343,6 +344,35 @@ const DRUGS: Drug[] = [
       {
         id: "adult",
         label: "Adult",
+        description: "2 g over 10 min",
+        type: "g",
+        doseMin: 2,
+        doseMax: 2,
+        doseDefault: 2,
+        doseStep: 0.5,
+        concMcgMl: 20000,
+        concLabel: "20 mg/mL (2 g in 100 mL)",
+        mixInstructions: "2 g (20 mL of 100 mg/mL TXA) + 80 mL NaCl 0.9% → 100 mL @ 20 mg/mL",
+        infusionMinutes: 10,
+        note: "600 mL/h for 10 min",
+      },
+      {
+        id: "epistaxis-topical",
+        label: "Epistaxis topical",
+        description: "500 mg topical",
+        type: "mg",
+        doseMin: 500,
+        doseMax: 500,
+        doseDefault: 500,
+        doseStep: 50,
+        concMcgMl: 100000,
+        concLabel: "100 mg/mL",
+        mixInstructions: "Use 500 mg/5 mL TXA soaked into gauze and pack into the bleeding nostril",
+        note: "Topical use after first aid is unsuccessful",
+      },
+      {
+        id: "epistaxis-iv",
+        label: "Epistaxis IV",
         description: "1 g over 10 min",
         type: "g",
         doseMin: 1,
@@ -353,7 +383,7 @@ const DRUGS: Drug[] = [
         concLabel: "10 mg/mL (1 g in 100 mL)",
         mixInstructions: "1 g (10 mL of 100 mg/mL TXA) + 90 mL NaCl 0.9% → 100 mL @ 10 mg/mL",
         infusionMinutes: 10,
-        note: "600 mL/h for 10 min",
+        note: "For epistaxis with haemodynamic compromise",
       },
       {
         id: "paeds",
@@ -398,7 +428,7 @@ function fmtNum(n: number, dp = 1): string {
 }
 
 interface CalcResult {
-  kind: "infusion" | "fixed" | "push";
+  kind: "infusion" | "fixed" | "push" | "topical";
   flowRateMlH?: number;
   volumeMl?: number;
   totalDoseMg?: number;
@@ -456,6 +486,10 @@ function doCalc(mode: DoseMode, dose: number, weight: number, durMin: number): C
     case "push_mcg": {
       const vol = dose / c;
       return { kind: "push", volumeMl: vol, formula: `${dose} mcg ÷ ${c} mcg/mL` };
+    }
+    case "topical_mg": {
+      const vol = (dose * 1000) / c;
+      return { kind: "topical", volumeMl: vol, formula: `${dose} mg ÷ ${c / 1000} mg/mL` };
     }
   }
 }
@@ -594,7 +628,7 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
         {!isFixed && (
           <SliderRow
             label={`Dose rate`}
-            unit={mode.type === "push_mcg" ? "mcg" : mode.type}
+            unit={mode.type === "push_mcg" ? "mcg" : mode.type === "topical_mg" ? "mg" : mode.type}
             value={dose}
             min={mode.doseMin}
             max={mode.doseMax}
@@ -630,14 +664,16 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
 
       {/* Results */}
       <div className={`rounded-2xl border p-4 space-y-3 ${clr.result} ${clr.resultBorder}`}>
-        {result.kind === "push" ? (
+        {result.kind === "push" || result.kind === "topical" ? (
           <div className="text-center py-2">
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">Volume to draw up</p>
             <p className={`text-4xl font-black tabular-nums ${clr.label}`}>
               {fmtNum(result.volumeMl ?? 0, 2)}
               <span className="text-lg font-normal text-slate-400 ml-1">mL</span>
             </p>
-            <p className="text-xs text-slate-500 mt-1">from {mode.concLabel} solution</p>
+            <p className="text-xs text-slate-500 mt-1">
+              {result.kind === "topical" ? "apply topically as directed" : `from ${mode.concLabel} solution`}
+            </p>
           </div>
         ) : (
           <>
@@ -691,7 +727,7 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
         {formulaOpen && (
           <p className="rounded-lg bg-slate-900/60 px-3 py-2 font-mono text-xs text-slate-400 leading-relaxed">
             {result.formula} = <strong className={clr.label}>{fmtNum(result.flowRateMlH ?? result.volumeMl ?? 0, 2)}</strong>{" "}
-            {result.kind === "push" ? "mL" : "mL/h"}
+            {result.kind === "push" || result.kind === "topical" ? "mL" : "mL/h"}
           </p>
         )}
       </div>
@@ -730,6 +766,62 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
 /* ════════════════════════════════════════════════════════════
    GENERAL FORMULAS VIEW
 ════════════════════════════════════════════════════════════ */
+function FormulaSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-4">
+      <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function FormulaRow({ label, value, unit }: { label: string; value: number; unit: string }) {
+  return (
+    <div className="flex items-baseline justify-between border-t border-slate-800 pt-3">
+      <span className="text-xs text-slate-500">{label}</span>
+      <span className="text-xl font-bold tabular-nums text-teal-400">
+        {fmtNum(value, 2)} <span className="text-sm font-normal text-slate-500">{unit}</span>
+      </span>
+    </div>
+  );
+}
+
+function FormulaField({
+  label,
+  unit,
+  value,
+  onChange,
+  min = 0,
+  max = 9999,
+  step = 1,
+}: {
+  label: string;
+  unit: string;
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-xs text-slate-400 shrink-0">{label}</span>
+      <div className="flex items-center gap-1.5">
+        <input
+          type="number"
+          value={value}
+          min={min}
+          max={max}
+          step={step}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          className="w-20 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-right text-sm font-semibold text-slate-200 focus:border-teal-600 focus:outline-none"
+        />
+        <span className="text-xs text-slate-500 w-12">{unit}</span>
+      </div>
+    </div>
+  );
+}
+
 function GeneralFormulas({ onBack }: { onBack: () => void }) {
   const [drawDose, setDrawDose] = useState(100);
   const [drawStockConc, setDrawStockConc] = useState(10);
@@ -755,56 +847,6 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
   const vtFlowRate = vtTime > 0 ? (vtVol * 60) / vtTime : 0;
   const backDose = backWeight > 0 ? (backFr * backConc) / 60 / backWeight : 0;
 
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-4">
-      <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">{title}</h3>
-      {children}
-    </div>
-  );
-
-  const Row = ({ label, value, unit }: { label: string; value: number; unit: string }) => (
-    <div className="flex items-baseline justify-between border-t border-slate-800 pt-3">
-      <span className="text-xs text-slate-500">{label}</span>
-      <span className="text-xl font-bold tabular-nums text-teal-400">
-        {fmtNum(value, 2)} <span className="text-sm font-normal text-slate-500">{unit}</span>
-      </span>
-    </div>
-  );
-
-  const Field = ({
-    label,
-    unit,
-    value,
-    onChange,
-    min = 0,
-    max = 9999,
-    step = 1,
-  }: {
-    label: string;
-    unit: string;
-    value: number;
-    onChange: (v: number) => void;
-    min?: number;
-    max?: number;
-    step?: number;
-  }) => (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-xs text-slate-400 shrink-0">{label}</span>
-      <div className="flex items-center gap-1.5">
-        <input
-          type="number"
-          value={value}
-          min={min}
-          max={max}
-          step={step}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          className="w-20 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-right text-sm font-semibold text-slate-200 focus:border-teal-600 focus:outline-none"
-        />
-        <span className="text-xs text-slate-500 w-12">{unit}</span>
-      </div>
-    </div>
-  );
-
   return (
     <div className="flex flex-col gap-4 pb-24">
       <div className="flex items-center gap-3">
@@ -822,57 +864,57 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
       </div>
 
       {/* 1. Draw-up volume */}
-      <Section title="1 — How many mL to draw up?">
+      <FormulaSection title="1 — How many mL to draw up?">
         <p className="font-mono text-xs text-slate-500">Volume = Dose ÷ Stock concentration</p>
         <div className="space-y-2">
-          <Field label="Required dose" unit="mcg (or mg)" value={drawDose} onChange={setDrawDose} min={1} max={10000} />
-          <Field label="Stock concentration" unit="mcg/mL (or mg/mL)" value={drawStockConc} onChange={setDrawStockConc} min={0.1} max={10000} step={0.1} />
+          <FormulaField label="Required dose" unit="mcg (or mg)" value={drawDose} onChange={setDrawDose} min={1} max={10000} />
+          <FormulaField label="Stock concentration" unit="mcg/mL (or mg/mL)" value={drawStockConc} onChange={setDrawStockConc} min={0.1} max={10000} step={0.1} />
         </div>
-        <Row label="Volume to draw up" value={drawVolume} unit="mL" />
-      </Section>
+        <FormulaRow label="Volume to draw up" value={drawVolume} unit="mL" />
+      </FormulaSection>
 
       {/* 2. Infusion flow rate */}
-      <Section title="2 — Infusion flow rate (mcg/kg/min)">
+      <FormulaSection title="2 — Infusion flow rate (mcg/kg/min)">
         <p className="font-mono text-xs text-slate-500">Flow = (Vol × Dose × 60) ÷ (Conc × 1000)</p>
         <div className="space-y-2">
-          <Field label="Solution volume" unit="mL" value={infVol} onChange={setInfVol} min={1} max={1000} />
-          <Field label="Dose rate" unit="mcg/kg/min" value={infDose} onChange={setInfDose} min={0.01} max={10} step={0.01} />
-          <Field label="Patient weight" unit="kg" value={infWeight} onChange={setInfWeight} min={1} max={200} />
-          <Field label="Total drug in bag" unit="mg" value={infConc} onChange={setInfConc} min={0.1} max={1000} step={0.1} />
+          <FormulaField label="Solution volume" unit="mL" value={infVol} onChange={setInfVol} min={1} max={1000} />
+          <FormulaField label="Dose rate" unit="mcg/kg/min" value={infDose} onChange={setInfDose} min={0.01} max={10} step={0.01} />
+          <FormulaField label="Patient weight" unit="kg" value={infWeight} onChange={setInfWeight} min={1} max={200} />
+          <FormulaField label="Total drug in bag" unit="mg" value={infConc} onChange={setInfConc} min={0.1} max={1000} step={0.1} />
         </div>
-        <Row label="Flow rate" value={infFlowRate} unit="mL/h" />
-      </Section>
+        <FormulaRow label="Flow rate" value={infFlowRate} unit="mL/h" />
+      </FormulaSection>
 
       {/* 3. Drip rate */}
-      <Section title="3 — Drip rate (gravity set)">
+      <FormulaSection title="3 — Drip rate (gravity set)">
         <p className="font-mono text-xs text-slate-500">Drops/min = (mL/h × Drop factor) ÷ 60</p>
         <div className="space-y-2">
-          <Field label="Flow rate" unit="mL/h" value={dripRate} onChange={setDripRate} min={1} max={500} />
-          <Field label="Drop factor" unit="gtt/mL" value={dripFactor} onChange={setDripFactor} min={10} max={60} step={10} />
+          <FormulaField label="Flow rate" unit="mL/h" value={dripRate} onChange={setDripRate} min={1} max={500} />
+          <FormulaField label="Drop factor" unit="gtt/mL" value={dripFactor} onChange={setDripFactor} min={10} max={60} step={10} />
         </div>
-        <Row label="Drip rate" value={drips} unit="drops/min" />
-      </Section>
+        <FormulaRow label="Drip rate" value={drips} unit="drops/min" />
+      </FormulaSection>
 
       {/* 4. Volume over time */}
-      <Section title="4 — Flow rate for fixed volume/time">
+      <FormulaSection title="4 — Flow rate for fixed volume/time">
         <p className="font-mono text-xs text-slate-500">Flow = (Volume × 60) ÷ Infusion time</p>
         <div className="space-y-2">
-          <Field label="Volume to infuse" unit="mL" value={vtVol} onChange={setVtVol} min={1} max={1000} />
-          <Field label="Infusion time" unit="min" value={vtTime} onChange={setVtTime} min={1} max={480} />
+          <FormulaField label="Volume to infuse" unit="mL" value={vtVol} onChange={setVtVol} min={1} max={1000} />
+          <FormulaField label="Infusion time" unit="min" value={vtTime} onChange={setVtTime} min={1} max={480} />
         </div>
-        <Row label="Flow rate" value={vtFlowRate} unit="mL/h" />
-      </Section>
+        <FormulaRow label="Flow rate" value={vtFlowRate} unit="mL/h" />
+      </FormulaSection>
 
       {/* 5. Back-calculate dose */}
-      <Section title="5 — What dose is running? (reverse calc)">
+      <FormulaSection title="5 — What dose is running? (reverse calc)">
         <p className="font-mono text-xs text-slate-500">Dose = (Flow × Conc) ÷ 60 ÷ Weight</p>
         <div className="space-y-2">
-          <Field label="Current flow rate" unit="mL/h" value={backFr} onChange={setBackFr} min={0.1} max={500} step={0.1} />
-          <Field label="Solution concentration" unit="mcg/mL" value={backConc} onChange={setBackConc} min={0.1} max={10000} step={0.1} />
-          <Field label="Patient weight" unit="kg" value={backWeight} onChange={setBackWeight} min={1} max={200} />
+          <FormulaField label="Current flow rate" unit="mL/h" value={backFr} onChange={setBackFr} min={0.1} max={500} step={0.1} />
+          <FormulaField label="Solution concentration" unit="mcg/mL" value={backConc} onChange={setBackConc} min={0.1} max={10000} step={0.1} />
+          <FormulaField label="Patient weight" unit="kg" value={backWeight} onChange={setBackWeight} min={1} max={200} />
         </div>
-        <Row label="Dose rate" value={backDose} unit="mcg/kg/min" />
-      </Section>
+        <FormulaRow label="Dose rate" value={backDose} unit="mcg/kg/min" />
+      </FormulaSection>
     </div>
   );
 }

@@ -310,6 +310,7 @@ const STAGES: StageDef[] = [
    DRUG DOSE PRESETS
 ════════════════════════════════════════════════════════════ */
 const DRUG_DOSES: Record<string, { dose: string; route: string }[]> = {
+  "Adenosine":          [{ dose: "6 mg", route: "IV" }, { dose: "12 mg", route: "IV" }, { dose: "18 mg", route: "IV" }, { dose: "0.1 mg/kg", route: "IV" }, { dose: "0.2 mg/kg", route: "IV" }],
   "Adrenaline":         [{ dose: "1 mg", route: "IV" }, { dose: "0.5 mg", route: "IM" }, { dose: "0.1 mg", route: "IV" }, { dose: "0.01 mg/kg", route: "IV" }],
   "Amiodarone":         [{ dose: "300 mg", route: "IV" }, { dose: "150 mg", route: "IV" }, { dose: "5 mg/kg", route: "IV" }],
   "Aspirin":            [{ dose: "300 mg", route: "PO" }],
@@ -333,12 +334,12 @@ const DRUG_DOSES: Record<string, { dose: string; route: string }[]> = {
   "Ondansetron":        [{ dose: "4 mg", route: "IV" }, { dose: "4 mg", route: "PO" }, { dose: "4 mg", route: "IM" }],
   "Oxytocin":           [{ dose: "5 IU", route: "IM" }, { dose: "10 IU", route: "IM" }],
   "Salbutamol":         [{ dose: "5 mg", route: "NEB" }, { dose: "2.5 mg", route: "NEB" }],
-  "TXA":                [{ dose: "1 g", route: "IV" }, { dose: "15 mg/kg", route: "IV" }],
+  "TXA":                [{ dose: "2 g", route: "IV" }, { dose: "1 g", route: "IV" }, { dose: "500 mg", route: "TOP" }, { dose: "15 mg/kg", route: "IV" }],
   "Vitamin K":          [{ dose: "0.5 mg", route: "IM" }, { dose: "1 mg", route: "IM" }],
 };
 
 const PRESET_DRUGS = Object.keys(DRUG_DOSES).concat(["Other"]);
-const MED_ROUTES = ["IV", "IO", "IM", "IN", "SL", "NEB", "SC", "PO", "ETT", "PR", "INH"];
+const MED_ROUTES = ["IV", "IO", "IM", "IN", "SL", "NEB", "SC", "PO", "ETT", "PR", "INH", "TOP"];
 
 /* ════════════════════════════════════════════════════════════
    HELPERS
@@ -659,6 +660,7 @@ export default function TreatmentLogPage() {
   const [medDose, setMedDose]     = useState("");
   const [medRoute, setMedRoute]   = useState("IV");
   const [medTime, setMedTime]     = useState("");
+  const medIdSeq = useRef(0);
 
   /* ─── Timer ─── */
   useEffect(() => {
@@ -763,7 +765,8 @@ export default function TreatmentLogPage() {
   function saveMed() {
     const drug = medDrug === "Other" ? medCustom.trim() : medDrug;
     if (!drug || !medDose.trim()) return;
-    const entry: MedEntry = { id: editingMedId ?? `med-${Date.now()}`, drug, dose: medDose.trim(), route: medRoute, time: medTime || nowHHMM() };
+    medIdSeq.current += 1;
+    const entry: MedEntry = { id: editingMedId ?? `med-${medIdSeq.current}`, drug, dose: medDose.trim(), route: medRoute, time: medTime || nowHHMM() };
     if (editingMedId) setMeds((p) => p.map((m) => m.id === editingMedId ? entry : m));
     else { ensureStarted(); setMeds((p) => [...p, entry]); }
     setMedFO(false); setEditMed(null);

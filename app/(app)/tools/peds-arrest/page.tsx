@@ -255,7 +255,7 @@ export default function PedsArrestPage() {
             />
           </div>
           <p className="text-[10px] text-slate-600">
-            CPG v2.4 formulas — 0–12m: (months×0.5)+4 · 1–5y: (age×2)+8 ·
+            CPG v2.5 formulas — 0–12m: (months×0.5)+4 · 1–5y: (age×2)+8 ·
             6–14y: (age×3)+7
           </p>
         </section>

@@ -222,7 +222,7 @@ export const TOOL_GROUPS: ToolGroup[] = [
         icon: "Gauge",
       },
       {
-        name: "CPG v2.4 (2025)",
+        name: "CPG v2.5 (2026)",
         href: "/tools/cpg",
         tagline: "Full Clinical Practice Guidelines — browse and jump to any page in-app.",
         meta: "Reference",

@@ -229,6 +229,13 @@ export const TOOL_GROUPS: ToolGroup[] = [
         icon: "FileText",
       },
       {
+        name: "CPG Latest Changes",
+        href: "/tools/cpg-latest-changes",
+        tagline: "CPG v2.5 update log with amended protocols, new CPGs, and formulary changes.",
+        meta: "CPG v2.5 Update",
+        icon: "RefreshCcw",
+      },
+      {
         name: "Clinical Assistant (beta)",
         href: "/tools/cpg-chat",
         tagline: "Ask CPG or SOP questions — AI answers with direct page references.",

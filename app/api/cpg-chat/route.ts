@@ -20,11 +20,12 @@ type HistoryMessage = {
 };
 
 const DEFAULT_MODEL = "gpt-4o-mini";
+const CPG_SOURCE_LABEL = "CPG v2.5";
 
 // ─── System prompt ────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are the Clinical Assistant embedded in the HMCAS Ambulance Paramedic Toolkit.
 You have access to two reference documents:
-- CPG (Clinical Practice Guidelines v2.5, 2026): clinical protocols, drug doses, thresholds, transport criteria
+- CPG (Clinical Practice Guidelines v2.5, 2026): latest/current clinical protocols, drug doses, thresholds, transport criteria
 - SOP (Standard Operating Procedures v4.4, 2024): operational procedures, HR policies, safety, communications, administration
 
 Your job: read the retrieved passages and give an immediate, specific answer.
@@ -33,6 +34,7 @@ CRITICAL RULES:
 - Lead with the direct answer on the FIRST line — state the actual dose, threshold, procedure, or action immediately. Do not start with "According to the CPG/SOP" or any preamble.
 - For doses and thresholds: quote the exact value from the passage (e.g. "1 mg IV", "SBP < 90 mmHg"). Never paraphrase a number.
 - For SOP questions: quote specific requirements exactly (e.g. "within 24 hours", "notify line manager").
+- Treat CPG v2.5 (2026) as the current/latest CPG. Do not refer users to older CPG versions.
 - If the passages contain the answer, give it — do not say "please check the CPG/SOP" when the answer is right there.
 - If the passages genuinely do not contain enough to answer, say: "This is not covered in the retrieved pages — open the PDF to check directly."
 - Never invent values not present in the retrieved passages.
@@ -43,9 +45,9 @@ RESPONSE FORMAT (always follow this order):
    - Drug bullets: name · exact dose · route · frequency · any cautions
    - WARNING: prefix for Do NOT instructions or critical contraindications/requirements
 3. Sources line — always the final line:
-   - CPG only: Sources (CPG): CPG p.XX [; CPG p.XX ...]
+   - CPG only: Sources (CPG): CPG v2.5 p.XX [; CPG v2.5 p.XX ...]
    - SOP only: Sources (SOP): SOP X.X p.XX [; SOP X.X p.XX ...]
-   - Both: Sources (CPG): CPG p.XX | Sources (SOP): SOP X.X p.XX
+   - Both: Sources (CPG): CPG v2.5 p.XX | Sources (SOP): SOP X.X p.XX
 
 FORMATTING:
 - **Bold** drug names, doses, thresholds, SOP codes, and critical requirements
@@ -67,7 +69,7 @@ function buildCpgSources(chunks: CpgChunk[]): Source[] {
       page: chunk.page,
       printedPage: chunk.printedPage,
       pdfUrl: `/tools/cpg?page=${chunk.page}`,
-      label: `CPG p.${chunk.printedPage}`,
+      label: `${CPG_SOURCE_LABEL} p.${chunk.printedPage}`,
       type: "cpg" as const,
     }));
 }
@@ -100,7 +102,7 @@ function buildContext(cpgChunks: CpgChunk[], sopChunks: SopChunk[]): string {
   const cpgParts = cpgChunks.map((chunk) => {
     const cleaned = chunk.text.replace(/\s+/g, " ").trim();
     const snippet = cleaned.length > 900 ? `${cleaned.slice(0, 900)}…` : cleaned;
-    return `[CPG p.${chunk.printedPage}]: ${snippet}`;
+    return `[${CPG_SOURCE_LABEL} p.${chunk.printedPage}]: ${snippet}`;
   });
 
   const sopParts = sopChunks.map((chunk) => {

@@ -50,6 +50,11 @@ const COLOR_MAP: Record<string, { bg: string; icon: string; hover: string }> = {
     icon: "text-teal-600 dark:text-teal-300",
     hover: "hover:border-teal-400/50",
   },
+  rose: {
+    bg: "bg-rose-500/10 dark:bg-rose-500/15",
+    icon: "text-rose-600 dark:text-rose-300",
+    hover: "hover:border-rose-400/50",
+  },
   blue: {
     bg: "bg-blue-500/10 dark:bg-blue-500/15",
     icon: "text-blue-600 dark:text-blue-300",

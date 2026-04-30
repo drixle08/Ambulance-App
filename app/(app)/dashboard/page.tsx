@@ -7,6 +7,7 @@ import {
   Brain,
   BookOpen,
   Activity,
+  FlaskConical,
 } from "lucide-react";
 import { ProtocolFinder } from "./ProtocolFinder";
 import { TOOL_GROUPS } from "./data";
@@ -19,6 +20,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Brain,
   BookOpen,
   Activity,
+  FlaskConical,
 };
 
 const COLOR_MAP: Record<string, { bg: string; icon: string; hover: string; ring: string }> = {
@@ -28,6 +30,7 @@ const COLOR_MAP: Record<string, { bg: string; icon: string; hover: string; ring:
   violet: { bg: "bg-violet-500/10 dark:bg-violet-500/15", icon: "text-violet-600 dark:text-violet-300", hover: "hover:border-violet-400/60 dark:hover:border-violet-400/50", ring: "group-hover:ring-violet-400/30" },
   amber: { bg: "bg-amber-500/10 dark:bg-amber-500/15", icon: "text-amber-600 dark:text-amber-300", hover: "hover:border-amber-400/60 dark:hover:border-amber-400/50", ring: "group-hover:ring-amber-400/30" },
   teal: { bg: "bg-teal-500/10 dark:bg-teal-500/15", icon: "text-teal-600 dark:text-teal-300", hover: "hover:border-teal-400/60 dark:hover:border-teal-400/50", ring: "group-hover:ring-teal-400/30" },
+  rose: { bg: "bg-rose-500/10 dark:bg-rose-500/15", icon: "text-rose-600 dark:text-rose-300", hover: "hover:border-rose-400/60 dark:hover:border-rose-400/50", ring: "group-hover:ring-rose-400/30" },
 };
 
 export default function DashboardPage() {

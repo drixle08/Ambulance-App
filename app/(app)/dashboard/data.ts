@@ -18,6 +18,23 @@ export type ToolGroup = {
 
 export const TOOL_GROUPS: ToolGroup[] = [
   {
+    title: "Toxicology & Toxinology",
+    shortTitle: "Toxicology",
+    slug: "toxicology",
+    description: "Toxidrome matching and toxic exposure CPG tools.",
+    icon: "FlaskConical",
+    color: "rose",
+    tools: [
+      {
+        name: "Toxidrome Finder",
+        href: "/tools/toxicology",
+        tagline: "Select scene clues and symptoms to narrow likely toxins, view matched toxidromes, and jump straight to the right CPG.",
+        meta: "CPG 8.x Toxicology",
+        icon: "FlaskConical",
+      },
+    ],
+  },
+  {
     title: "Trauma",
     slug: "trauma",
     description: "Bypass criteria and burn surface area assessment.",

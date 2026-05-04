@@ -32,6 +32,13 @@ export const TOOL_GROUPS: ToolGroup[] = [
         meta: "CPG 8.x Toxicology",
         icon: "FlaskConical",
       },
+      {
+        name: "Toxidrome Flow Guide",
+        href: "/tools/toxidrome",
+        tagline: "12-question yes/no decision flow to identify the toxidrome pattern and link directly to the relevant CPG protocol.",
+        meta: "CPG 8.x · 12 toxidromes",
+        icon: "GitBranch",
+      },
     ],
   },
   {

@@ -12,10 +12,12 @@ import {
   ExternalLink,
   Flame,
   FlaskConical,
+  GitMerge,
   Pill,
   RefreshCcw,
   ShieldAlert,
   Wind,
+  XCircle,
 } from "lucide-react";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 import { normalizeCpgSlug } from "@/lib/cpgIndex";
@@ -25,10 +27,13 @@ import {
   TOXICOLOGY_SYMPTOM_GROUP_LABELS,
   TOXICOLOGY_SYMPTOMS,
   getToxicologyMatches,
+  type MixedSuggestion,
   type ToxicologyConfidence,
   type ToxicologyMatch,
   type ToxicologySymptomGroup,
 } from "@/lib/toxicology";
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const CONFIDENCE_STYLES: Record<
   ToxicologyConfidence,
@@ -59,7 +64,10 @@ const CONFIDENCE_STYLES: Record<
 
 type ExposureColor = "orange" | "neutral" | "emerald" | "violet" | "rose";
 
-const EXPOSURE_COLOR_STYLES: Record<ExposureColor, { active: string; inactive: string; iconActive: string; iconInactive: string }> = {
+const EXPOSURE_COLOR_STYLES: Record<
+  ExposureColor,
+  { active: string; inactive: string; iconActive: string; iconInactive: string }
+> = {
   orange: {
     active: "border-orange-500/50 bg-orange-500/15 text-orange-100",
     inactive: "border-slate-700 bg-slate-900/70 text-slate-300 hover:border-orange-500/30 hover:text-orange-200",
@@ -92,21 +100,27 @@ const EXPOSURE_COLOR_STYLES: Record<ExposureColor, { active: string; inactive: s
   },
 };
 
+// ─── Exposure clue definitions ────────────────────────────────────────────────
+
 const EXPOSURE_CLUE_DEFS: { id: string; Icon: React.ElementType; color: ExposureColor }[] = [
-  { id: "smoke_or_enclosed_fire", Icon: Flame, color: "orange" },
-  { id: "generator_or_exhaust", Icon: Wind, color: "neutral" },
-  { id: "pesticide_or_chemical", Icon: FlaskConical, color: "emerald" },
-  { id: "pill_bottle_or_medication", Icon: Pill, color: "violet" },
-  { id: "bite_or_sting", Icon: Bug, color: "rose" },
+  { id: "smoke_or_enclosed_fire",    Icon: Flame,        color: "orange"  },
+  { id: "generator_or_exhaust",      Icon: Wind,         color: "neutral" },
+  { id: "pesticide_or_chemical",     Icon: FlaskConical, color: "emerald" },
+  { id: "pill_bottle_or_medication", Icon: Pill,         color: "violet"  },
+  { id: "bite_or_sting",             Icon: Bug,          color: "rose"    },
 ];
 
 const EXPOSURE_CLUE_IDS = new Set(EXPOSURE_CLUE_DEFS.map((e) => e.id));
 const CLINICAL_GROUPS = TOXICOLOGY_GROUP_ORDER.filter((g) => g !== "scene");
 
+// ─── CPG link builder ─────────────────────────────────────────────────────────
+
 function buildCpgHref(match: ToxicologyMatch) {
   const slug = normalizeCpgSlug(match.entry.code);
   return `/cpg/${encodeURIComponent(slug)}?code=${encodeURIComponent(match.entry.code)}&page=${match.entry.printedPage}&pdfPage=${match.entry.printedPage}`;
 }
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ToxicologyPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -116,8 +130,11 @@ export default function ToxicologyPage() {
   const [showAllResults, setShowAllResults] = useState(false);
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-  const matches = useMemo(() => getToxicologyMatches(selectedIds), [selectedIds]);
+
+  const result = useMemo(() => getToxicologyMatches(selectedIds), [selectedIds]);
+  const { matches, mixed, contradictions } = result;
   const topMatch = matches[0] ?? null;
+  const displayedMatches = showAllResults ? matches : matches.slice(0, 1);
 
   const summaryText = useMemo(() => {
     if (!selectedIds.length) return "Toxicology finder: no findings selected.";
@@ -128,8 +145,12 @@ export default function ToxicologyPage() {
       .slice(0, 3)
       .map((m) => `${m.entry.code} ${m.entry.title} (${CONFIDENCE_STYLES[m.confidence].label.toLowerCase()})`)
       .join("; ");
-    return `Toxicology findings: ${labels}. Top matches: ${top || "none"}.`;
-  }, [matches, selectedIds.length, selectedSet]);
+    const mixedNote =
+      mixed.length > 0
+        ? ` Mixed signal: ${mixed.map((mx) => `${mx.primary.toxidrome} + ${mx.secondary.toxidrome}`).join("; ")}.`
+        : "";
+    return `Toxicology findings: ${labels}. Top matches: ${top || "none"}.${mixedNote}`;
+  }, [result, selectedIds, selectedSet, matches, mixed]);
 
   function toggleSymptom(id: string) {
     setSelectedIds((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
@@ -151,7 +172,6 @@ export default function ToxicologyPage() {
 
   const selectedExposureCount = EXPOSURE_CLUE_DEFS.filter((e) => selectedSet.has(e.id)).length;
   const selectedClinicalCount = selectedIds.filter((id) => !EXPOSURE_CLUE_IDS.has(id)).length;
-  const displayedMatches = showAllResults ? matches : matches.slice(0, 1);
 
   return (
     <div className="min-h-screen bg-slate-950 pb-36 text-slate-100">
@@ -181,13 +201,18 @@ export default function ToxicologyPage() {
                 Clear ({selectedIds.length})
               </button>
             )}
-            <CopySummaryButton summaryText={summaryText} label="Copy" copiedLabel="Copied" className="px-2.5" />
+            <CopySummaryButton
+              summaryText={summaryText}
+              label="Copy"
+              copiedLabel="Copied"
+              className="px-2.5"
+            />
           </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl space-y-4 px-4 pt-4">
-        {/* ── Intro + safety note ── */}
+        {/* ── Intro ── */}
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
             <div className="flex items-center gap-3">
@@ -199,10 +224,12 @@ export default function ToxicologyPage() {
                   <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.25em] text-rose-300">
                     CPG 8.x
                   </span>
-                  <span className="text-[10px] text-slate-500">{TOXICOLOGY_PROFILES.length} toxidrome patterns</span>
+                  <span className="text-[10px] text-slate-500">
+                    {TOXICOLOGY_PROFILES.length} toxidrome patterns · mixed co-ingestion detection
+                  </span>
                 </div>
                 <p className="mt-1 text-sm text-slate-300">
-                  Select scene clues then exam findings — the tool scores the closest CPG toxidrome pattern and links the protocol.
+                  Select scene clues then examination findings — the algorithm scores each CPG toxidrome, flags pattern completeness, and detects possible co-ingestion signals.
                 </p>
               </div>
             </div>
@@ -211,20 +238,20 @@ export default function ToxicologyPage() {
             <div className="flex gap-2">
               <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
               <p className="text-xs leading-relaxed text-amber-100/80">
-                Pattern-matching aid only. Continue scene safety, ABCs, glucose, monitoring, and escalation based on the patient in front of you.
+                Pattern-matching aid only. Continue scene safety, ABCs, glucose, monitoring, and clinical escalation based on the patient in front of you.
               </p>
             </div>
           </div>
         </div>
 
-        {/* ── Step 1: Scene & Exposure clues ── */}
+        {/* ── Step 1: Scene & Exposure ── */}
         <section>
           <div className="mb-2.5 flex items-center gap-2">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white">
               1
             </span>
             <h2 className="text-sm font-semibold text-white">Scene &amp; exposure clues</h2>
-            <span className="text-xs text-slate-500">— start here, highest diagnostic weight</span>
+            <span className="text-xs text-slate-500">— highest diagnostic weight, start here</span>
             {selectedExposureCount > 0 && (
               <span className="ml-auto rounded-full border border-rose-500/40 bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold text-rose-300 tabular-nums">
                 {selectedExposureCount} selected
@@ -242,7 +269,9 @@ export default function ToxicologyPage() {
                   key={id}
                   type="button"
                   onClick={() => toggleSymptom(id)}
-                  className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-medium transition-all active:scale-[0.99] ${active ? c.active : c.inactive}`}
+                  className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-medium transition-all active:scale-[0.99] ${
+                    active ? c.active : c.inactive
+                  }`}
                 >
                   <Icon className={`h-5 w-5 shrink-0 ${active ? c.iconActive : c.iconInactive}`} />
                   <span className="leading-snug">{symptom.label}</span>
@@ -257,7 +286,7 @@ export default function ToxicologyPage() {
           </div>
         </section>
 
-        {/* ── Step 2: Examination findings (collapsible groups) ── */}
+        {/* ── Step 2: Examination findings ── */}
         <section>
           <div className="mb-2.5 flex items-center gap-2">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-600 text-[10px] font-bold text-white">
@@ -281,7 +310,9 @@ export default function ToxicologyPage() {
                 <div
                   key={group}
                   className={`overflow-hidden rounded-2xl border transition-colors ${
-                    selectedInGroup > 0 ? "border-slate-700 bg-slate-900" : "border-slate-800 bg-slate-900/70"
+                    selectedInGroup > 0
+                      ? "border-slate-700 bg-slate-900"
+                      : "border-slate-800 bg-slate-900/70"
                   }`}
                 >
                   <button
@@ -297,7 +328,9 @@ export default function ToxicologyPage() {
                         {selectedInGroup}/{symptoms.length}
                       </span>
                     ) : (
-                      <span className="text-[11px] tabular-nums text-slate-600">{symptoms.length}</span>
+                      <span className="text-[11px] tabular-nums text-slate-600">
+                        {symptoms.length}
+                      </span>
                     )}
                     {isExpanded ? (
                       <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
@@ -360,20 +393,22 @@ export default function ToxicologyPage() {
             )}
           </div>
 
+          {/* Empty state */}
           {!selectedIds.length && (
             <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-sm text-slate-400">
-              Start by selecting a scene clue or examination finding above. The strongest results usually come from an exposure clue combined with one or two hallmark findings.
+              Start by selecting a scene clue or examination finding above. Scene clues carry the highest diagnostic weight — start there when the exposure is known.
             </div>
           )}
 
+          {/* No matches */}
           {selectedIds.length > 0 && matches.length === 0 && (
             <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
               <div className="flex gap-3">
                 <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-white">No clear toxicology pattern</p>
+                  <p className="text-sm font-semibold text-white">No CPG toxidrome pattern matched</p>
                   <p className="text-sm leading-relaxed text-slate-400">
-                    The selected findings do not strongly fit one bundled CPG pattern. Consider mixed ingestion, incomplete assessment, or non-toxicology differentials — sepsis, stroke, hypoglycaemia, or trauma.
+                    The selected findings do not score against any single bundled CPG pattern. Consider mixed ingestion, an incomplete picture, or non-toxicological differentials — sepsis, stroke, hypoglycaemia, or trauma.
                   </p>
                 </div>
               </div>
@@ -382,6 +417,32 @@ export default function ToxicologyPage() {
 
           {matches.length > 0 && (
             <div className="space-y-3">
+              {/* ── Contradiction warnings ── */}
+              {contradictions.length > 0 && (
+                <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4">
+                  <div className="flex items-start gap-2">
+                    <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-300">
+                        Contradictory findings selected
+                      </p>
+                      <ul className="space-y-1">
+                        {contradictions.map((msg, i) => (
+                          <li
+                            key={i}
+                            className="flex items-start gap-1.5 text-[11px] leading-snug text-amber-100/80"
+                          >
+                            <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-amber-400" />
+                            {msg}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Match cards ── */}
               {displayedMatches.map((match, index) => {
                 const styles = CONFIDENCE_STYLES[match.confidence];
                 const isTop = index === 0;
@@ -389,7 +450,9 @@ export default function ToxicologyPage() {
                 return (
                   <article
                     key={match.profile.id}
-                    className={`rounded-3xl border bg-slate-900 p-5 shadow-lg shadow-black/10 ${isTop ? styles.ring : "border-slate-800"}`}
+                    className={`rounded-3xl border bg-slate-900 p-5 shadow-lg shadow-black/10 ${
+                      isTop ? styles.ring : "border-slate-800"
+                    }`}
                   >
                     {/* Title row */}
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -400,6 +463,11 @@ export default function ToxicologyPage() {
                           >
                             {styles.label}
                           </span>
+                          {match.allHallmarksPresent && (
+                            <span className="rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-300">
+                              ✓ Pattern complete
+                            </span>
+                          )}
                           <span className="rounded-full border border-slate-700 bg-slate-950 px-2.5 py-1 text-[10px] font-medium text-slate-300">
                             {match.profile.toxidrome}
                           </span>
@@ -418,8 +486,10 @@ export default function ToxicologyPage() {
                       </span>
                     </div>
 
-                    {/* Matched cues — color-coded by type */}
-                    {(match.matchedHallmarks.length > 0 || match.matchedExposure.length > 0 || match.matchedSupporting.length > 0) && (
+                    {/* Matched cues — colour-coded by type */}
+                    {(match.matchedHallmarks.length > 0 ||
+                      match.matchedExposure.length > 0 ||
+                      match.matchedSupporting.length > 0) && (
                       <div className="mt-3 flex flex-wrap gap-1.5">
                         {match.matchedHallmarks.map((c) => (
                           <span
@@ -448,7 +518,7 @@ export default function ToxicologyPage() {
                       </div>
                     )}
 
-                    {/* Management + route */}
+                    {/* Management + CPG route */}
                     <div className="mt-4 grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
                       <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-500">
@@ -491,7 +561,16 @@ export default function ToxicologyPage() {
                 );
               })}
 
-              {/* Show / hide additional matches */}
+              {/* ── Mixed / co-ingestion signals (shown after primary card) ── */}
+              {mixed.length > 0 && (
+                <div className="space-y-2">
+                  {mixed.map((mx: MixedSuggestion, i) => (
+                    <MixedCard key={i} suggestion={mx} />
+                  ))}
+                </div>
+              )}
+
+              {/* ── Show / hide additional matches ── */}
               {matches.length > 1 && (
                 <button
                   type="button"
@@ -511,23 +590,39 @@ export default function ToxicologyPage() {
         </section>
       </main>
 
-      {/* ── Sticky bottom bar: top match ── */}
+      {/* ── Sticky bottom bar ── */}
       {topMatch && (
         <div className="fixed bottom-16 left-0 right-0 z-30 px-4 pb-2 md:bottom-0">
           <div
-            className={`mx-auto flex max-w-5xl items-center justify-between gap-3 rounded-2xl border px-4 py-3 ${CONFIDENCE_STYLES[topMatch.confidence].sticky}`}
+            className={`mx-auto flex max-w-5xl items-center justify-between gap-3 rounded-2xl border px-4 py-3 ${
+              CONFIDENCE_STYLES[topMatch.confidence].sticky
+            }`}
           >
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/50">
-                Top match
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-white/50">
+                  Top match
+                </p>
+                {topMatch.allHallmarksPresent && (
+                  <span className="rounded-full border border-emerald-500/40 bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.15em] text-emerald-300">
+                    Pattern complete
+                  </span>
+                )}
+                {mixed.length > 0 && (
+                  <span className="rounded-full border border-orange-500/40 bg-orange-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.15em] text-orange-300">
+                    Mixed signal
+                  </span>
+                )}
+              </div>
               <p className="truncate text-sm font-bold text-white">
                 {topMatch.entry.code} — {topMatch.entry.title}
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <span
-                className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] ${CONFIDENCE_STYLES[topMatch.confidence].badge}`}
+                className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] ${
+                  CONFIDENCE_STYLES[topMatch.confidence].badge
+                }`}
               >
                 {CONFIDENCE_STYLES[topMatch.confidence].label}
               </span>
@@ -540,6 +635,62 @@ export default function ToxicologyPage() {
               </Link>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Mixed toxidrome card ─────────────────────────────────────────────────────
+
+function MixedCard({ suggestion }: { suggestion: MixedSuggestion }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="rounded-2xl border border-orange-500/30 bg-orange-500/8 p-4">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-start gap-3 text-left"
+      >
+        <GitMerge className="mt-0.5 h-4 w-4 shrink-0 text-orange-300" />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-300">
+            Mixed / Co-ingestion Signal
+          </p>
+          <p className="mt-1 text-sm font-semibold text-white">
+            {suggestion.primary.toxidrome}
+            <span className="mx-1.5 text-slate-500">+</span>
+            {suggestion.secondary.toxidrome}
+          </p>
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            {suggestion.unexplainedHallmarks.map((s) => (
+              <span
+                key={s.id}
+                className="rounded-full border border-orange-500/30 bg-orange-500/10 px-2 py-0.5 text-[10px] font-medium text-orange-200"
+              >
+                {s.label}
+              </span>
+            ))}
+            <span className="self-center text-[10px] text-slate-500">
+              — unexplained by primary
+            </span>
+          </div>
+        </div>
+        <ChevronDown
+          className={`mt-0.5 h-4 w-4 shrink-0 text-slate-500 transition-transform ${
+            expanded ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {expanded && (
+        <div className="mt-3 border-t border-orange-500/20 pt-3">
+          <p className="text-xs leading-relaxed text-slate-300">{suggestion.rationale}</p>
+          <p className="mt-2 text-[11px] text-slate-500">
+            Consider combined management — consult both {suggestion.primary.cpgCode} and{" "}
+            {suggestion.secondary.cpgCode} protocols with the receiving team.
+          </p>
         </div>
       )}
     </div>

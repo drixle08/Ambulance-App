@@ -1,6 +1,6 @@
 // public/sw.js
 
-const CACHE_NAME = "apt-cache-v5";
+const CACHE_NAME = "apt-cache-v6";
 const CORE_ROUTES = [
   "/",
   "/dashboard",
@@ -17,7 +17,7 @@ const CORE_ROUTES = [
   "/tools/stroke",
   "/tools/vitals",
   "/tools/peds-arrest",
-  "/tools/peds-arrest-algorithm",
+  "/tools/peds-medical-arrest",
   "/tools/adult-arrest",
   "/tools/witnessed-adult-arrest",
   "/tools/rosc",

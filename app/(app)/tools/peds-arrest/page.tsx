@@ -15,6 +15,9 @@ import {
   Minus,
   Scale,
   Heart,
+  Wind,
+  GitBranch,
+  ChevronRight,
 } from "lucide-react";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -28,6 +31,14 @@ function estimateWeightKg(ageYears: number, ageMonths: number): number | null {
   return null;
 }
 
+function getSGASize(weight: number): string {
+  if (weight <= 5) return "1";
+  if (weight <= 12) return "1.5";
+  if (weight <= 25) return "2";
+  if (weight <= 35) return "2.5";
+  return "3";
+}
+
 function fmt(value: number | null | undefined, dp = 1): string {
   if (value == null || Number.isNaN(value)) return "–";
   return value.toFixed(dp);
@@ -35,7 +46,14 @@ function fmt(value: number | null | undefined, dp = 1): string {
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type ColorKey = "emerald" | "sky" | "blue" | "amber" | "yellow" | "rose";
+type ColorKey =
+  | "emerald"
+  | "sky"
+  | "blue"
+  | "amber"
+  | "yellow"
+  | "rose"
+  | "violet";
 
 const COLOR_STYLES: Record<
   ColorKey,
@@ -71,6 +89,11 @@ const COLOR_STYLES: Record<
     iconBg: "bg-rose-900/40 text-rose-400",
     accent: "text-rose-400",
   },
+  violet: {
+    border: "border-violet-900/60",
+    iconBg: "bg-violet-900/40 text-violet-400",
+    accent: "text-violet-400",
+  },
 };
 
 // ─── Page ────────────────────────────────────────────────────────────────────
@@ -89,7 +112,11 @@ export default function PedsArrestPage() {
   // Doses
   const adrMg = weight ? 0.01 * weight : null;
   const adrMl = weight ? 0.1 * weight : null;
-  const amioMg = weight ? 5 * weight : null;
+  const amioMgRaw = weight ? 5 * weight : null;
+  const amioMg = amioMgRaw != null ? Math.min(amioMgRaw, 300) : null;
+  const amioCapped = amioMgRaw != null && amioMgRaw > 300;
+  // Amiodarone: 150 mg/3 mL = 50 mg/mL (undiluted)
+  const amioMl = amioMg != null ? amioMg / 50 : null;
   const fluid10 = weight ? 10 * weight : null;
   const fluid20 = weight ? 20 * weight : null;
   const defib4 = weight ? 4 * weight : null;
@@ -98,6 +125,16 @@ export default function PedsArrestPage() {
   const defib10 = weight ? 10 * weight : null;
   const dex10Vol = weight ? 2.5 * weight : null;
   const sbp = hasAge && ageYears > 0 ? 70 + 2 * ageYears : 70;
+
+  // Airway sizing
+  const sgaSize = weight ? getSGASize(weight) : null;
+  const isInfant = hasAge && ageYears === 0 && ageMonths > 0;
+  const ettUncuffed =
+    hasAge && ageYears >= 1 ? ageYears / 4 + 4 : null;
+  const ettCuffed =
+    hasAge && ageYears >= 1 ? ageYears / 4 + 3.5 : null;
+  const ettDepth =
+    hasAge && ageYears >= 1 ? ageYears / 2 + 12 : null;
 
   function adjustYears(delta: number) {
     setAgeYears((prev) => Math.max(0, Math.min(14, prev + delta)));
@@ -116,14 +153,23 @@ export default function PedsArrestPage() {
     setWeightOverride("");
   }
 
+  const sgaText = sgaSize ? `SGA size ${sgaSize}` : "";
+  const ettText = ettUncuffed
+    ? `ETT uncuffed ${fmt(ettUncuffed, 1)} / cuffed ${fmt(ettCuffed, 1)} mm ID, depth ${fmt(ettDepth, 1)} cm at lip`
+    : isInfant
+    ? "ETT ~3.0–3.5 mm (infant)"
+    : "";
   const summaryText =
     weight == null
       ? "Paediatric arrest – no valid age/weight entered."
       : `Paediatric arrest: ${ageYears}y ${ageMonths}m, weight ~${fmt(weight)} kg. ` +
         `Adrenaline 0.01 mg/kg ≈ ${fmt(adrMg, 3)} mg (${fmt(adrMl, 1)} mL of 1:10,000). ` +
-        `Amiodarone 5 mg/kg ≈ ${fmt(amioMg, 1)} mg. ` +
-        `Fluids 10 mL/kg ≈ ${fmt(fluid10, 0)} mL (max 20 mL/kg ≈ ${fmt(fluid20, 0)} mL). ` +
-        `First shock 4 J/kg ≈ ${fmt(defib4, 0)} J. Target SBP ≥ ${sbp} mmHg.`;
+        `Amiodarone 5 mg/kg ≈ ${fmt(amioMg, 1)} mg${amioCapped ? " (capped 300 mg)" : ""} (${fmt(amioMl, 1)} mL undiluted). ` +
+        `Fluids 10–20 mL/kg: bolus ${fmt(fluid10, 0)}–${fmt(fluid20, 0)} mL (up to 3 boluses). ` +
+        `First shock 4 J/kg ≈ ${fmt(defib4, 0)} J. ` +
+        (sgaText ? `${sgaText}. ` : "") +
+        (ettText ? `${ettText}. ` : "") +
+        `Target SBP ≥ ${sbp} mmHg.`;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-28">
@@ -132,13 +178,13 @@ export default function PedsArrestPage() {
         <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-3">
           <Link
             href="/dashboard/resuscitation"
-            className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
+            className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 text-slate-300" />
           </Link>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
-              Paediatric Resuscitation
+              CPG 2.3 · v2.5 2026
             </p>
             <h1 className="text-base font-bold text-white leading-tight">
               Paediatric Arrest — WAAFELSS
@@ -148,7 +194,7 @@ export default function PedsArrestPage() {
             <button
               type="button"
               onClick={handleReset}
-              className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 transition-colors"
               aria-label="Reset"
             >
               <RotateCcw className="w-4 h-4 text-slate-300" />
@@ -159,6 +205,25 @@ export default function PedsArrestPage() {
       </header>
 
       <main className="mx-auto max-w-2xl px-4 pt-4 space-y-4">
+        {/* ── Algorithm Link ── */}
+        <Link
+          href="/tools/peds-medical-arrest"
+          className="flex items-center gap-3 rounded-2xl border border-violet-500/20 bg-violet-500/5 px-4 py-3 hover:bg-violet-500/10 transition-colors"
+        >
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/15 border border-violet-500/20 flex-shrink-0">
+            <GitBranch className="h-4 w-4 text-violet-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-violet-300">
+              Paediatric Medical Cardiac Arrest
+            </p>
+            <p className="text-[10px] text-violet-500">
+              Step-by-step shockable / non-shockable algorithm — CPG 2.3
+            </p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-violet-500 flex-shrink-0" />
+        </Link>
+
         {/* ── Age Input ── */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900 p-4 space-y-4">
           <div className="flex items-center gap-2">
@@ -260,44 +325,49 @@ export default function PedsArrestPage() {
           </p>
         </section>
 
-        {/* ── Dose Cards ── */}
+        {/* ── Dose Cards: A A F E ── */}
         <div className="grid grid-cols-2 gap-3">
-          {/* Adrenaline */}
           <DoseCard
             letter="A"
             title="Adrenaline"
-            formula="0.01 mg/kg = 0.1 mL/kg"
+            formula="0.01 mg/kg IV/IO — repeat every 4 min"
             color="emerald"
             icon={<Syringe className="w-5 h-5" />}
           >
             <BigValue value={fmt(adrMg, 3)} unit="mg" />
-            <SmallValue value={fmt(adrMl, 1)} unit="mL of 1:10,000" />
+            <SmallValue value={fmt(adrMl, 1)} unit="mL of 1:10,000 (0.1 mg/mL)" />
           </DoseCard>
 
-          {/* Amiodarone */}
           <DoseCard
             letter="A"
             title="Amiodarone"
-            formula="5 mg/kg — VF/VT only"
+            formula="5 mg/kg IV/IO — refractory VF/VT"
             color="sky"
             icon={<Zap className="w-5 h-5" />}
           >
             <BigValue value={fmt(amioMg, 1)} unit="mg" />
+            <SmallValue value={fmt(amioMl, 1)} unit="mL undiluted (150 mg/3 mL)" />
+            {amioCapped && (
+              <p className="text-[10px] text-amber-400 mt-0.5">
+                ⚠ Capped at 300 mg max dose
+              </p>
+            )}
           </DoseCard>
 
-          {/* Fluids */}
           <DoseCard
             letter="F"
             title="Fluids"
-            formula="10 mL/kg isotonic"
+            formula="10–20 mL/kg NaCl 0.9% — up to 3 boluses"
             color="blue"
             icon={<Droplets className="w-5 h-5" />}
           >
             <BigValue value={fmt(fluid10, 0)} unit="mL" />
-            <SmallValue value={`max ${fmt(fluid20, 0)} mL`} unit="(×2 boluses)" />
+            <SmallValue
+              value={`max ${fmt(fluid20, 0)} mL`}
+              unit="per bolus"
+            />
           </DoseCard>
 
-          {/* Energy */}
           <DoseCard
             letter="E"
             title="Energy"
@@ -312,19 +382,102 @@ export default function PedsArrestPage() {
               <ShockRow label="10 J/kg" value={fmt(defib10, 0)} />
             </div>
           </DoseCard>
+        </div>
 
-          {/* Sugar */}
+        {/* ── L: Laryngeal / Airway Sizing (full-width) ── */}
+        <DoseCard
+          letter="L"
+          title="Laryngeal / Airway Sizing"
+          formula="Weight → SGA size · Age → ETT (mm ID)"
+          color="violet"
+          icon={<Wind className="w-5 h-5" />}
+        >
+          <div className="grid grid-cols-2 gap-3 mt-1">
+            {/* SGA */}
+            <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-3">
+              <p className="text-[10px] text-violet-500 font-medium uppercase tracking-wider mb-1">
+                SGA (LMA) Size
+              </p>
+              <p className="text-4xl font-black text-violet-300 tabular-nums leading-none">
+                {sgaSize ?? "–"}
+              </p>
+              <p className="text-[10px] text-violet-600 leading-snug mt-2">
+                ≤5 kg → 1 · 5–12 → 1.5
+                <br />
+                10–25 → 2 · 25–35 → 2.5
+              </p>
+            </div>
+
+            {/* ETT */}
+            <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-3">
+              <p className="text-[10px] text-violet-500 font-medium uppercase tracking-wider mb-1">
+                ETT (mm ID)
+              </p>
+              {ettUncuffed != null ? (
+                <div className="space-y-1.5">
+                  <div>
+                    <p className="text-[9px] text-violet-600 leading-none">
+                      Uncuffed
+                    </p>
+                    <p className="text-2xl font-black text-violet-300 tabular-nums leading-tight">
+                      {fmt(ettUncuffed, 1)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-violet-600 leading-none">
+                      Cuffed
+                    </p>
+                    <p className="text-2xl font-black text-violet-300 tabular-nums leading-tight">
+                      {fmt(ettCuffed, 1)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-violet-600 leading-none">
+                      Depth at lip
+                    </p>
+                    <p className="text-base font-bold text-violet-300 tabular-nums">
+                      {fmt(ettDepth, 1)} cm
+                    </p>
+                  </div>
+                </div>
+              ) : isInfant ? (
+                <div>
+                  <p className="text-2xl font-black text-violet-300 tabular-nums leading-tight">
+                    3.0–3.5
+                  </p>
+                  <p className="text-[10px] text-violet-600 mt-1">
+                    uncuffed (infant)
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-16">
+                  <p className="text-[10px] text-violet-700 text-center leading-relaxed">
+                    Enter age ≥ 1y
+                    <br />
+                    for ETT sizing
+                  </p>
+                </div>
+              )}
+              <p className="text-[9px] text-violet-700 leading-snug mt-2">
+                (age÷4)+4 / +3.5 · depth (age÷2)+12
+              </p>
+            </div>
+          </div>
+        </DoseCard>
+
+        {/* ── Dose Cards: S S ── */}
+        <div className="grid grid-cols-2 gap-3">
           <DoseCard
             letter="S"
             title="Sugar (Dextrose 10%)"
-            formula="2.5 mL/kg IV"
+            formula="2.5 mL/kg IV/IO"
             color="yellow"
             icon={<Droplets className="w-5 h-5" />}
           >
             <BigValue value={fmt(dex10Vol, 1)} unit="mL" />
+            <SmallValue value="D10W" unit="(10% dextrose)" />
           </DoseCard>
 
-          {/* Systolic BP */}
           <DoseCard
             letter="S"
             title="Target SBP"
@@ -347,21 +500,31 @@ export default function PedsArrestPage() {
           <div className="grid grid-cols-2 gap-y-2 gap-x-4">
             {(
               [
-                ["W", "Weight"],
-                ["A", "Airway"],
-                ["A", "Adrenaline / Amiodarone"],
-                ["F", "Fluids"],
-                ["E", "Energy (Defib)"],
-                ["L", "Lorazepam"],
-                ["S", "Sugar (Dextrose)"],
-                ["S", "Systolic BP target"],
-              ] as [string, string][]
-            ).map(([letter, label], i) => (
+                ["W", "Weight", false],
+                ["A", "Airway", false],
+                ["A", "Adrenaline / Amiodarone", false],
+                ["F", "Fluids", false],
+                ["E", "Energy (Defib)", false],
+                ["L", "Laryngeal (SGA & ETT sizing)", true],
+                ["S", "Sugar (Dextrose)", false],
+                ["S", "Systolic BP target", false],
+              ] as [string, string, boolean][]
+            ).map(([letter, label, isL], i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-md bg-emerald-900/60 text-emerald-400 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                <span
+                  className={`w-6 h-6 rounded-md text-xs font-bold flex items-center justify-center flex-shrink-0 ${
+                    isL
+                      ? "bg-violet-900/60 text-violet-400"
+                      : "bg-emerald-900/60 text-emerald-400"
+                  }`}
+                >
                   {letter}
                 </span>
-                <span className="text-xs text-slate-300">{label}</span>
+                <span
+                  className={`text-xs ${isL ? "text-violet-300" : "text-slate-300"}`}
+                >
+                  {label}
+                </span>
               </div>
             ))}
           </div>
@@ -371,15 +534,16 @@ export default function PedsArrestPage() {
         <div className="flex items-start gap-2 rounded-xl border border-slate-800 bg-slate-900/40 p-3">
           <Heart className="w-4 h-4 text-rose-500 mt-0.5 flex-shrink-0" />
           <p className="text-[11px] text-slate-500 leading-relaxed">
-            Cross-check all doses against your HMCAS CPG, resuscitation chart,
-            and clinical judgement before use on real patients.
+            Cross-check all doses against your HMCAS CPG v2.5, resuscitation
+            chart, and clinical judgement. Do NOT terminate paediatric
+            resuscitation in the field — transport to hospital.
           </p>
         </div>
       </main>
 
       {/* ── Sticky Bottom Bar ── */}
       <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-30 border-t border-slate-800 bg-slate-950/95 backdrop-blur-sm">
-        <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-4">
+        <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-3">
           <div className="flex-1">
             <p className="text-[10px] text-slate-500 uppercase tracking-widest">
               Active weight
@@ -402,6 +566,14 @@ export default function PedsArrestPage() {
                   {fmt(defib4, 0)} J
                 </p>
               </div>
+              {sgaSize && (
+                <div className="text-right">
+                  <p className="text-[10px] text-slate-500">SGA</p>
+                  <p className="text-base font-bold text-violet-400 tabular-nums">
+                    {sgaSize}
+                  </p>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -439,7 +611,9 @@ function DoseCard({
           {icon}
         </div>
         <div className="min-w-0">
-          <p className={`text-[10px] font-bold uppercase tracking-widest ${s.accent}`}>
+          <p
+            className={`text-[10px] font-bold uppercase tracking-widest ${s.accent}`}
+          >
             {letter}
           </p>
           <p className="text-sm font-semibold text-white leading-tight truncate">
@@ -456,10 +630,10 @@ function DoseCard({
 function BigValue({ value, unit }: { value: string; unit: string }) {
   return (
     <div className="flex items-baseline gap-1">
-      <span className="text-2xl font-bold text-white tabular-nums">{value}</span>
-      {unit && (
-        <span className="text-xs text-slate-400">{unit}</span>
-      )}
+      <span className="text-2xl font-bold text-white tabular-nums">
+        {value}
+      </span>
+      {unit && <span className="text-xs text-slate-400">{unit}</span>}
     </div>
   );
 }

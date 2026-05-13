@@ -296,6 +296,13 @@ export const TOOL_GROUPS: ToolGroup[] = [
         meta: "SOP 2025",
         icon: "ClipboardCheck",
       },
+      {
+        name: "CPM v4.0 (2024)",
+        href: "/tools/cpm",
+        tagline: "CPM v4.0 procedure and clinical privileging manual with in-app page navigation.",
+        meta: "Clinical Procedure Manual",
+        icon: "FileText",
+      },
     ],
   },
 ];

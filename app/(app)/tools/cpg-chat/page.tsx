@@ -8,6 +8,7 @@ import {
   ClipboardCheck,
   Copy,
   ExternalLink,
+  FileText,
   Loader2,
   MessageCircle,
   Plus,
@@ -25,7 +26,7 @@ type SourceDoc = {
   printedPage: number;
   pdfUrl: string;
   label: string;
-  type: "cpg" | "sop";
+  type: "cpg" | "sop" | "cpm";
 };
 
 type ChatMessage = {
@@ -40,6 +41,7 @@ type ChatMessage = {
 const EXAMPLES = [
   "Adrenaline dose in adult cardiac arrest?",
   "What is the uniform policy for paramedics?",
+  "Which procedures are AP vs CCP privileged?",
   "Post-ROSC BP targets and ventilation?",
   "How do I report a needlestick injury?",
   "Paediatric asthma — salbutamol dose by weight?",
@@ -92,6 +94,17 @@ function ResponseRenderer({ text }: { text: string }) {
         <div key={keyIdx++} className="mt-1 flex items-start gap-1.5">
           <ClipboardCheck className="w-3.5 h-3.5 mt-0.5 shrink-0 text-amber-400" />
           <span className="text-xs text-amber-400">{trimmed}</span>
+        </div>
+      );
+      continue;
+    }
+
+    // CPM Sources line
+    if (/^sources?\s*\(cpm\)/i.test(trimmed)) {
+      nodes.push(
+        <div key={keyIdx++} className="mt-1 flex items-start gap-1.5">
+          <FileText className="w-3.5 h-3.5 mt-0.5 shrink-0 text-cyan-400" />
+          <span className="text-xs text-cyan-400">{trimmed}</span>
         </div>
       );
       continue;
@@ -166,6 +179,7 @@ function SourceChips({ sources }: { sources: SourceDoc[] }) {
   const deduped = Array.from(new Map(sources.map((s) => [s.label, s])).values());
   const cpg = deduped.filter((s) => s.type === "cpg");
   const sop = deduped.filter((s) => s.type === "sop");
+  const cpm = deduped.filter((s) => s.type === "cpm");
 
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -188,6 +202,16 @@ function SourceChips({ sources }: { sources: SourceDoc[] }) {
           className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-amber-400 hover:bg-amber-500/20 transition-colors"
         >
           <ExternalLink className="w-3 h-3" />
+          {s.label}
+        </a>
+      ))}
+      {cpm.map((s) => (
+        <a
+          key={s.label}
+          href={s.pdfUrl}
+          className="inline-flex items-center gap-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-cyan-400 hover:bg-cyan-500/20 transition-colors"
+        >
+          <FileText className="w-3 h-3" />
           {s.label}
         </a>
       ))}
@@ -281,7 +305,7 @@ export default function CpgChatPage() {
             printedPage: Number(s?.printedPage ?? 0),
             pdfUrl: typeof s?.pdfUrl === "string" ? s.pdfUrl : "",
             label: typeof s?.label === "string" ? s.label : "Source",
-            type: s?.type === "sop" ? "sop" : "cpg",
+            type: s?.type === "sop" ? "sop" : s?.type === "cpm" ? "cpm" : "cpg",
           }))
         : [];
 
@@ -361,13 +385,13 @@ export default function CpgChatPage() {
                 </span>
                 <div>
                   <p className="text-sm font-bold text-slate-100">HMCAS Clinical Assistant</p>
-                  <p className="text-[0.65rem] text-slate-500">CPG v2.5 (2026) · SOP v4.4 (2024)</p>
+                  <p className="text-[0.65rem] text-slate-500">CPG v2.5 (2026) · SOP v4.4 (2024) · CPM v4.0 (2024)</p>
                 </div>
               </div>
               <p className="text-sm text-slate-400">
                 Ask about clinical protocols, drug doses, transport criteria, operational
-                procedures, HR policies, or safety requirements. Answers are grounded in
-                the CPG and SOP and include direct page references.
+                procedures, clinical procedures, HR policies, or safety requirements.
+                Answers are grounded in the CPG, SOP, and CPM and include direct page references.
               </p>
               <div className="flex flex-wrap gap-1.5 pt-1">
                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-emerald-400">
@@ -377,6 +401,10 @@ export default function CpgChatPage() {
                 <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-amber-400">
                   <ClipboardCheck className="w-3 h-3" />
                   SOP
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-cyan-400">
+                  <FileText className="w-3 h-3" />
+                  CPM
                 </span>
               </div>
             </div>
@@ -481,7 +509,7 @@ export default function CpgChatPage() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               rows={1}
-              placeholder="Ask a CPG or SOP question… (Enter to send)"
+              placeholder="Ask a CPG, SOP, or CPM question… (Enter to send)"
               disabled={isSending}
               className="flex-1 resize-none rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors disabled:opacity-50 max-h-36 overflow-y-auto"
             />
@@ -499,7 +527,7 @@ export default function CpgChatPage() {
             </button>
           </form>
           <p className="text-[0.6rem] text-slate-700 mt-1.5 text-center">
-            Grounded in HMCAS CPG v2.5 (2026) &amp; SOP v4.4 (2024) — always verify with the full document
+            Grounded in HMCAS CPG v2.5 (2026), SOP v4.4 (2024), and CPM v4.0 (2024) — always verify with the full document
           </p>
         </div>
       </div>

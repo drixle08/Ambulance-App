@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchCpgChunks, type CpgChunk } from "@/lib/cpgChat/retriever";
 import { searchSopChunks, type SopChunk } from "@/lib/sopChat/retriever";
+import { searchCpmChunks, type CpmChunk } from "@/lib/cpmChat/retriever";
 import { searchSopEntries } from "@/lib/sopIndex";
 
 export const runtime = "nodejs";
@@ -11,7 +12,7 @@ type Source = {
   printedPage: number;
   pdfUrl: string;
   label: string;
-  type: "cpg" | "sop";
+  type: "cpg" | "sop" | "cpm";
 };
 
 type HistoryMessage = {
@@ -21,6 +22,7 @@ type HistoryMessage = {
 
 const DEFAULT_MODEL = "gpt-4o-mini";
 const CPG_SOURCE_LABEL = "CPG v2.5";
+const CPM_SOURCE_LABEL = "CPM v4.0";
 
 // ─── System prompt ────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are the Clinical Assistant — a senior HMCAS paramedic with deep CPG knowledge, built into the HMCAS Ambulance Paramedic Toolkit. You talk like a knowledgeable colleague on scene: clear, direct, and practical. Not a textbook. Not a robot.
@@ -28,6 +30,7 @@ const SYSTEM_PROMPT = `You are the Clinical Assistant — a senior HMCAS paramed
 You have access to:
 - CPG (Clinical Practice Guidelines v2.5, 2026) — current HMCAS clinical protocols
 - SOP (Standard Operating Procedures v4.4, 2024) — operational and HR procedures
+- CPM (Clinical Procedure Manual v4.0, 2024) — clinical procedure and privileging reference
 
 TONE:
 - Peer-to-peer. Talk like a senior medic helping a colleague mid-shift, not writing a report.
@@ -41,7 +44,8 @@ CLINICAL RULES — non-negotiable:
 - If the retrieved passages do not cover it, say: "That's not in the retrieved pages — open the PDF and check directly."
 - CPG v2.5 (2026) is the current version. Do not reference older CPG versions.
 - SOP v4.4 (2024) is the current SOP.
-- If the question is outside CPG/SOP scope entirely, say so clearly and don't speculate.
+- CPM v4.0 (2024) is the current Clinical Procedure Manual.
+- If the question is outside CPG/SOP/CPM scope entirely, say so clearly and don't speculate.
 
 RESPONSE FORMAT (in this order, every time):
 1. Opening — one or two sentences giving the direct answer in plain language
@@ -55,7 +59,8 @@ RESPONSE FORMAT (in this order, every time):
 4. Sources line — always the very last line, formatted exactly:
    - CPG only:  Sources (CPG): CPG v2.5 p.XX [; CPG v2.5 p.XX ...]
    - SOP only:  Sources (SOP): SOP X.X p.XX [; SOP X.X p.XX ...]
-   - Both:      Sources (CPG): CPG v2.5 p.XX | Sources (SOP): SOP X.X p.XX
+   - CPM only:  Sources (CPM): CPM v4.0 p.XX [; CPM v4.0 p.XX ...]
+   - Mixed:     Sources (CPG): CPG v2.5 p.XX | Sources (SOP): SOP X.X p.XX | Sources (CPM): CPM v4.0 p.XX
 
 FORMATTING:
 - Under 300 words total
@@ -106,7 +111,25 @@ function buildSopSources(chunks: SopChunk[], query: string): Source[] {
     });
 }
 
-function buildContext(cpgChunks: CpgChunk[], sopChunks: SopChunk[]): string {
+function buildCpmSources(chunks: CpmChunk[]): Source[] {
+  const seenPages = new Set<number>();
+  return chunks
+    .filter((chunk) => {
+      if (seenPages.has(chunk.printedPage)) return false;
+      seenPages.add(chunk.printedPage);
+      return true;
+    })
+    .map((chunk) => ({
+      id: chunk.id,
+      page: chunk.page,
+      printedPage: chunk.printedPage,
+      pdfUrl: `/tools/cpm?page=${chunk.printedPage}`,
+      label: `${CPM_SOURCE_LABEL} p.${chunk.printedPage}`,
+      type: "cpm" as const,
+    }));
+}
+
+function buildContext(cpgChunks: CpgChunk[], sopChunks: SopChunk[], cpmChunks: CpmChunk[]): string {
   const cpgParts = cpgChunks.map((chunk) => {
     const cleaned = chunk.text.replace(/\s+/g, " ").trim();
     const snippet = cleaned.length > 900 ? `${cleaned.slice(0, 900)}…` : cleaned;
@@ -119,10 +142,16 @@ function buildContext(cpgChunks: CpgChunk[], sopChunks: SopChunk[]): string {
     return `[SOP p.${chunk.printedPage}]: ${snippet}`;
   });
 
-  return [...cpgParts, ...sopParts].join("\n\n");
+  const cpmParts = cpmChunks.map((chunk) => {
+    const cleaned = chunk.text.replace(/\s+/g, " ").trim();
+    const snippet = cleaned.length > 900 ? `${cleaned.slice(0, 900)}…` : cleaned;
+    return `[${CPM_SOURCE_LABEL} p.${chunk.printedPage}]: ${snippet}`;
+  });
+
+  return [...cpgParts, ...sopParts, ...cpmParts].join("\n\n");
 }
 
-function buildSourceLine(cpgSources: Source[], sopSources: Source[]): string {
+function buildSourceLine(cpgSources: Source[], sopSources: Source[], cpmSources: Source[]): string {
   const parts: string[] = [];
   if (cpgSources.length) {
     const labels = Array.from(new Set(cpgSources.map((s) => s.label)));
@@ -131,6 +160,10 @@ function buildSourceLine(cpgSources: Source[], sopSources: Source[]): string {
   if (sopSources.length) {
     const labels = Array.from(new Set(sopSources.map((s) => s.label)));
     parts.push(`Sources (SOP): ${labels.join("; ")}`);
+  }
+  if (cpmSources.length) {
+    const labels = Array.from(new Set(cpmSources.map((s) => s.label)));
+    parts.push(`Sources (CPM): ${labels.join("; ")}`);
   }
   return parts.join(" | ");
 }
@@ -214,25 +247,27 @@ export async function POST(req: NextRequest) {
     .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }))
     .slice(-6);
 
-  // Search both CPG and SOP in parallel
-  const [cpgChunks, sopChunks] = await Promise.all([
+  // Search CPG, SOP, and CPM in parallel
+  const [cpgChunks, sopChunks, cpmChunks] = await Promise.all([
     searchCpgChunks(query, 6),
     searchSopChunks(query, 4),
+    searchCpmChunks(query, 4),
   ]);
 
-  if (cpgChunks.length === 0 && sopChunks.length === 0) {
+  if (cpgChunks.length === 0 && sopChunks.length === 0 && cpmChunks.length === 0) {
     return NextResponse.json({
       answer:
-        "I can only answer questions covered by the HMCAS CPG or SOP. Please ask about a clinical protocol, drug dose, operational procedure, or administrative policy.",
+        "I can only answer questions covered by the HMCAS CPG, SOP, or CPM. Please ask about a clinical protocol, drug dose, clinical procedure, operational procedure, or administrative policy.",
       sources: [],
     });
   }
 
   const cpgSources = buildCpgSources(cpgChunks);
   const sopSources = buildSopSources(sopChunks, query);
-  const allSources = [...cpgSources, ...sopSources];
-  const sourceLine = buildSourceLine(cpgSources, sopSources);
-  const context = buildContext(cpgChunks, sopChunks);
+  const cpmSources = buildCpmSources(cpmChunks);
+  const allSources = [...cpgSources, ...sopSources, ...cpmSources];
+  const sourceLine = buildSourceLine(cpgSources, sopSources, cpmSources);
+  const context = buildContext(cpgChunks, sopChunks, cpmChunks);
 
   const answer = await callOpenAI(query, context, sourceLine, history);
 
@@ -240,7 +275,8 @@ export async function POST(req: NextRequest) {
     if (!answer) return null;
     const hasSourceLine =
       answer.toLowerCase().includes("sources (cpg)") ||
-      answer.toLowerCase().includes("sources (sop)");
+      answer.toLowerCase().includes("sources (sop)") ||
+      answer.toLowerCase().includes("sources (cpm)");
     if (hasSourceLine) return answer;
     return sourceLine ? `${answer.trim()}\n\n${sourceLine}` : answer;
   })();
@@ -248,7 +284,7 @@ export async function POST(req: NextRequest) {
   if (!finalAnswer) {
     const fallback = sourceLine
       ? `Unable to generate a response right now.\n\n${sourceLine}`
-      : "Unable to generate a response right now. Please review the CPG or SOP PDF directly.";
+      : "Unable to generate a response right now. Please review the CPG, SOP, or CPM PDF directly.";
     return NextResponse.json({ answer: fallback, sources: allSources, sourceLine });
   }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Pill, Search, ClipboardCheck } from "lucide-react";
+import { FileText, Pill, Search, ClipboardCheck } from "lucide-react";
 import {
   CPG_ENTRIES,
   normalizeCpgSlug,
@@ -10,6 +10,7 @@ import {
   type MedicationEntry,
 } from "@/lib/cpgIndex";
 import { searchSopEntries, type SopEntry } from "@/lib/sopIndex";
+import { searchCpmEntries, type CpmEntry } from "@/lib/cpmIndex";
 import { useDevice } from "@/app/_components/DeviceProvider";
 
 const PDF_PATH = "/reference/cpg/cpg-v2.5-2026.pdf";
@@ -55,10 +56,17 @@ export function ProtocolFinder() {
     return searchSopEntries(normalizedQuery);
   }, [normalizedQuery, isNumericQuery]);
 
+  // CPM procedure results
+  const cpmResults = useMemo((): CpmEntry[] => {
+    if (!normalizedQuery) return [];
+    return searchCpmEntries(normalizedQuery);
+  }, [normalizedQuery]);
+
   const hasResults =
     protocolResults.length > 0 ||
     medResults.length > 0 ||
     sopResults.length > 0 ||
+    cpmResults.length > 0 ||
     isNumericQuery;
 
   // ─── Navigation helpers ───────────────────────────────────────────────────
@@ -104,6 +112,11 @@ export function ProtocolFinder() {
     setQuery("");
   };
 
+  const openCpm = (entry: CpmEntry) => {
+    window.location.assign(`/tools/cpm?page=${entry.printedPage}`);
+    setQuery("");
+  };
+
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
@@ -123,13 +136,14 @@ export function ProtocolFinder() {
                 return;
               }
               if (protocolResults[0]) openEntry(protocolResults[0]);
-              else if (medResults[0]) openMedication(medResults[0]);
               else if (sopResults[0]) openSop(sopResults[0]);
+              else if (cpmResults[0]) openCpm(cpmResults[0]);
+              else if (medResults[0]) openMedication(medResults[0]);
             }
           }}
-          placeholder="Search CPG, SOP, or medication…"
+          placeholder="Search CPG, SOP, CPM, or medication..."
           className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
-          aria-label="Search protocol, SOP, or medication"
+          aria-label="Search protocol, SOP, CPM, or medication"
         />
       </div>
 
@@ -228,6 +242,41 @@ export function ProtocolFinder() {
                 </>
               )}
 
+              {/* CPM results */}
+              {cpmResults.length > 0 && (
+                <>
+                  <li className="px-4 py-1.5 bg-cyan-50 dark:bg-cyan-500/10">
+                    <span className="text-[0.6rem] font-bold uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
+                      Clinical Procedure Manual
+                    </span>
+                  </li>
+                  {cpmResults.map((entry) => (
+                    <li key={entry.code}>
+                      <button
+                        type="button"
+                        onClick={() => openCpm(entry)}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-cyan-50 dark:hover:bg-cyan-500/10"
+                      >
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400">
+                          <FileText className="h-3.5 w-3.5" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
+                            {entry.title}
+                          </p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {entry.section} Â· p.{entry.printedPage}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-cyan-100 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-400">
+                          CPM {entry.code}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </>
+              )}
+
               {/* Medication / formulary results */}
               {medResults.length > 0 && (
                 <>
@@ -266,7 +315,7 @@ export function ProtocolFinder() {
             </ul>
           ) : (
             <div className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
-              No matching protocols, SOPs, or medications. Try another term.
+              No matching protocols, SOPs, CPM procedures, or medications. Try another term.
             </div>
           )}
         </div>
@@ -274,3 +323,4 @@ export function ProtocolFinder() {
     </div>
   );
 }
+

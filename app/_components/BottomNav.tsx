@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useDevice } from "@/app/_components/DeviceProvider";
-import { ClipboardCheck, Home, LayoutGrid, MessageCircle, Pill, Search, Timer, X } from "lucide-react";
+import { ClipboardCheck, FileText, Home, LayoutGrid, MessageCircle, Pill, Search, Timer, X } from "lucide-react";
 import {
   CPG_ENTRIES,
   normalizeCpgSlug,
@@ -13,6 +13,7 @@ import {
   type MedicationEntry,
 } from "@/lib/cpgIndex";
 import { searchSopEntries, type SopEntry } from "@/lib/sopIndex";
+import { searchCpmEntries, type CpmEntry } from "@/lib/cpmIndex";
 
 const PDF_PATH = "/reference/cpg/cpg-v2.5-2026.pdf";
 
@@ -51,7 +52,10 @@ function SearchResults({
   const sops: SopEntry[] =
     q && !isNumericQuery ? searchSopEntries(q) : [];
 
-  const hasResults = protocols.length > 0 || meds.length > 0 || sops.length > 0 || isNumericQuery;
+  const cpms: CpmEntry[] =
+    q ? searchCpmEntries(q) : [];
+
+  const hasResults = protocols.length > 0 || meds.length > 0 || sops.length > 0 || cpms.length > 0 || isNumericQuery;
 
   // On mobile: route to the in-app PDF viewer so the page fragment works.
   // On desktop: open the PDF directly in a new tab.
@@ -81,6 +85,11 @@ function SearchResults({
     onClose();
   };
 
+  const openCpm = (entry: CpmEntry) => {
+    window.location.assign(`/tools/cpm?page=${entry.printedPage}`);
+    onClose();
+  };
+
   const openMed = (med: MedicationEntry) => {
     if (isMobile) {
       const slug = `formulary-${med.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")}`;
@@ -97,7 +106,7 @@ function SearchResults({
     return (
       <div className="flex flex-col items-center justify-center h-48 gap-2 text-slate-600">
         <Search className="w-8 h-8" />
-        <p className="text-sm">Type to search protocols, SOPs, or medications</p>
+        <p className="text-sm">Type to search protocols, SOPs, CPM, or medications</p>
       </div>
     );
   }
@@ -105,7 +114,7 @@ function SearchResults({
   if (!hasResults) {
     return (
       <p className="px-5 py-8 text-center text-sm text-slate-600">
-        No matching protocols, SOPs, or medications found.
+        No matching protocols, SOPs, CPM procedures, or medications found.
       </p>
     );
   }
@@ -186,6 +195,38 @@ function SearchResults({
               </div>
               <span className="shrink-0 rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-amber-400">
                 {entry.code}
+              </span>
+            </button>
+          ))}
+        </>
+      )}
+
+      {/* CPM */}
+      {cpms.length > 0 && (
+        <>
+          <div className="bg-cyan-500/5 px-5 py-2">
+            <span className="text-[0.6rem] font-black uppercase tracking-widest text-cyan-500">
+              Clinical Procedure Manual
+            </span>
+          </div>
+          {cpms.map((entry) => (
+            <button
+              key={entry.code}
+              type="button"
+              onClick={() => openCpm(entry)}
+              className="flex w-full items-center gap-3 px-5 py-4 text-left hover:bg-cyan-500/5 active:bg-cyan-500/10"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cyan-500/15 text-cyan-400">
+                <FileText className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-slate-100">{entry.title}</p>
+                <p className="text-xs text-slate-500">
+                  {entry.section} Â· p.{entry.printedPage}
+                </p>
+              </div>
+              <span className="shrink-0 rounded-full border border-cyan-500/30 bg-cyan-500/15 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-cyan-400">
+                CPM {entry.code}
               </span>
             </button>
           ))}
@@ -331,7 +372,7 @@ export function BottomNav() {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Protocol, SOP, medication, or page number…"
+              placeholder="Protocol, SOP, CPM, medication, or page number..."
               className="flex-1 bg-transparent text-base text-slate-100 placeholder:text-slate-600 outline-none"
             />
             <button
@@ -352,3 +393,4 @@ export function BottomNav() {
     </>
   );
 }
+

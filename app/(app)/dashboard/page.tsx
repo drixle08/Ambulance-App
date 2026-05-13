@@ -67,7 +67,7 @@ export default function DashboardPage() {
           <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Select a category</h1>
         </header>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {TOOL_GROUPS.map((group) => {
             const Icon = ICON_MAP[group.icon] ?? BookOpen;
             const color = COLOR_MAP[group.color] ?? COLOR_MAP.amber;
@@ -75,14 +75,14 @@ export default function DashboardPage() {
               <Link
                 key={group.slug}
                 href={`/dashboard/${group.slug}`}
-                className={`group flex flex-col items-center gap-3 rounded-3xl border border-slate-200 bg-white/90 p-5 text-center shadow-sm transition-all active:scale-95 ${color.hover} hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80`}
+                className={`group flex flex-col items-center gap-4 rounded-3xl border border-slate-200 bg-white/90 p-6 text-center shadow-sm transition-all active:scale-95 ${color.hover} hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80`}
               >
-                <div className={`flex h-16 w-16 items-center justify-center rounded-2xl ${color.bg} ring-4 ring-transparent transition-all ${color.ring}`}>
-                  <Icon className={`h-8 w-8 ${color.icon}`} />
+                <div className={`flex h-20 w-20 items-center justify-center rounded-2xl ${color.bg} ring-4 ring-transparent transition-all ${color.ring}`}>
+                  <Icon className={`h-10 w-10 ${color.icon}`} />
                 </div>
-                <div className="space-y-1">
-                  <h2 className="text-sm font-semibold leading-tight text-slate-900 dark:text-slate-50">{group.shortTitle ?? group.title}</h2>
-                  <span className="inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                <div className="space-y-1.5">
+                  <h2 className="text-base font-bold leading-tight text-slate-900 dark:text-slate-50">{group.shortTitle ?? group.title}</h2>
+                  <span className="inline-block rounded-full bg-slate-100 px-2.5 py-1 text-[0.7rem] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400 uppercase tracking-wider">
                     {group.tools.length} {group.tools.length === 1 ? "tool" : "tools"}
                   </span>
                 </div>

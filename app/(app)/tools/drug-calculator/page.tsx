@@ -613,16 +613,34 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
       {/* Inputs */}
       <div className={`rounded-2xl border p-4 space-y-5 ${clr.card} ${clr.border}`}>
         {needsWeight && (
-          <SliderRow
-            label="Patient weight"
-            unit="kg"
-            value={weight}
-            min={3}
-            max={150}
-            step={1}
-            onChange={setWeight}
-            accentClass={clr.label}
-          />
+          <div className="space-y-3">
+            <SliderRow
+              label="Patient weight"
+              unit="kg"
+              value={weight}
+              min={3}
+              max={150}
+              step={1}
+              onChange={setWeight}
+              accentClass={clr.label}
+            />
+            <div className="grid grid-cols-3 gap-2">
+              {[50, 60, 70, 80, 90, 100].map((w) => (
+                <button
+                  key={w}
+                  type="button"
+                  onClick={() => setWeight(w)}
+                  className={`h-10 rounded-xl border text-sm font-bold transition-all active:scale-95 ${
+                    weight === w
+                      ? `${clr.badge} border-current`
+                      : "border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-500"
+                  }`}
+                >
+                  {w}kg
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         {!isFixed && (
@@ -663,52 +681,52 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
       </div>
 
       {/* Results */}
-      <div className={`rounded-2xl border p-4 space-y-3 ${clr.result} ${clr.resultBorder}`}>
+      <div className={`rounded-2xl border p-6 space-y-4 shadow-xl ${clr.result} ${clr.resultBorder}`}>
         {result.kind === "push" || result.kind === "topical" ? (
-          <div className="text-center py-2">
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">Volume to draw up</p>
-            <p className={`text-4xl font-black tabular-nums ${clr.label}`}>
+          <div className="text-center py-4">
+            <p className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-2">Volume to draw up</p>
+            <div className={`text-6xl font-black tabular-nums tracking-tighter ${clr.label}`}>
               {fmtNum(result.volumeMl ?? 0, 2)}
-              <span className="text-lg font-normal text-slate-400 ml-1">mL</span>
-            </p>
-            <p className="text-xs text-slate-500 mt-1">
-              {result.kind === "topical" ? "apply topically as directed" : `from ${mode.concLabel} solution`}
+              <span className="text-2xl font-normal text-slate-400 ml-2">mL</span>
+            </div>
+            <p className="text-sm font-medium text-slate-400 mt-4 px-4 py-2 bg-slate-900/50 rounded-lg inline-block border border-slate-800">
+              {result.kind === "topical" ? "Apply topically as directed" : `Use ${mode.concLabel} solution`}
             </p>
           </div>
         ) : (
           <>
             {result.kind === "fixed" && result.volumeMl !== undefined && (
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                  {result.totalDoseMg !== undefined ? "Total dose" : "Volume"}
+              <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                  {result.totalDoseMg !== undefined ? "Total dose" : "Total Volume"}
                 </span>
-                <span className="text-sm font-semibold text-slate-200 tabular-nums">
+                <span className="text-lg font-bold text-slate-100 tabular-nums">
                   {result.totalDoseMg !== undefined
                     ? `${fmtNum(result.totalDoseMg, 0)} mg → ${fmtNum(result.volumeMl, 1)} mL`
                     : `${fmtNum(result.volumeMl, 1)} mL`}
                 </span>
               </div>
             )}
+            <div className="py-2 text-center">
+              <p className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-2">Flow Rate</p>
+              <div className={`text-7xl font-black tabular-nums tracking-tighter ${clr.label}`}>
+                {fmtNum(result.flowRateMlH ?? 0, 1)}
+                <span className="text-2xl font-normal text-slate-400 ml-2">mL/h</span>
+              </div>
+            </div>
             {result.kind === "fixed" && result.durationMin !== undefined && (
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">Duration</span>
-                <span className="text-sm font-semibold text-slate-200">{result.durationMin} min</span>
+              <div className="flex items-center justify-between border-t border-slate-800/60 pt-3">
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Infusion Duration</span>
+                <span className="text-base font-bold text-slate-200">{result.durationMin} min</span>
               </div>
             )}
-            <div className="pt-1 text-center">
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">Flow Rate</p>
-              <p className={`text-5xl font-black tabular-nums ${clr.label}`}>
-                {fmtNum(result.flowRateMlH ?? 0, 1)}
-                <span className="text-xl font-normal text-slate-400 ml-1.5">mL/h</span>
-              </p>
-            </div>
             {result.dripsPerMin !== undefined && (
               <div className="flex items-center justify-between border-t border-slate-800/60 pt-3">
-                <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                  Gravity set (20 gtt/mL)
+                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                  Gravity set <span className="text-[0.6rem] font-normal text-slate-500">(20 gtt/mL)</span>
                 </span>
-                <span className="text-sm font-semibold text-slate-300 tabular-nums">
-                  {fmtNum(result.dripsPerMin, 0)} drops/min
+                <span className="text-xl font-black text-slate-200 tabular-nums">
+                  {fmtNum(result.dripsPerMin, 0)} <span className="text-xs font-bold text-slate-500">gtt/min</span>
                 </span>
               </div>
             )}

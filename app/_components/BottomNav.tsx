@@ -60,6 +60,7 @@ function SearchResults({
   // On mobile: route to the in-app PDF viewer so the page fragment works.
   // On desktop: open the PDF directly in a new tab.
   const openPage = (printedPage: number) => {
+    if ("vibrate" in navigator) navigator.vibrate(10);
     if (isMobile) {
       window.location.assign(`/cpg/page?page=${printedPage}&pdfPage=${printedPage}`);
     } else {
@@ -69,6 +70,7 @@ function SearchResults({
   };
 
   const openEntry = (entry: CpgEntry) => {
+    if ("vibrate" in navigator) navigator.vibrate(10);
     if (isMobile) {
       const slug = normalizeCpgSlug(entry.code);
       window.location.assign(
@@ -81,16 +83,19 @@ function SearchResults({
   };
 
   const openSop = (entry: SopEntry) => {
+    if ("vibrate" in navigator) navigator.vibrate(10);
     window.location.assign(`/tools/sop?page=${entry.printedPage}`);
     onClose();
   };
 
   const openCpm = (entry: CpmEntry) => {
+    if ("vibrate" in navigator) navigator.vibrate(10);
     window.location.assign(`/tools/cpm?page=${entry.printedPage}`);
     onClose();
   };
 
   const openMed = (med: MedicationEntry) => {
+    if ("vibrate" in navigator) navigator.vibrate(10);
     if (isMobile) {
       const slug = `formulary-${med.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")}`;
       window.location.assign(

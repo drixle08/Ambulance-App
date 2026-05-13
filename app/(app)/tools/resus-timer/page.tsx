@@ -58,6 +58,12 @@ export default function ResuscitationTimerPage() {
   // Drug tracking
   const [lastAdrenalineAt, setLastAdrenalineAt] = useState<number | null>(null);
   const [amiodaroneDose, setAmiodaroneDose] = useState<0 | 1 | 2>(0);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setMounted(true), 0);
+    return () => window.clearTimeout(id);
+  }, []);
+
   const voiceSupported = useMemo(() => {
     if (typeof window === "undefined") return false;
     const SpeechRec: SpeechRecognitionConstructor | undefined =
@@ -256,6 +262,7 @@ export default function ResuscitationTimerPage() {
   }, [isRunning, metronomeOn, phase, playClick]);
 
   const handleStartPause = useCallback(() => {
+    if ("vibrate" in navigator) navigator.vibrate(10);
     if (isRunning) {
       setIsRunning(false);
       addLog("Timer paused");
@@ -298,9 +305,13 @@ export default function ResuscitationTimerPage() {
     addLog("Timer reset");
   }, [addLog]);
 
-  const handleShock = () => addLog("Shock delivered");
+  const handleShock = () => {
+    if ("vibrate" in navigator) navigator.vibrate([100, 50, 100]);
+    addLog("Shock delivered");
+  };
 
   const handleAdrenaline = useCallback(() => {
+    if ("vibrate" in navigator) navigator.vibrate(20);
     const now = elapsedRef.current;
     lastAdrenalineAtRef.current = now;
     setLastAdrenalineAt(now);
@@ -309,6 +320,7 @@ export default function ResuscitationTimerPage() {
   }, [addLog, speak]);
 
   const handleAmiodarone = useCallback(() => {
+    if ("vibrate" in navigator) navigator.vibrate(20);
     const current = amiodaroneDoseRef.current;
     if (current >= 2) {
       addLog("Amiodarone — max doses already given");
@@ -517,7 +529,7 @@ export default function ResuscitationTimerPage() {
             <button
               type="button"
               onClick={() => setVoiceEnabled((on) => !on)}
-              disabled={!voiceSupported}
+              disabled={mounted ? !voiceSupported : false}
               className="inline-flex items-center gap-1 rounded-full border border-slate-700 px-3 py-1 text-[0.7rem] text-slate-200 disabled:opacity-50"
             >
               {voiceEnabled ? (

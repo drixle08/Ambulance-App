@@ -72,6 +72,7 @@ export function ProtocolFinder() {
   // ─── Navigation helpers ───────────────────────────────────────────────────
 
   const openPrintedPage = (printedPage: number) => {
+    if ("vibrate" in navigator) navigator.vibrate(10);
     const clamped = Math.max(printedPage + PDF_PAGE_OFFSET, 1);
     if (isMobile) {
       window.location.assign(`/cpg/page?page=${clamped}&pdfPage=${clamped}`);
@@ -82,6 +83,7 @@ export function ProtocolFinder() {
   };
 
   const openEntry = (entry: CpgEntry) => {
+    if ("vibrate" in navigator) navigator.vibrate(10);
     const targetPdfPage = entry.printedPage + PDF_PAGE_OFFSET;
     if (isMobile) {
       const slug = normalizeCpgSlug(entry.code);
@@ -95,6 +97,7 @@ export function ProtocolFinder() {
   };
 
   const openMedication = (med: MedicationEntry) => {
+    if ("vibrate" in navigator) navigator.vibrate(10);
     const targetPdfPage = med.formularyPage + PDF_PAGE_OFFSET;
     if (isMobile) {
       const slug = `formulary-${med.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")}`;
@@ -108,11 +111,13 @@ export function ProtocolFinder() {
   };
 
   const openSop = (entry: SopEntry) => {
+    if ("vibrate" in navigator) navigator.vibrate(10);
     window.location.assign(`/tools/sop?page=${entry.printedPage}`);
     setQuery("");
   };
 
   const openCpm = (entry: CpmEntry) => {
+    if ("vibrate" in navigator) navigator.vibrate(10);
     window.location.assign(`/tools/cpm?page=${entry.printedPage}`);
     setQuery("");
   };

@@ -22,6 +22,7 @@ export function CopySummaryButton({
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
+    if ("vibrate" in navigator) navigator.vibrate(10);
     try {
       if (!("clipboard" in navigator)) {
         console.warn("Clipboard API not available");

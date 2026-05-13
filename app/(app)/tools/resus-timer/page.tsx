@@ -77,6 +77,16 @@ export default function ResuscitationTimerPage() {
   });
   const [voiceListening, setVoiceListening] = useState(false);
 
+  const vibrate = useCallback((pattern: number | number[]) => {
+    if (typeof window !== "undefined" && "vibrate" in navigator) {
+      try {
+        navigator.vibrate(pattern);
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
   // start time stored both in a ref (for logic) and state (safe for render)
   const [startTime, setStartTime] = useState<Date | null>(null);
 
@@ -205,6 +215,7 @@ export default function ResuscitationTimerPage() {
         if (phaseRef.current === "CPR") {
           setPhase("Pause");
           phaseRef.current = "Pause";
+          vibrate([500, 200, 500]);
           if (startTimeRef.current) {
             addLog(`Cycle ${cycleRef.current} complete — rhythm check`);
           }
@@ -213,6 +224,7 @@ export default function ResuscitationTimerPage() {
           const next = cycleRef.current + 1;
           setPhase("CPR");
           phaseRef.current = "CPR";
+          vibrate(300);
           setCycleNumber(next);
           cycleRef.current = next;
           if (startTimeRef.current) {
@@ -232,6 +244,7 @@ export default function ResuscitationTimerPage() {
           speak("Adrenaline due in 30 seconds");
         } else if (since === ADRENALINE_INTERVAL) {
           speak("Adrenaline due now");
+          vibrate([200, 100, 200, 100, 200]);
           // Reset timer for the next repeating reminder
           lastAdrenalineAtRef.current = nowElapsed;
           setLastAdrenalineAt(nowElapsed);
@@ -298,7 +311,10 @@ export default function ResuscitationTimerPage() {
     addLog("Timer reset");
   }, [addLog]);
 
-  const handleShock = () => addLog("Shock delivered");
+  const handleShock = useCallback(() => {
+    addLog("Shock delivered");
+    vibrate([100, 50, 100]);
+  }, [addLog, vibrate]);
 
   const handleAdrenaline = useCallback(() => {
     const now = elapsedRef.current;
@@ -306,7 +322,8 @@ export default function ResuscitationTimerPage() {
     setLastAdrenalineAt(now);
     addLog("Adrenaline 1mg IV given");
     speak("Adrenaline given. Next dose in 4 minutes.");
-  }, [addLog, speak]);
+    vibrate(200);
+  }, [addLog, speak, vibrate]);
 
   const handleAmiodarone = useCallback(() => {
     const current = amiodaroneDoseRef.current;
@@ -318,6 +335,7 @@ export default function ResuscitationTimerPage() {
     const next = (current + 1) as 1 | 2;
     amiodaroneDoseRef.current = next;
     setAmiodaroneDose(next);
+    vibrate(200);
     if (next === 1) {
       addLog("Amiodarone 300mg IV given (1st dose — after 3rd shock)");
       speak("Amiodarone 300 milligrams given. Next dose: 150 milligrams after the next shock.");
@@ -325,7 +343,7 @@ export default function ResuscitationTimerPage() {
       addLog("Amiodarone 150mg IV given (2nd dose — after 4th shock)");
       speak("Amiodarone 150 milligrams given. Maximum doses reached.");
     }
-  }, [addLog, speak]);
+  }, [addLog, speak, vibrate]);
 
   const handleOtherConfirm = () => {
     const trimmed = otherText.trim();
@@ -544,14 +562,14 @@ export default function ResuscitationTimerPage() {
 
         {/* Main timer area */}
         <section className="flex flex-1 flex-col items-center justify-center">
-          <div className="flex flex-col items-center gap-2">
-            <div className={`rounded-3xl border px-6 py-4 text-center shadow-lg transition-colors ${phase === "Pause" ? "border-amber-500/50 bg-amber-950/40" : "border-slate-800 bg-slate-900/80"}`}>
-              <div className={`mb-1 text-xs font-medium uppercase tracking-[0.18em] ${phase === "Pause" ? "text-amber-400" : "text-emerald-400"}`}>
+          <div className="flex flex-col items-center gap-2 w-full">
+            <div className={`w-full rounded-3xl border px-6 py-8 text-center shadow-lg transition-all duration-500 ${phase === "Pause" ? "border-amber-500 bg-amber-950/40 ring-4 ring-amber-500/20 animate-pulse" : "border-emerald-500/50 bg-slate-900/80"}`}>
+              <div className={`mb-2 text-sm font-bold uppercase tracking-[0.2em] ${phase === "Pause" ? "text-amber-400" : "text-emerald-400"}`}>
                 {phase === "Pause"
-                  ? `Cycle ${cycleNumber} complete — Rhythm Check`
-                  : `Cycle ${cycleNumber} → CPR`}
+                  ? `Rhythm Check`
+                  : `CPR Cycle ${cycleNumber}`}
               </div>
-              <div className={`text-6xl font-semibold tabular-nums tracking-tight sm:text-7xl ${phase === "Pause" ? "text-amber-300" : ""}`}>
+              <div className={`text-7xl font-black tabular-nums tracking-tighter sm:text-8xl ${phase === "Pause" ? "text-amber-300" : "text-emerald-50"}`}>
                 {mainTimer}
               </div>
               <div className="mt-2 flex items-center justify-center gap-2 text-[0.7rem] text-slate-400">
@@ -657,33 +675,34 @@ export default function ResuscitationTimerPage() {
         })()}
 
         {/* Event buttons */}
-        <section className="space-y-2">
-          <div className="grid grid-cols-2 gap-2">
+        <section className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={handleShock}
-              className="h-12 rounded-2xl bg-emerald-500 text-sm font-semibold text-slate-950 shadow-md active:translate-y-[1px]"
+              className="h-20 rounded-2xl bg-red-600 text-lg font-bold text-white shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 border-b-4 border-red-800"
             >
+              <HeartPulse className="h-6 w-6" />
               Shock
             </button>
             <button
               type="button"
               onClick={handleAdrenaline}
-              className="h-12 rounded-2xl border border-emerald-500/80 bg-slate-900 text-sm font-semibold text-emerald-300 shadow-md active:translate-y-[1px]"
+              className="h-20 rounded-2xl bg-emerald-600 text-lg font-bold text-white shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-2 border-b-4 border-emerald-800"
             >
               Adrenaline
             </button>
             <button
               type="button"
               onClick={handleAmiodarone}
-              className="h-12 rounded-2xl border border-slate-700 bg-slate-900 text-sm font-semibold text-slate-100 shadow-md active:translate-y-[1px]"
+              className="h-16 rounded-2xl border-2 border-slate-600 bg-slate-800 text-base font-bold text-slate-100 shadow-md active:scale-95 transition-transform"
             >
               Amiodarone
             </button>
             <button
               type="button"
               onClick={() => setOtherDialogOpen(true)}
-              className="h-12 rounded-2xl border border-slate-700 bg-slate-900 text-sm font-semibold text-slate-100 shadow-md active:translate-y-[1px]"
+              className="h-16 rounded-2xl border-2 border-slate-600 bg-slate-800 text-base font-bold text-slate-100 shadow-md active:scale-95 transition-transform"
             >
               Other...
             </button>

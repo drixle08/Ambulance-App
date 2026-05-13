@@ -300,9 +300,9 @@ export function BottomNav() {
   const isResus = pathname === "/tools/resus-timer";
 
   const tabBase =
-    "flex flex-1 flex-col items-center gap-1 py-2.5 transition-colors active:opacity-70";
+    "flex flex-1 flex-col items-center gap-1.5 py-3 transition-colors active:scale-95 transition-transform duration-100";
   const active = "text-emerald-400";
-  const inactive = "text-slate-500";
+  const inactive = "text-slate-400";
 
   return (
     <>

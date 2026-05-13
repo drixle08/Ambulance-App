@@ -208,6 +208,22 @@ export const TOOL_GROUPS: ToolGroup[] = [
     ],
   },
   {
+    title: "Documentation",
+    slug: "documentation",
+    description: "Structured narrative documentation tools.",
+    icon: "FilePenLine",
+    color: "blue",
+    tools: [
+      {
+        name: "CHART Documentation",
+        href: "/tools/documentation",
+        tagline: "Build an EMS narrative using Chief Complaint, History, Assessment, Rx Treatment, and Transport/Outcome.",
+        meta: "Narrative template",
+        icon: "FilePenLine",
+      },
+    ],
+  },
+  {
     title: "External Links",
     shortTitle: "Links",
     slug: "external-links",

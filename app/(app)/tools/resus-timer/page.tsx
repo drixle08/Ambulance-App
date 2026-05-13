@@ -55,9 +55,12 @@ export default function ResuscitationTimerPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [otherDialogOpen, setOtherDialogOpen] = useState(false);
   const [otherText, setOtherText] = useState("");
+  const [mounted, setMounted] = useState(false);
+
   // Drug tracking
   const [lastAdrenalineAt, setLastAdrenalineAt] = useState<number | null>(null);
   const [amiodaroneDose, setAmiodaroneDose] = useState<0 | 1 | 2>(0);
+
   const voiceSupported = useMemo(() => {
     if (typeof window === "undefined") return false;
     const SpeechRec: SpeechRecognitionConstructor | undefined =
@@ -67,15 +70,19 @@ export default function ResuscitationTimerPage() {
       (window as any).webkitSpeechRecognition;
     return Boolean(SpeechRec);
   }, []);
-  const [voiceEnabled, setVoiceEnabled] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return window.localStorage.getItem("voiceEnabled") === "true";
-    } catch {
-      return false;
-    }
-  });
+
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [voiceListening, setVoiceListening] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    try {
+      const saved = window.localStorage.getItem("voiceEnabled");
+      if (saved === "true") setVoiceEnabled(true);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const vibrate = useCallback((pattern: number | number[]) => {
     if (typeof window !== "undefined" && "vibrate" in navigator) {
@@ -535,10 +542,10 @@ export default function ResuscitationTimerPage() {
             <button
               type="button"
               onClick={() => setVoiceEnabled((on) => !on)}
-              disabled={!voiceSupported}
+              disabled={!mounted || !voiceSupported}
               className="inline-flex items-center gap-1 rounded-full border border-slate-700 px-3 py-1 text-[0.7rem] text-slate-200 disabled:opacity-50"
             >
-              {voiceEnabled ? (
+              {mounted && voiceEnabled ? (
                 <>
                   <Mic className="h-3.5 w-3.5" />
                   Voice on

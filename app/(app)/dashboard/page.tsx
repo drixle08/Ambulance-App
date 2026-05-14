@@ -40,7 +40,7 @@ export default function DashboardPage() {
   return (
     <>
       {/* Mobile sticky header — shown only when AppHeader is hidden */}
-      <div className="flex md:hidden sticky top-0 z-20 items-center justify-between border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur-sm">
+      <div className="app-topbar flex md:hidden sticky top-0 z-20 items-center justify-between border-b px-4 py-3 backdrop-blur-sm">
         <div className="flex items-center gap-2">
           <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-500/15 text-xs font-bold text-emerald-400">AP</span>
           <div>
@@ -50,7 +50,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pt-4 pb-4">
+      <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 pt-4 pb-4">
 
         {/* Protocol Finder row — desktop only; mobile uses BottomNav Search tab */}
         <div className="hidden md:flex flex-wrap items-center gap-2">
@@ -67,7 +67,7 @@ export default function DashboardPage() {
           <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Select a category</h1>
         </header>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {TOOL_GROUPS.map((group) => {
             const Icon = ICON_MAP[group.icon] ?? BookOpen;
             const color = COLOR_MAP[group.color] ?? COLOR_MAP.amber;
@@ -75,13 +75,13 @@ export default function DashboardPage() {
               <Link
                 key={group.slug}
                 href={`/dashboard/${group.slug}`}
-                className={`group flex flex-col items-center gap-3 rounded-3xl border border-slate-200 bg-white/90 p-5 text-center shadow-sm transition-all active:scale-95 ${color.hover} hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80`}
+                className={`app-card group flex min-h-40 flex-col items-center justify-center gap-4 rounded-3xl border p-6 text-center shadow-sm transition-all active:scale-95 ${color.hover} hover:shadow-md`}
               >
-                <div className={`flex h-16 w-16 items-center justify-center rounded-2xl ${color.bg} ring-4 ring-transparent transition-all ${color.ring}`}>
-                  <Icon className={`h-8 w-8 ${color.icon}`} />
+                <div className={`flex h-20 w-20 items-center justify-center rounded-3xl ${color.bg} ring-4 ring-transparent transition-all ${color.ring}`}>
+                  <Icon className={`h-10 w-10 ${color.icon}`} />
                 </div>
                 <div className="space-y-1">
-                  <h2 className="text-sm font-semibold leading-tight text-slate-900 dark:text-slate-50">{group.shortTitle ?? group.title}</h2>
+                  <h2 className="text-base font-black leading-tight text-slate-900 dark:text-slate-50">{group.shortTitle ?? group.title}</h2>
                   <span className="inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                     {group.tools.length} {group.tools.length === 1 ? "tool" : "tools"}
                   </span>

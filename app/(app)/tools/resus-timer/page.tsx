@@ -45,6 +45,11 @@ const PAUSE_SECONDS = 5;   // rhythm-check gap between cycles
 const DEFAULT_BPM = 110;
 const ADRENALINE_INTERVAL = 240; // every 4 minutes per CPG
 
+function vibrate(pattern: VibratePattern = 35) {
+  if (typeof navigator === "undefined" || !("vibrate" in navigator)) return;
+  navigator.vibrate(pattern);
+}
+
 export default function ResuscitationTimerPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [phase, setPhase] = useState<Phase>("CPR");
@@ -197,12 +202,14 @@ export default function ResuscitationTimerPage() {
         if (prev > 1) {
           // 5-second heads-up before CPR cycle ends
           if (phaseRef.current === "CPR" && prev - 1 === 5) {
+            vibrate([60, 40, 60]);
             speak("5 seconds. Prepare for rhythm check.");
           }
           return prev - 1;
         }
 
         if (phaseRef.current === "CPR") {
+          vibrate([120, 60, 120]);
           setPhase("Pause");
           phaseRef.current = "Pause";
           if (startTimeRef.current) {
@@ -210,6 +217,7 @@ export default function ResuscitationTimerPage() {
           }
           return PAUSE_SECONDS;
         } else {
+          vibrate(90);
           const next = cycleRef.current + 1;
           setPhase("CPR");
           phaseRef.current = "CPR";
@@ -229,8 +237,10 @@ export default function ResuscitationTimerPage() {
       if (lastAdren !== null) {
         const since = nowElapsed - lastAdren;
         if (since === ADRENALINE_INTERVAL - 30) {
+          vibrate([80, 50, 80]);
           speak("Adrenaline due in 30 seconds");
         } else if (since === ADRENALINE_INTERVAL) {
+          vibrate([180, 80, 180, 80, 180]);
           speak("Adrenaline due now");
           // Reset timer for the next repeating reminder
           lastAdrenalineAtRef.current = nowElapsed;
@@ -256,6 +266,7 @@ export default function ResuscitationTimerPage() {
   }, [isRunning, metronomeOn, phase, playClick]);
 
   const handleStartPause = useCallback(() => {
+    vibrate(25);
     if (isRunning) {
       setIsRunning(false);
       addLog("Timer paused");
@@ -278,6 +289,7 @@ export default function ResuscitationTimerPage() {
   }, [addLog, isRunning]);
 
   const handleReset = useCallback(() => {
+    vibrate([35, 35, 35]);
     setIsRunning(false);
     setPhase("CPR");
     phaseRef.current = "CPR";
@@ -298,10 +310,14 @@ export default function ResuscitationTimerPage() {
     addLog("Timer reset");
   }, [addLog]);
 
-  const handleShock = () => addLog("Shock delivered");
+  const handleShock = () => {
+    vibrate([90, 45, 90]);
+    addLog("Shock delivered");
+  };
 
   const handleAdrenaline = useCallback(() => {
     const now = elapsedRef.current;
+    vibrate([80, 40, 80]);
     lastAdrenalineAtRef.current = now;
     setLastAdrenalineAt(now);
     addLog("Adrenaline 1mg IV given");
@@ -310,6 +326,7 @@ export default function ResuscitationTimerPage() {
 
   const handleAmiodarone = useCallback(() => {
     const current = amiodaroneDoseRef.current;
+    vibrate(60);
     if (current >= 2) {
       addLog("Amiodarone — max doses already given");
       speak("Maximum amiodarone doses already given.");
@@ -330,6 +347,7 @@ export default function ResuscitationTimerPage() {
   const handleOtherConfirm = () => {
     const trimmed = otherText.trim();
     if (trimmed) {
+      vibrate(35);
       addLog(trimmed);
     }
     setOtherText("");
@@ -482,7 +500,7 @@ export default function ResuscitationTimerPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
-      <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-4 pb-5 pt-4">
+      <main className="mx-auto flex min-h-screen max-w-lg flex-col gap-5 px-4 pb-6 pt-4">
         {/* Header */}
         <header className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -500,7 +518,7 @@ export default function ResuscitationTimerPage() {
             <button
               type="button"
               onClick={() => setMetronomeOn((on) => !on)}
-              className="inline-flex items-center gap-1 rounded-full border border-slate-700 px-3 py-1 text-[0.7rem] text-slate-200"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-200"
             >
               {metronomeOn ? (
                 <>
@@ -518,7 +536,7 @@ export default function ResuscitationTimerPage() {
               type="button"
               onClick={() => setVoiceEnabled((on) => !on)}
               disabled={!voiceSupported}
-              className="inline-flex items-center gap-1 rounded-full border border-slate-700 px-3 py-1 text-[0.7rem] text-slate-200 disabled:opacity-50"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-200 disabled:opacity-50"
             >
               {voiceEnabled ? (
                 <>
@@ -543,19 +561,19 @@ export default function ResuscitationTimerPage() {
         )}
 
         {/* Main timer area */}
-        <section className="flex flex-1 flex-col items-center justify-center">
-          <div className="flex flex-col items-center gap-2">
-            <div className={`rounded-3xl border px-6 py-4 text-center shadow-lg transition-colors ${phase === "Pause" ? "border-amber-500/50 bg-amber-950/40" : "border-slate-800 bg-slate-900/80"}`}>
-              <div className={`mb-1 text-xs font-medium uppercase tracking-[0.18em] ${phase === "Pause" ? "text-amber-400" : "text-emerald-400"}`}>
+        <section className="flex flex-col items-center justify-center">
+          <div className="flex w-full flex-col items-center gap-2">
+            <div className={`w-full rounded-[2rem] border px-6 py-8 text-center shadow-lg transition-colors ${phase === "Pause" ? "border-amber-500/50 bg-amber-950/40" : "border-emerald-500/40 bg-slate-900/80"}`}>
+              <div className={`mb-3 text-sm font-black uppercase tracking-[0.28em] ${phase === "Pause" ? "text-amber-400" : "text-emerald-400"}`}>
                 {phase === "Pause"
                   ? `Cycle ${cycleNumber} complete — Rhythm Check`
                   : `Cycle ${cycleNumber} → CPR`}
               </div>
-              <div className={`text-6xl font-semibold tabular-nums tracking-tight sm:text-7xl ${phase === "Pause" ? "text-amber-300" : ""}`}>
+              <div className={`text-7xl font-black tabular-nums tracking-tight sm:text-8xl ${phase === "Pause" ? "text-amber-300" : "text-emerald-50"}`}>
                 {mainTimer}
               </div>
-              <div className="mt-2 flex items-center justify-center gap-2 text-[0.7rem] text-slate-400">
-                <ActivitySquare className="h-3.5 w-3.5 text-emerald-400" />
+              <div className="mt-4 flex items-center justify-center gap-2 text-xs font-semibold text-slate-400">
+                <ActivitySquare className="h-4 w-4 text-emerald-400" />
                 <span>
                   Time since start:{" "}
                   <span className="font-mono text-slate-100">
@@ -568,9 +586,9 @@ export default function ResuscitationTimerPage() {
         </section>
 
         {/* Recent events */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 px-3 py-2">
+        <section className="rounded-3xl border border-slate-800 bg-slate-900/70 px-4 py-3">
           <div className="mb-1 flex items-center justify-between">
-            <span className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <span className="text-xs font-black uppercase tracking-[0.22em] text-slate-400">
               Recent events
             </span>
             <span className="text-[0.65rem] text-slate-500">
@@ -611,19 +629,19 @@ export default function ResuscitationTimerPage() {
           const adrUrgent = adrSecs !== null && adrSecs <= 30 && !adrOverdue;
 
           return (
-            <section className="rounded-2xl border border-slate-800 bg-slate-900/70 px-3 py-3 space-y-2">
-              <span className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <section className="rounded-3xl border border-slate-800 bg-slate-900/70 px-4 py-4 space-y-3">
+              <span className="text-xs font-black uppercase tracking-[0.22em] text-slate-400">
                 Drug reminders
               </span>
 
               {/* Adrenaline countdown */}
               {adrSecs !== null && (
-                <div className={`rounded-xl border px-3 py-2 transition-colors ${adrOverdue ? "border-red-500/60 bg-red-500/15 animate-pulse" : adrUrgent ? "border-orange-400/60 bg-orange-500/10" : "border-amber-500/30 bg-amber-500/5"}`}>
+                <div className={`rounded-2xl border px-4 py-3 transition-colors ${adrOverdue ? "border-red-500/60 bg-red-500/15 animate-pulse" : adrUrgent ? "border-orange-400/60 bg-orange-500/10" : "border-amber-500/40 bg-amber-500/10"}`}>
                   <div className="flex items-center justify-between gap-2">
-                    <span className={`text-xs font-bold ${adrOverdue ? "text-red-300" : adrUrgent ? "text-orange-300" : "text-amber-300"}`}>
+                    <span className={`text-base font-black ${adrOverdue ? "text-red-300" : adrUrgent ? "text-orange-300" : "text-amber-300"}`}>
                       Adrenaline 1mg IV
                     </span>
-                    <span className={`font-mono text-sm font-bold ${adrOverdue ? "text-red-300" : adrUrgent ? "text-orange-300" : "text-amber-200"}`}>
+                    <span className={`font-mono text-base font-black ${adrOverdue ? "text-red-300" : adrUrgent ? "text-orange-300" : "text-amber-200"}`}>
                       {adrOverdue ? "DUE NOW" : formatSeconds(adrSecs)}
                     </span>
                   </div>
@@ -658,32 +676,32 @@ export default function ResuscitationTimerPage() {
 
         {/* Event buttons */}
         <section className="space-y-2">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={handleShock}
-              className="h-12 rounded-2xl bg-emerald-500 text-sm font-semibold text-slate-950 shadow-md active:translate-y-[1px]"
+              className="h-20 rounded-3xl bg-red-600 text-xl font-black text-white shadow-lg active:translate-y-[1px]"
             >
               Shock
             </button>
             <button
               type="button"
               onClick={handleAdrenaline}
-              className="h-12 rounded-2xl border border-emerald-500/80 bg-slate-900 text-sm font-semibold text-emerald-300 shadow-md active:translate-y-[1px]"
+              className="h-20 rounded-3xl border border-emerald-500/80 bg-emerald-500 text-xl font-black text-slate-950 shadow-lg active:translate-y-[1px]"
             >
               Adrenaline
             </button>
             <button
               type="button"
               onClick={handleAmiodarone}
-              className="h-12 rounded-2xl border border-slate-700 bg-slate-900 text-sm font-semibold text-slate-100 shadow-md active:translate-y-[1px]"
+              className="h-16 rounded-2xl border border-slate-600 bg-slate-800 text-lg font-black text-slate-100 shadow-md active:translate-y-[1px]"
             >
               Amiodarone
             </button>
             <button
               type="button"
               onClick={() => setOtherDialogOpen(true)}
-              className="h-12 rounded-2xl border border-slate-700 bg-slate-900 text-sm font-semibold text-slate-100 shadow-md active:translate-y-[1px]"
+              className="h-16 rounded-2xl border border-slate-600 bg-slate-800 text-lg font-black text-slate-100 shadow-md active:translate-y-[1px]"
             >
               Other...
             </button>
@@ -691,18 +709,18 @@ export default function ResuscitationTimerPage() {
         </section>
 
         {/* Start / Pause / Reset controls */}
-        <section className="mt-1 flex gap-2">
+        <section className="mt-1 flex gap-3">
           <button
             type="button"
             onClick={handleStartPause}
-            className="flex-1 h-14 rounded-2xl bg-emerald-500 text-base font-semibold text-slate-950 shadow-lg active:translate-y-[1px]"
+            className="h-16 flex-1 rounded-3xl bg-emerald-500 text-lg font-black text-slate-950 shadow-lg active:translate-y-[1px]"
           >
             {isRunning ? "Pause" : "Start"}
           </button>
           <button
             type="button"
             onClick={handleReset}
-            className="h-14 min-w-[5.5rem] rounded-2xl border border-slate-700 bg-slate-900 text-sm font-semibold text-slate-100 shadow-md active:translate-y-[1px]"
+            className="h-16 min-w-28 rounded-3xl border border-slate-700 bg-slate-900 text-base font-black text-slate-100 shadow-md active:translate-y-[1px]"
           >
             Reset
           </button>

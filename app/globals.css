@@ -2,8 +2,152 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: light;
+  --app-bg: #e5f3f1;
+  --app-bg-soft: #f5fbfa;
+  --app-ink: #0f172a;
+  --app-accent: #0e7490;
+  --app-accent-bright: #14b8a6;
+  --app-border: rgba(14, 116, 144, 0.2);
+  --app-dark-base: #062a30;
+  --app-dark-surface: #0d3438;
+  --app-dark-surface-soft: rgba(13, 52, 56, 0.74);
+  --app-light-surface: rgba(255, 255, 255, 0.88);
+  --app-light-surface-soft: rgba(245, 251, 250, 0.9);
+}
+
+.dark {
+  color-scheme: dark;
+  --app-bg: #041e24;
+  --app-bg-soft: #0a3034;
+  --app-ink: #f8fafc;
+  --app-accent: #67e8f9;
+  --app-accent-bright: #2dd4bf;
+  --app-border: rgba(103, 232, 249, 0.22);
+  --app-dark-base: #041e24;
+  --app-dark-surface: #0b3338;
+  --app-dark-surface-soft: rgba(11, 51, 56, 0.78);
+  --app-light-surface: rgba(15, 49, 54, 0.84);
+  --app-light-surface-soft: rgba(9, 39, 45, 0.82);
+}
+
 html,
 body {
   padding: 0;
   margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(20, 184, 166, 0.24), transparent 28rem),
+    radial-gradient(circle at bottom right, rgba(14, 116, 144, 0.18), transparent 24rem),
+    linear-gradient(135deg, var(--app-bg-soft), var(--app-bg));
+  color: var(--app-ink);
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at top left, rgba(45, 212, 191, 0.28), transparent 28rem),
+    radial-gradient(circle at bottom right, rgba(6, 182, 212, 0.18), transparent 24rem),
+    linear-gradient(135deg, #03161b, var(--app-bg));
+}
+
+.app-shell {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42)),
+    transparent;
+}
+
+.dark .app-shell {
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, 0.28), rgba(6, 17, 18, 0.08)),
+    transparent;
+}
+
+.app-topbar {
+  border-color: var(--app-border);
+  background: rgba(248, 251, 251, 0.82);
+}
+
+.dark .app-topbar {
+  border-color: var(--app-border);
+  background: rgba(7, 20, 20, 0.86);
+}
+
+.app-card {
+  border-color: var(--app-border);
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.dark .app-card {
+  border-color: var(--app-border);
+  background: rgba(15, 31, 34, 0.82);
+}
+
+.app-shell [class~="bg-slate-950"],
+.app-shell [class~="bg-slate-950/98"],
+.app-shell [class~="bg-slate-950/95"],
+.app-shell [class~="bg-slate-950/90"],
+.app-shell [class~="bg-slate-950/80"],
+.app-shell [class~="bg-slate-950/70"],
+.app-shell [class~="bg-slate-950/60"],
+.app-shell [class~="bg-slate-950/50"],
+.app-shell [class~="dark:bg-slate-950"],
+.app-shell [class~="dark:bg-slate-950/90"],
+.app-shell [class~="dark:bg-slate-950/80"] {
+  background-color: var(--app-dark-base) !important;
+}
+
+.app-shell [class~="bg-slate-900"],
+.app-shell [class~="bg-slate-900/90"],
+.app-shell [class~="bg-slate-900/80"],
+.app-shell [class~="bg-slate-900/70"],
+.app-shell [class~="bg-slate-900/60"],
+.app-shell [class~="bg-slate-900/50"],
+.app-shell [class~="bg-slate-800"],
+.app-shell [class~="bg-slate-800/80"],
+.app-shell [class~="bg-slate-800/60"],
+.app-shell [class~="dark:bg-slate-900"],
+.app-shell [class~="dark:bg-slate-900/90"],
+.app-shell [class~="dark:bg-slate-900/80"],
+.app-shell [class~="dark:bg-slate-800"],
+.app-shell [class~="dark:bg-slate-800/50"] {
+  background-color: var(--app-dark-surface-soft) !important;
+}
+
+.app-shell [class~="bg-white"],
+.app-shell [class~="bg-white/90"],
+.app-shell [class~="bg-white/80"],
+.app-shell [class~="bg-slate-50"],
+.app-shell [class~="bg-slate-50/90"],
+.app-shell [class~="bg-slate-100"],
+.app-shell [class~="bg-slate-100/70"] {
+  background-color: var(--app-light-surface) !important;
+}
+
+.app-shell [class~="border-slate-800"],
+.app-shell [class~="border-slate-800/70"],
+.app-shell [class~="border-slate-800/60"],
+.app-shell [class~="border-slate-800/50"],
+.app-shell [class~="border-slate-700"],
+.app-shell [class~="dark:border-slate-800"],
+.app-shell [class~="dark:border-slate-700"],
+.app-shell [class~="border-slate-200"],
+.app-shell [class~="border-slate-300"] {
+  border-color: var(--app-border) !important;
+}
+
+.app-shell [class~="bg-emerald-500"],
+.app-shell [class~="hover:bg-emerald-400"]:hover {
+  background-color: var(--app-accent-bright) !important;
+}
+
+.app-shell [class~="text-emerald-500"],
+.app-shell [class~="text-emerald-400"],
+.app-shell [class~="text-emerald-300"],
+.app-shell [class~="dark:text-emerald-400"],
+.app-shell [class~="dark:text-emerald-300"] {
+  color: var(--app-accent) !important;
 }

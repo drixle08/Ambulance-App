@@ -110,15 +110,15 @@ export default async function GroupPage({ params }: GroupPageProps) {
         {group.tools.map((tool) => {
           const ToolIcon = ICON_MAP[tool.icon] ?? FileText;
           const isExternal = tool.href.startsWith("http");
-          const cardClass = `group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/90 px-4 py-4 shadow-sm transition-all ${color.hover} hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80 dark:hover:bg-slate-900`;
+          const cardClass = `group flex min-h-20 items-center gap-4 rounded-2xl border border-slate-200 bg-white/90 px-5 py-5 shadow-sm transition-all ${color.hover} hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80 dark:hover:bg-slate-900`;
 
           const inner = (
             <>
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${color.bg}`}>
-                <ToolIcon className={`h-5 w-5 ${color.icon}`} />
+              <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${color.bg}`}>
+                <ToolIcon className={`h-7 w-7 ${color.icon}`} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
+                <p className="truncate text-base font-black text-slate-900 dark:text-slate-50">
                   {tool.name}
                 </p>
                 {tool.meta && (

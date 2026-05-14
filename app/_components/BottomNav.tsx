@@ -300,7 +300,7 @@ export function BottomNav() {
   const isResus = pathname === "/tools/resus-timer";
 
   const tabBase =
-    "flex flex-1 flex-col items-center gap-1 py-2.5 transition-colors active:opacity-70";
+    "flex min-h-16 flex-1 flex-col items-center justify-center gap-1.5 py-3 transition-colors active:opacity-70";
   const active = "text-emerald-400";
   const inactive = "text-slate-500";
 
@@ -316,8 +316,8 @@ export function BottomNav() {
           href="/"
           className={`${tabBase} ${isHome ? active : inactive}`}
         >
-          <Home className="h-5 w-5" />
-          <span className="text-[0.6rem] font-semibold tracking-wide">Home</span>
+          <Home className="h-6 w-6" />
+          <span className="text-[0.65rem] font-black tracking-wide">Home</span>
         </Link>
 
         {/* Tools */}
@@ -325,8 +325,8 @@ export function BottomNav() {
           href="/dashboard"
           className={`${tabBase} ${isTools ? active : inactive}`}
         >
-          <LayoutGrid className="h-5 w-5" />
-          <span className="text-[0.6rem] font-semibold tracking-wide">Tools</span>
+          <LayoutGrid className="h-6 w-6" />
+          <span className="text-[0.65rem] font-black tracking-wide">Tools</span>
         </Link>
 
         {/* Search */}
@@ -335,8 +335,8 @@ export function BottomNav() {
           onClick={() => setSearchOpen(true)}
           className={`${tabBase} ${searchOpen ? active : inactive}`}
         >
-          <Search className="h-5 w-5" />
-          <span className="text-[0.6rem] font-semibold tracking-wide">Search</span>
+          <Search className="h-6 w-6" />
+          <span className="text-[0.65rem] font-black tracking-wide">Search</span>
         </button>
 
         {/* CPG Chat */}
@@ -344,8 +344,8 @@ export function BottomNav() {
           href="/tools/cpg-chat"
           className={`${tabBase} ${isChat ? active : inactive}`}
         >
-          <MessageCircle className="h-5 w-5" />
-          <span className="text-[0.6rem] font-semibold tracking-wide">CPG Chat</span>
+          <MessageCircle className="h-6 w-6" />
+          <span className="text-[0.65rem] font-black tracking-wide">CPG Chat</span>
         </Link>
 
         {/* Resus Timer */}
@@ -353,8 +353,8 @@ export function BottomNav() {
           href="/tools/resus-timer"
           className={`${tabBase} ${isResus ? "text-red-400" : inactive}`}
         >
-          <Timer className="h-5 w-5" />
-          <span className="text-[0.6rem] font-semibold tracking-wide">Resus</span>
+          <Timer className="h-6 w-6" />
+          <span className="text-[0.65rem] font-black tracking-wide">Resus</span>
         </Link>
       </nav>
 

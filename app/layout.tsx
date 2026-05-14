@@ -36,7 +36,7 @@ export default async function RootLayout({
       suppressHydrationWarning
       data-device={deviceType}
     >
-      <body className="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+      <body className="text-slate-900 dark:text-slate-50">
         <DeviceProvider initialDevice={deviceType}>
           <ThemeProvider>
             {children}

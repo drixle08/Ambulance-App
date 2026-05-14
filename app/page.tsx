@@ -145,9 +145,9 @@ function AboutCard({ compact = false }: { compact?: boolean }) {
 
 const DesktopHome: React.FC = () => {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+    <div className="app-shell min-h-screen text-slate-900 dark:text-slate-50">
       <StandaloneRedirect />
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/80">
+      <header className="app-topbar border-b backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2.5">
           <div className="flex flex-col">
             <span className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-emerald-500">
@@ -173,7 +173,7 @@ const DesktopHome: React.FC = () => {
       <main className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pb-6 pt-4 md:pt-6">
         <section className="flex flex-col gap-4 md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.4fr)] md:items-start md:gap-6">
           <div className="flex flex-col gap-4">
-            <div className="rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+            <div className="app-card rounded-3xl border p-4 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="mt-1">
                   <ActivitySquare className="h-5 w-5 text-emerald-500" />
@@ -231,9 +231,9 @@ const DesktopHome: React.FC = () => {
 
 const MobileHome: React.FC = () => {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+    <div className="app-shell min-h-screen text-slate-900 dark:text-slate-50">
       <StandaloneRedirect />
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/90">
+      <header className="app-topbar sticky top-0 z-30 border-b backdrop-blur-sm">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-2.5">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/15 text-xs font-semibold text-emerald-300">
@@ -263,7 +263,7 @@ const MobileHome: React.FC = () => {
 
       <main className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pb-24 pt-4">
         <section className="space-y-3">
-          <div className="rounded-3xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+          <div className="app-card rounded-3xl border p-4 shadow-sm">
             <div className="flex items-start gap-3">
               <div className="mt-1">
                 <ActivitySquare className="h-5 w-5 text-emerald-500" />
@@ -298,7 +298,7 @@ const MobileHome: React.FC = () => {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+          <div className="app-card rounded-2xl border p-4 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
               <MonitorSmartphone className="h-4 w-4 text-emerald-500" />
               <span>Need protocols fast?</span>

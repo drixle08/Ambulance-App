@@ -418,6 +418,8 @@ const CLR: Record<string, { card: string; border: string; label: string; badge: 
   blue:    { card: "bg-blue-950/30",    border: "border-blue-800/50",    label: "text-blue-400",    badge: "bg-blue-900/50 text-blue-300",    result: "bg-blue-950/50",    resultBorder: "border-blue-700/60",    tab: "hover:text-blue-300",    tabActive: "text-blue-300 border-b-2 border-blue-500" },
 };
 
+const WEIGHT_PRESETS = [50, 60, 70, 80, 90, 100];
+
 /* ════════════════════════════════════════════════════════════
    CALCULATION ENGINE
 ════════════════════════════════════════════════════════════ */
@@ -518,7 +520,7 @@ function SliderRow({
 }) {
   const dp = step < 0.1 ? 3 : step < 1 ? 1 : 0;
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-baseline justify-between">
         <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">{label}</span>
         <span className={`text-lg font-bold tabular-nums ${accentClass}`}>
@@ -532,7 +534,7 @@ function SliderRow({
         step={step}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full accent-current"
+        className="h-6 w-full accent-current"
       />
       <div className="flex justify-between text-[0.6rem] text-slate-600">
         <span>{fmtNum(min, dp)}</span>
@@ -576,7 +578,7 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
         <button
           type="button"
           onClick={onBack}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-200 active:bg-slate-800"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-200 active:bg-slate-800"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -597,7 +599,7 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
               key={m.id}
               type="button"
               onClick={() => handleModeChange(i)}
-              className={`px-4 pb-2 pt-1.5 text-xs font-semibold transition-colors ${
+              className={`min-h-11 px-4 pb-2 pt-1.5 text-sm font-semibold transition-colors ${
                 i === modeIdx ? clr.tabActive : `text-slate-500 ${clr.tab}`
               }`}
             >
@@ -613,16 +615,37 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
       {/* Inputs */}
       <div className={`rounded-2xl border p-4 space-y-5 ${clr.card} ${clr.border}`}>
         {needsWeight && (
-          <SliderRow
-            label="Patient weight"
-            unit="kg"
-            value={weight}
-            min={3}
-            max={150}
-            step={1}
-            onChange={setWeight}
-            accentClass={clr.label}
-          />
+          <div className="space-y-3">
+            <SliderRow
+              label="Patient weight"
+              unit="kg"
+              value={weight}
+              min={3}
+              max={150}
+              step={1}
+              onChange={setWeight}
+              accentClass={clr.label}
+            />
+            <div className="grid grid-cols-3 gap-2">
+              {WEIGHT_PRESETS.map((preset) => {
+                const selected = weight === preset;
+                return (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setWeight(preset)}
+                    className={`min-h-11 rounded-xl border px-3 text-sm font-black tabular-nums transition-colors ${
+                      selected
+                        ? `${clr.badge} border-current`
+                        : "border-slate-700 bg-slate-900/70 text-slate-300 hover:border-slate-500"
+                    }`}
+                  >
+                    {preset}kg
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         {!isFixed && (
@@ -663,13 +686,13 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
       </div>
 
       {/* Results */}
-      <div className={`rounded-2xl border p-4 space-y-3 ${clr.result} ${clr.resultBorder}`}>
+      <div className={`rounded-3xl border p-5 space-y-4 shadow-lg shadow-black/20 ${clr.result} ${clr.resultBorder}`}>
         {result.kind === "push" || result.kind === "topical" ? (
           <div className="text-center py-2">
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">Volume to draw up</p>
-            <p className={`text-4xl font-black tabular-nums ${clr.label}`}>
+            <p className={`text-6xl font-black tabular-nums ${clr.label}`}>
               {fmtNum(result.volumeMl ?? 0, 2)}
-              <span className="text-lg font-normal text-slate-400 ml-1">mL</span>
+              <span className="text-2xl font-normal text-slate-300 ml-1">mL</span>
             </p>
             <p className="text-xs text-slate-500 mt-1">
               {result.kind === "topical" ? "apply topically as directed" : `from ${mode.concLabel} solution`}
@@ -697,17 +720,17 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
             )}
             <div className="pt-1 text-center">
               <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">Flow Rate</p>
-              <p className={`text-5xl font-black tabular-nums ${clr.label}`}>
+              <p className={`text-7xl font-black tabular-nums ${clr.label}`}>
                 {fmtNum(result.flowRateMlH ?? 0, 1)}
-                <span className="text-xl font-normal text-slate-400 ml-1.5">mL/h</span>
+                <span className="text-2xl font-normal text-slate-300 ml-1.5">mL/h</span>
               </p>
             </div>
             {result.dripsPerMin !== undefined && (
-              <div className="flex items-center justify-between border-t border-slate-800/60 pt-3">
+              <div className="flex items-center justify-between border-t border-slate-800/60 pt-4">
                 <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
                   Gravity set (20 gtt/mL)
                 </span>
-                <span className="text-sm font-semibold text-slate-300 tabular-nums">
+                <span className="text-xl font-black text-slate-100 tabular-nums">
                   {fmtNum(result.dripsPerMin, 0)} drops/min
                 </span>
               </div>
@@ -963,9 +986,9 @@ export default function DrugCalculatorPage() {
               key={drug.id}
               type="button"
               onClick={() => { setSelectedId(drug.id); setView("drug"); }}
-              className={`flex flex-col gap-2 rounded-2xl border p-4 text-left transition-all active:scale-95 hover:brightness-110 ${clr.card} ${clr.border}`}
+              className={`flex min-h-36 flex-col gap-3 rounded-2xl border p-5 text-left transition-all active:scale-95 hover:brightness-110 ${clr.card} ${clr.border}`}
             >
-              <p className={`text-sm font-bold leading-tight ${clr.label}`}>{drug.name}</p>
+              <p className={`text-base font-black leading-tight ${clr.label}`}>{drug.name}</p>
               <p className="text-[0.65rem] text-slate-500 leading-snug">{drug.subtitle}</p>
               <span className={`self-start rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider ${clr.badge}`}>
                 {drug.modes.length > 1 ? `${drug.modes.length} modes` : drug.modes[0].description}
@@ -978,9 +1001,9 @@ export default function DrugCalculatorPage() {
         <button
           type="button"
           onClick={() => setView("formulas")}
-          className="col-span-2 flex items-center gap-3 rounded-2xl border border-teal-800/50 bg-teal-950/20 p-4 text-left transition-all active:scale-95 hover:brightness-110"
+          className="col-span-2 flex min-h-24 items-center gap-4 rounded-2xl border border-teal-800/50 bg-teal-950/20 p-5 text-left transition-all active:scale-95 hover:brightness-110"
         >
-          <Calculator className="h-6 w-6 shrink-0 text-teal-400" />
+          <Calculator className="h-8 w-8 shrink-0 text-teal-400" />
           <div>
             <p className="text-sm font-bold text-teal-400">General Formulas</p>
             <p className="text-[0.65rem] text-slate-500">Draw-up, flow rate, drip rate, reverse-calculate dose</p>

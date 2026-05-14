@@ -28,6 +28,9 @@ export function CopySummaryButton({
         return;
       }
       await navigator.clipboard.writeText(summaryText);
+      if ("vibrate" in navigator) {
+        navigator.vibrate(20);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {

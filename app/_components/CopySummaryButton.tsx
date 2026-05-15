@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Copy } from "lucide-react";
 
 function classNames(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -28,6 +29,12 @@ export function CopySummaryButton({
         return;
       }
       await navigator.clipboard.writeText(summaryText);
+
+      // Haptic feedback for tactile confirmation in clinical settings
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate(30);
+      }
+
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -39,15 +46,26 @@ export function CopySummaryButton({
     <button
       type="button"
       onClick={handleCopy}
+      aria-label={copied ? "Summary copied" : "Copy summary to clipboard"}
       className={classNames(
-        "rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5",
+        "rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950",
         copied
           ? "border-emerald-500 bg-emerald-500/15 text-emerald-100"
           : "border-slate-700 bg-slate-900 text-slate-200 hover:border-emerald-400 hover:text-emerald-300 hover:bg-slate-900/80",
         className
       )}
     >
-      {copied ? copiedLabel : label}
+      {copied ? (
+        <>
+          <Check className="h-3 w-3" />
+          {copiedLabel}
+        </>
+      ) : (
+        <>
+          <Copy className="h-3 w-3" />
+          {label}
+        </>
+      )}
     </button>
   );
 }

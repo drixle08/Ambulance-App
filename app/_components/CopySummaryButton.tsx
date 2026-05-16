@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Copy } from "lucide-react";
 
 function classNames(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -28,6 +29,12 @@ export function CopySummaryButton({
         return;
       }
       await navigator.clipboard.writeText(summaryText);
+
+      // Haptic feedback for clinical confirmation
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate(50);
+      }
+
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -47,7 +54,17 @@ export function CopySummaryButton({
         className
       )}
     >
-      {copied ? copiedLabel : label}
+      {copied ? (
+        <>
+          <Check size={12} className="shrink-0 text-emerald-400" />
+          {copiedLabel}
+        </>
+      ) : (
+        <>
+          <Copy size={12} className="shrink-0" />
+          {label}
+        </>
+      )}
     </button>
   );
 }

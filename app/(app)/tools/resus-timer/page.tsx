@@ -60,6 +60,8 @@ export default function ResuscitationTimerPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [otherDialogOpen, setOtherDialogOpen] = useState(false);
   const [otherText, setOtherText] = useState("");
+  const [resetConfirm, setResetConfirm] = useState(false);
+  const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // Drug tracking
   const [lastAdrenalineAt, setLastAdrenalineAt] = useState<number | null>(null);
   const [amiodaroneDose, setAmiodaroneDose] = useState<0 | 1 | 2>(0);
@@ -289,8 +291,20 @@ export default function ResuscitationTimerPage() {
   }, [addLog, isRunning]);
 
   const handleReset = useCallback(() => {
+    // If the timer is active, require a second click to confirm
+    if (startTimeRef.current && !resetConfirm) {
+      setResetConfirm(true);
+      vibrate(40);
+      // Auto-cancel confirmation after 3 seconds if not clicked
+      if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+      resetTimeoutRef.current = setTimeout(() => setResetConfirm(false), 3000);
+      return;
+    }
+
+    if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
     vibrate([35, 35, 35]);
     setIsRunning(false);
+    setResetConfirm(false);
     setPhase("CPR");
     phaseRef.current = "CPR";
     setCycleNumber(1);
@@ -308,7 +322,7 @@ export default function ResuscitationTimerPage() {
     setAmiodaroneDose(0);
     if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     addLog("Timer reset");
-  }, [addLog]);
+  }, [addLog, resetConfirm]);
 
   const handleShock = () => {
     vibrate([90, 45, 90]);
@@ -383,6 +397,13 @@ export default function ResuscitationTimerPage() {
   }, [cycleNumber, logs, startTime, startTimeString]);
 
   // Voice control
+  // Cleanup reset timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     if (!voiceEnabled || !voiceSupported) return;
     if (typeof window === "undefined") return;
@@ -505,7 +526,7 @@ export default function ResuscitationTimerPage() {
         <header className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300">
-              <HeartPulse className="h-4 w-4" />
+              <HeartPulse className="h-4 w-4" aria-hidden="true" />
             </span>
             <div className="flex flex-col">
               <span className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-emerald-400">
@@ -522,12 +543,12 @@ export default function ResuscitationTimerPage() {
             >
               {metronomeOn ? (
                 <>
-                  <Volume2 className="h-3.5 w-3.5" />
+                  <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
                   Metronome
                 </>
               ) : (
                 <>
-                  <VolumeX className="h-3.5 w-3.5" />
+                  <VolumeX className="h-3.5 w-3.5" aria-hidden="true" />
                   Muted
                 </>
               )}
@@ -540,12 +561,12 @@ export default function ResuscitationTimerPage() {
             >
               {voiceEnabled ? (
                 <>
-                  <Mic className="h-3.5 w-3.5" />
+                  <Mic className="h-3.5 w-3.5" aria-hidden="true" />
                   Voice on
                 </>
               ) : (
                 <>
-                  <MicOff className="h-3.5 w-3.5" />
+                  <MicOff className="h-3.5 w-3.5" aria-hidden="true" />
                   Voice off
                 </>
               )}
@@ -720,9 +741,13 @@ export default function ResuscitationTimerPage() {
           <button
             type="button"
             onClick={handleReset}
-            className="h-16 min-w-28 rounded-3xl border border-slate-700 bg-slate-900 text-base font-black text-slate-100 shadow-md active:translate-y-[1px]"
+            className={`h-16 min-w-28 rounded-3xl border text-base font-black shadow-md transition-colors active:translate-y-[1px] ${
+              resetConfirm
+                ? "border-red-500 bg-red-600 text-white"
+                : "border-slate-700 bg-slate-900 text-slate-100"
+            }`}
           >
-            Reset
+            {resetConfirm ? "Confirm?" : "Reset"}
           </button>
         </section>
 
@@ -764,19 +789,31 @@ export default function ResuscitationTimerPage() {
         {/* Other dialog */}
         {otherDialogOpen && (
           <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/60 px-4 pb-6">
-            <div className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-950 p-4 shadow-xl">
-              <h2 className="mb-1 text-sm font-semibold">Log other event</h2>
-              <p className="mb-2 text-[0.75rem] text-slate-400">
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="other-dialog-title"
+              className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-950 p-4 shadow-xl"
+            >
+              <h2 id="other-dialog-title" className="mb-1 text-sm font-semibold">Log other event</h2>
+              <p id="other-dialog-desc" className="mb-2 text-[0.75rem] text-slate-400">
                 Short description only (e.g. “Airway secured”, “ROSC”, “Rhythm
                 check”).
               </p>
               <textarea
                 rows={2}
                 value={otherText}
+                maxLength={100}
                 onChange={(e) => setOtherText(e.target.value)}
-                className="mb-3 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                aria-describedby="other-dialog-desc"
+                className="mb-1 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 autoFocus
               />
+              <div className="mb-3 flex justify-end">
+                <span className={`text-[0.65rem] ${otherText.length >= 100 ? "text-red-400" : "text-slate-500"}`}>
+                  {otherText.length}/100
+                </span>
+              </div>
               <div className="flex justify-end gap-2">
                 <button
                   type="button"

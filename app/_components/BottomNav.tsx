@@ -222,7 +222,7 @@ function SearchResults({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-slate-100">{entry.title}</p>
                 <p className="text-xs text-slate-500">
-                  {entry.section} Â· p.{entry.printedPage}
+                  {entry.section} · p.{entry.printedPage}
                 </p>
               </div>
               <span className="shrink-0 rounded-full border border-cyan-500/30 bg-cyan-500/15 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-cyan-400">
@@ -374,11 +374,13 @@ export function BottomNav() {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Protocol, SOP, CPM, medication, or page number..."
               className="flex-1 bg-transparent text-base text-slate-100 placeholder:text-slate-600 outline-none"
+              aria-label="Search protocols, SOPs, CPM, or medications"
             />
             <button
               type="button"
               onClick={closeSearch}
               className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100 transition-colors"
+              aria-label="Close search"
             >
               <X className="h-5 w-5" />
             </button>

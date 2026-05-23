@@ -579,6 +579,7 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
           type="button"
           onClick={onBack}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-200 active:bg-slate-800"
+          aria-label="Go back"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -877,6 +878,7 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
           type="button"
           onClick={onBack}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-200 active:bg-slate-800"
+          aria-label="Go back"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>

@@ -63,6 +63,7 @@ export default function ResuscitationTimerPage() {
   // Drug tracking
   const [lastAdrenalineAt, setLastAdrenalineAt] = useState<number | null>(null);
   const [amiodaroneDose, setAmiodaroneDose] = useState<0 | 1 | 2>(0);
+  const [resetConfirm, setResetConfirm] = useState(false);
   const voiceSupported = useMemo(() => {
     if (typeof window === "undefined") return false;
     const SpeechRec: SpeechRecognitionConstructor | undefined =
@@ -97,6 +98,7 @@ export default function ResuscitationTimerPage() {
   // Drug refs (avoid stale closures in setInterval)
   const lastAdrenalineAtRef = useRef<number | null>(null);
   const amiodaroneDoseRef = useRef<0 | 1 | 2>(0);
+  const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     elapsedRef.current = elapsedSeconds;
@@ -123,6 +125,13 @@ export default function ResuscitationTimerPage() {
       // ignore storage errors
     }
   }, [voiceEnabled]);
+
+  // Cleanup reset timeout
+  useEffect(() => {
+    return () => {
+      if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+    };
+  }, []);
 
   const getAudioContext = useCallback((): AudioContext | null => {
     if (typeof window === "undefined") return null;
@@ -289,6 +298,19 @@ export default function ResuscitationTimerPage() {
   }, [addLog, isRunning]);
 
   const handleReset = useCallback(() => {
+    if (!resetConfirm) {
+      vibrate(25);
+      setResetConfirm(true);
+      if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+      resetTimeoutRef.current = setTimeout(() => {
+        setResetConfirm(false);
+      }, 3000);
+      return;
+    }
+
+    if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+    setResetConfirm(false);
+
     vibrate([35, 35, 35]);
     setIsRunning(false);
     setPhase("CPR");
@@ -308,7 +330,7 @@ export default function ResuscitationTimerPage() {
     setAmiodaroneDose(0);
     if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     addLog("Timer reset");
-  }, [addLog]);
+  }, [addLog, resetConfirm]);
 
   const handleShock = () => {
     vibrate([90, 45, 90]);
@@ -694,7 +716,10 @@ export default function ResuscitationTimerPage() {
             <button
               type="button"
               onClick={handleAmiodarone}
-              className="h-16 rounded-2xl border border-slate-600 bg-slate-800 text-lg font-black text-slate-100 shadow-md active:translate-y-[1px]"
+              disabled={amiodaroneDose >= 2}
+              className={`h-16 rounded-2xl border border-slate-600 bg-slate-800 text-lg font-black text-slate-100 shadow-md transition-opacity ${
+                amiodaroneDose >= 2 ? "opacity-40 grayscale" : "active:translate-y-[1px]"
+              }`}
             >
               Amiodarone
             </button>
@@ -720,9 +745,13 @@ export default function ResuscitationTimerPage() {
           <button
             type="button"
             onClick={handleReset}
-            className="h-16 min-w-28 rounded-3xl border border-slate-700 bg-slate-900 text-base font-black text-slate-100 shadow-md active:translate-y-[1px]"
+            className={`h-16 min-w-28 rounded-3xl border text-base font-black transition-colors shadow-md active:translate-y-[1px] ${
+              resetConfirm
+                ? "border-red-500 bg-red-600 text-white"
+                : "border-slate-700 bg-slate-900 text-slate-100"
+            }`}
           >
-            Reset
+            {resetConfirm ? "Confirm?" : "Reset"}
           </button>
         </section>
 

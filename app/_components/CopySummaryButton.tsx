@@ -28,6 +28,7 @@ export function CopySummaryButton({
         return;
       }
       await navigator.clipboard.writeText(summaryText);
+      navigator?.vibrate?.(50);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -39,6 +40,7 @@ export function CopySummaryButton({
     <button
       type="button"
       onClick={handleCopy}
+      aria-live="polite"
       className={classNames(
         "rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5",
         copied

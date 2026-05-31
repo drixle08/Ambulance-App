@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { Check, Copy } from "lucide-react";
 
 function classNames(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -20,6 +21,13 @@ export function CopySummaryButton({
   className,
 }: CopySummaryButtonProps) {
   const [copied, setCopied] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   const handleCopy = async () => {
     try {
@@ -29,7 +37,10 @@ export function CopySummaryButton({
       }
       await navigator.clipboard.writeText(summaryText);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      navigator?.vibrate?.(50);
+
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy summary:", err);
     }
@@ -39,6 +50,7 @@ export function CopySummaryButton({
     <button
       type="button"
       onClick={handleCopy}
+      aria-live="polite"
       className={classNames(
         "rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5",
         copied
@@ -47,7 +59,17 @@ export function CopySummaryButton({
         className
       )}
     >
-      {copied ? copiedLabel : label}
+      {copied ? (
+        <>
+          <Check className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span>{copiedLabel}</span>
+        </>
+      ) : (
+        <>
+          <Copy className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span>{label}</span>
+        </>
+      )}
     </button>
   );
 }

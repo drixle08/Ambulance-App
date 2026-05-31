@@ -1,0 +1,3 @@
+## 2025-05-14 - Multi-modal Feedback for Clinical UI State Transitions
+**Learning:** In high-pressure clinical environments, users often have divided visual focus. Combining `aria-live="polite"` for screen readers and `navigator.vibrate` for haptic feedback ensures that transient UI updates (like a successful clipboard copy) are reliably noticed without requiring the user to maintain visual contact with the button.
+**Action:** Always implement a combination of haptic feedback (`navigator?.vibrate?.(50)`) and ARIA live regions for critical or time-sensitive confirmation states in this clinical toolkit.

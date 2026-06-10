@@ -69,12 +69,11 @@ function SortableCard({
   const color = COLOR_MAP[group.color] ?? COLOR_MAP.amber;
 
   return (
+    // Outer wrapper: no touch-none — scroll events pass through freely
     <div
       ref={setNodeRef}
       style={style}
-      className={`touch-none select-none ${isDragging ? "z-50 relative" : ""}`}
-      {...attributes}
-      {...listeners}
+      className={`select-none ${isDragging ? "z-50 relative" : ""}`}
     >
       <Link
         href={`/dashboard/${group.slug}`}
@@ -88,10 +87,17 @@ function SortableCard({
               : `active:scale-95 ${color.hover} hover:shadow-md`}
         `}
       >
-        <div className={`flex h-20 w-20 items-center justify-center rounded-3xl ${color.bg} ring-4 ring-transparent transition-all ${color.ring}`}>
+        {/* Drag handle — only the icon circle has touch-none and the listeners */}
+        <div
+          {...attributes}
+          {...listeners}
+          className={`touch-none flex h-20 w-20 items-center justify-center rounded-3xl ${color.bg} ring-4 ring-transparent transition-all ${color.ring}`}
+        >
           <Icon className={`h-10 w-10 ${color.icon}`} />
         </div>
-        <div className="space-y-1">
+
+        {/* Text area — normal touch behaviour, scrollable */}
+        <div className="space-y-1 pointer-events-none">
           <h2 className="text-base font-black leading-tight text-slate-900 dark:text-slate-50">
             {group.shortTitle ?? group.title}
           </h2>
@@ -168,7 +174,7 @@ export function DashboardGrid() {
         </SortableContext>
       </DndContext>
       <p className="text-center text-[0.6rem] text-slate-600 pt-1">
-        Hold &amp; drag to rearrange
+        Hold the icon to rearrange
       </p>
     </>
   );

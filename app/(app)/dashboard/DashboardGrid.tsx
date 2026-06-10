@@ -10,7 +10,7 @@ import {
 import {
   DndContext,
   closestCenter,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
@@ -123,11 +123,11 @@ export function DashboardGrid() {
   }, []);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: { distance: 12 },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 800, tolerance: 10 },
+      activationConstraint: { delay: 800, tolerance: 5 },
     })
   );
 

@@ -124,10 +124,10 @@ export function DashboardGrid() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
+      activationConstraint: { distance: 12 },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 400, tolerance: 8 },
+      activationConstraint: { delay: 800, tolerance: 10 },
     })
   );
 

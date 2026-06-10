@@ -1,40 +1,7 @@
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
-import {
-  ShieldAlert,
-  HeartPulse,
-  Wind,
-  Brain,
-  BookOpen,
-  Activity,
-  FlaskConical,
-  FilePenLine,
-} from "lucide-react";
 import { ProtocolFinder } from "./ProtocolFinder";
-import { TOOL_GROUPS } from "./data";
+import { DashboardGrid } from "./DashboardGrid";
 import { CpgChatBubble } from "@/app/_components/CpgChatBubble";
-
-const ICON_MAP: Record<string, LucideIcon> = {
-  ShieldAlert,
-  HeartPulse,
-  Wind,
-  Brain,
-  BookOpen,
-  Activity,
-  FlaskConical,
-  FilePenLine,
-};
-
-const COLOR_MAP: Record<string, { bg: string; icon: string; hover: string; ring: string }> = {
-  orange: { bg: "bg-orange-500/10 dark:bg-orange-500/15", icon: "text-orange-600 dark:text-orange-300", hover: "hover:border-orange-400/60 dark:hover:border-orange-400/50", ring: "group-hover:ring-orange-400/30" },
-  red: { bg: "bg-red-500/10 dark:bg-red-500/15", icon: "text-red-600 dark:text-red-300", hover: "hover:border-red-400/60 dark:hover:border-red-400/50", ring: "group-hover:ring-red-400/30" },
-  sky: { bg: "bg-sky-500/10 dark:bg-sky-500/15", icon: "text-sky-600 dark:text-sky-300", hover: "hover:border-sky-400/60 dark:hover:border-sky-400/50", ring: "group-hover:ring-sky-400/30" },
-  violet: { bg: "bg-violet-500/10 dark:bg-violet-500/15", icon: "text-violet-600 dark:text-violet-300", hover: "hover:border-violet-400/60 dark:hover:border-violet-400/50", ring: "group-hover:ring-violet-400/30" },
-  amber: { bg: "bg-amber-500/10 dark:bg-amber-500/15", icon: "text-amber-600 dark:text-amber-300", hover: "hover:border-amber-400/60 dark:hover:border-amber-400/50", ring: "group-hover:ring-amber-400/30" },
-  teal: { bg: "bg-teal-500/10 dark:bg-teal-500/15", icon: "text-teal-600 dark:text-teal-300", hover: "hover:border-teal-400/60 dark:hover:border-teal-400/50", ring: "group-hover:ring-teal-400/30" },
-  rose: { bg: "bg-rose-500/10 dark:bg-rose-500/15", icon: "text-rose-600 dark:text-rose-300", hover: "hover:border-rose-400/60 dark:hover:border-rose-400/50", ring: "group-hover:ring-rose-400/30" },
-  blue: { bg: "bg-blue-500/10 dark:bg-blue-500/15", icon: "text-blue-600 dark:text-blue-300", hover: "hover:border-blue-400/60 dark:hover:border-blue-400/50", ring: "group-hover:ring-blue-400/30" },
-};
 
 export default function DashboardPage() {
   return (
@@ -67,29 +34,7 @@ export default function DashboardPage() {
           <h1 className="text-xl font-semibold tracking-tight md:text-2xl">Select a category</h1>
         </header>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {TOOL_GROUPS.map((group) => {
-            const Icon = ICON_MAP[group.icon] ?? BookOpen;
-            const color = COLOR_MAP[group.color] ?? COLOR_MAP.amber;
-            return (
-              <Link
-                key={group.slug}
-                href={`/dashboard/${group.slug}`}
-                className={`app-card group flex min-h-40 flex-col items-center justify-center gap-4 rounded-3xl border p-6 text-center shadow-sm transition-all active:scale-95 ${color.hover} hover:shadow-md`}
-              >
-                <div className={`flex h-20 w-20 items-center justify-center rounded-3xl ${color.bg} ring-4 ring-transparent transition-all ${color.ring}`}>
-                  <Icon className={`h-10 w-10 ${color.icon}`} />
-                </div>
-                <div className="space-y-1">
-                  <h2 className="text-base font-black leading-tight text-slate-900 dark:text-slate-50">{group.shortTitle ?? group.title}</h2>
-                  <span className="inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                    {group.tools.length} {group.tools.length === 1 ? "tool" : "tools"}
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+        <DashboardGrid />
       </div>
       <CpgChatBubble />
     </>

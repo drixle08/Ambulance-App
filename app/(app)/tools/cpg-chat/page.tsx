@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   ArrowLeft,
   BookOpen,
@@ -181,43 +182,39 @@ function SourceChips({ sources }: { sources: SourceDoc[] }) {
   const sop = deduped.filter((s) => s.type === "sop");
   const cpm = deduped.filter((s) => s.type === "cpm");
 
+  const pageParam = (s: SourceDoc) => s.printedPage || s.page || 1;
+
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
       {cpg.map((s) => (
-        <a
+        <Link
           key={s.label}
-          href={s.pdfUrl || undefined}
-          target="_blank"
-          rel="noreferrer"
+          href={`/tools/cpg?page=${pageParam(s)}`}
           className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-colors"
         >
           <BookOpen className="w-3 h-3" />
           {s.label}
-        </a>
+        </Link>
       ))}
       {sop.map((s) => (
-        <a
+        <Link
           key={s.label}
-          href={s.pdfUrl}
-          target="_blank"
-          rel="noreferrer"
+          href={`/tools/sop?page=${pageParam(s)}`}
           className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-amber-400 hover:bg-amber-500/20 transition-colors"
         >
           <ExternalLink className="w-3 h-3" />
           {s.label}
-        </a>
+        </Link>
       ))}
       {cpm.map((s) => (
-        <a
+        <Link
           key={s.label}
-          href={s.pdfUrl}
-          target="_blank"
-          rel="noreferrer"
+          href={`/tools/cpm?page=${pageParam(s)}`}
           className="inline-flex items-center gap-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-cyan-400 hover:bg-cyan-500/20 transition-colors"
         >
           <FileText className="w-3 h-3" />
           {s.label}
-        </a>
+        </Link>
       ))}
     </div>
   );

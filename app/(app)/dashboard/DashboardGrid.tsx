@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -44,7 +44,7 @@ const COLOR_MAP: Record<string, { bg: string; icon: string; hover: string; ring:
   blue:   { bg: "bg-blue-500/10 dark:bg-blue-500/15",     icon: "text-blue-600 dark:text-blue-300",     hover: "hover:border-blue-400/60 dark:hover:border-blue-400/50",     ring: "group-hover:ring-blue-400/30" },
 };
 
-function SortableCard({
+const SortableCard = memo(function SortableCard({
   group,
   anyDragging,
 }: {
@@ -108,7 +108,7 @@ function SortableCard({
       </Link>
     </div>
   );
-}
+});
 
 export function DashboardGrid() {
   const [groups, setGroups] = useState<ToolGroup[]>(TOOL_GROUPS);

@@ -222,7 +222,7 @@ function SearchResults({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-slate-100">{entry.title}</p>
                 <p className="text-xs text-slate-500">
-                  {entry.section} Â· p.{entry.printedPage}
+                  {entry.section} · p.{entry.printedPage}
                 </p>
               </div>
               <span className="shrink-0 rounded-full border border-cyan-500/30 bg-cyan-500/15 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-cyan-400">
@@ -275,11 +275,18 @@ export function BottomNav() {
   const { isMobile } = useDevice();
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQuery(query), 200);
+    return () => clearTimeout(id);
+  }, [query]);
 
   const closeSearch = () => {
     setSearchOpen(false);
     setQuery("");
+    setDebouncedQuery("");
   };
 
   // Auto-focus search input when sheet opens
@@ -386,7 +393,7 @@ export function BottomNav() {
 
           {/* Results */}
           <div className="flex-1 overflow-y-auto overscroll-contain">
-            <SearchResults query={query} onClose={closeSearch} isMobile={isMobile} />
+            <SearchResults query={debouncedQuery} onClose={closeSearch} isMobile={isMobile} />
           </div>
         </div>
       )}

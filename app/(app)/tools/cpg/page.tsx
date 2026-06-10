@@ -23,14 +23,63 @@ export default function CpgPage() {
   const [pageNumber, setPageNumber] = useState(initialPage);
   const [error, setError] = useState<string | null>(null);
   const [jumpInput, setJumpInput] = useState("");
+  const [renderZoom, setRenderZoom] = useState(1);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasWrapRef = useRef<HTMLDivElement | null>(null);
   const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
+  const renderZoomRef = useRef(1);
+  const pinchRef = useRef<{ dist: number; startZoom: number; live: number } | null>(null);
 
   useEffect(() => {
     GlobalWorkerOptions.workerSrc = new URL(
       "pdfjs-dist/build/pdf.worker.min.mjs",
       import.meta.url
     ).toString();
+  }, []);
+
+  // Pinch-to-zoom (non-passive touchmove to allow preventDefault)
+  useEffect(() => {
+    const el = canvasWrapRef.current;
+    if (!el) return;
+
+    const touchDist = (t: TouchList) =>
+      Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        pinchRef.current = { dist: touchDist(e.touches), startZoom: renderZoomRef.current, live: renderZoomRef.current };
+      }
+    };
+
+    const onMove = (e: TouchEvent) => {
+      if (e.touches.length !== 2 || !pinchRef.current) return;
+      e.preventDefault();
+      const d = touchDist(e.touches);
+      const z = Math.min(4, Math.max(1, (pinchRef.current.startZoom * d) / pinchRef.current.dist));
+      pinchRef.current.live = z;
+      el.style.transform = `scale(${z})`;
+      el.style.transformOrigin = "top center";
+    };
+
+    const onEnd = () => {
+      if (!pinchRef.current) return;
+      const z = Math.round(pinchRef.current.live * 4) / 4; // snap to nearest 0.25
+      pinchRef.current = null;
+      el.style.transform = "";
+      renderZoomRef.current = z;
+      setRenderZoom(z);
+    };
+
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onEnd, { passive: true });
+    el.addEventListener("touchcancel", onEnd, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchmove", onMove);
+      el.removeEventListener("touchend", onEnd);
+      el.removeEventListener("touchcancel", onEnd);
+    };
   }, []);
 
   useEffect(() => {
@@ -66,7 +115,7 @@ export default function CpgPage() {
       const outputScale = window.devicePixelRatio || 1;
       const containerWidth = Math.min(window.innerWidth * 0.95, 800);
       const baseViewport = page.getViewport({ scale: 1 });
-      const scale = (containerWidth / baseViewport.width) * outputScale;
+      const scale = (containerWidth / baseViewport.width) * outputScale * renderZoom;
       const viewport = page.getViewport({ scale });
 
       canvas.width = viewport.width;
@@ -88,15 +137,17 @@ export default function CpgPage() {
         setError("Failed to render page.");
       }
     });
-  }, [pdf, pageNumber]);
+  }, [pdf, pageNumber, renderZoom]);
 
-  const goPrev = () => setPageNumber((p) => Math.max(1, p - 1));
-  const goNext = () => setPageNumber((p) => (numPages ? Math.min(numPages, p + 1) : p + 1));
+  const resetZoom = () => { renderZoomRef.current = 1; setRenderZoom(1); };
+  const goPrev = () => { resetZoom(); setPageNumber((p) => Math.max(1, p - 1)); };
+  const goNext = () => { resetZoom(); setPageNumber((p) => numPages ? Math.min(numPages, p + 1) : p + 1); };
 
   const handleJump = (e: React.FormEvent) => {
     e.preventDefault();
     const n = parseInt(jumpInput, 10);
     if (Number.isFinite(n) && n > 0 && numPages && n <= numPages) {
+      resetZoom();
       setPageNumber(n);
       setJumpInput("");
     }
@@ -198,8 +249,28 @@ export default function CpgPage() {
           </div>
         )}
 
-        <div className={["flex justify-center rounded-xl overflow-hidden bg-white", isLoading ? "hidden" : ""].join(" ")}>
-          <canvas ref={canvasRef} className="max-w-full" />
+        <div
+          className={[
+            "relative rounded-xl bg-white",
+            isLoading ? "hidden" : "",
+            renderZoom > 1 ? "overflow-auto" : "overflow-hidden",
+          ].join(" ")}
+        >
+          <div
+            ref={canvasWrapRef}
+            className={renderZoom > 1 ? "" : "flex justify-center"}
+          >
+            <canvas ref={canvasRef} className="block" />
+          </div>
+          {renderZoom > 1.05 && (
+            <button
+              type="button"
+              onClick={resetZoom}
+              className="absolute top-2 right-2 z-10 rounded-full bg-slate-900/90 px-3 py-1 text-xs font-bold text-white backdrop-blur-sm"
+            >
+              {renderZoom.toFixed(1)}× · reset
+            </button>
+          )}
         </div>
 
         {pdf && (

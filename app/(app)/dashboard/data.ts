@@ -126,7 +126,7 @@ export const TOOL_GROUPS: ToolGroup[] = [
     title: "Respiratory & Paediatric Airway",
     shortTitle: "Respiratory",
     slug: "respiratory-airway",
-    description: "Asthma severity and croup scoring tools.",
+    description: "Asthma severity, croup scoring, and RSI medication reference.",
     icon: "Wind",
     color: "sky",
     tools: [
@@ -143,6 +143,13 @@ export const TOOL_GROUPS: ToolGroup[] = [
         tagline: "Modified Westley Croup Score with severity bands and management hints.",
         meta: "CPG Croup",
         icon: "Stethoscope",
+      },
+      {
+        name: "RSI Medications",
+        href: "/tools/rsi-meds",
+        tagline: "Pre and post RSI dosing reference with phase flow diagram — Fentanyl, Ketamine, Succinylcholine, Rocuronium, and post-intubation maintenance.",
+        meta: "CPG 11.1 · CCP",
+        icon: "Syringe",
       },
     ],
   },

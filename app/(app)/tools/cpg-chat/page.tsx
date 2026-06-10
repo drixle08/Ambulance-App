@@ -199,6 +199,8 @@ function SourceChips({ sources }: { sources: SourceDoc[] }) {
         <a
           key={s.label}
           href={s.pdfUrl}
+          target="_blank"
+          rel="noreferrer"
           className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-amber-400 hover:bg-amber-500/20 transition-colors"
         >
           <ExternalLink className="w-3 h-3" />
@@ -209,6 +211,8 @@ function SourceChips({ sources }: { sources: SourceDoc[] }) {
         <a
           key={s.label}
           href={s.pdfUrl}
+          target="_blank"
+          rel="noreferrer"
           className="inline-flex items-center gap-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-[0.65rem] font-semibold text-cyan-400 hover:bg-cyan-500/20 transition-colors"
         >
           <FileText className="w-3 h-3" />
@@ -221,6 +225,8 @@ function SourceChips({ sources }: { sources: SourceDoc[] }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
+const CHAT_STORAGE_KEY = "cpg-chat-messages";
+
 export default function CpgChatPage() {
   const router = useRouter();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -231,6 +237,28 @@ export default function CpgChatPage() {
   const [canShare, setCanShare] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Restore chat from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(CHAT_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as ChatMessage[];
+        if (Array.isArray(parsed) && parsed.length > 0) setMessages(parsed);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // Persist chat to sessionStorage whenever messages change
+  useEffect(() => {
+    try {
+      if (messages.length === 0) {
+        sessionStorage.removeItem(CHAT_STORAGE_KEY);
+      } else {
+        sessionStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+      }
+    } catch { /* ignore quota errors */ }
+  }, [messages]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -250,6 +278,7 @@ export default function CpgChatPage() {
   const clearChat = () => {
     setMessages([]);
     setError(null);
+    try { sessionStorage.removeItem(CHAT_STORAGE_KEY); } catch { /* ignore */ }
   };
 
   const handleCopy = async (msg: ChatMessage) => {

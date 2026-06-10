@@ -29,7 +29,7 @@ type Tab = "algorithm" | "reference";
 
 const DEFIB_ENERGY: Record<Defib, [string, string, string, string]> = {
   lp15: ["200 J", "300 J", "360 J", "360 J"],
-  zoll: ["120 J", "150 J", "200 J", "200 J"],
+  zoll: ["120 J", "200 J", "200 J", "200 J"],
 };
 
 const summaryText =
@@ -593,7 +593,7 @@ function ReferenceTab() {
             </div>
             <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-2.5">
               <p className="text-[0.62rem] font-bold uppercase text-amber-500/70 mb-1">Zoll (Biphasic)</p>
-              <p className="text-sm font-bold text-amber-200/70">120 → 150 → 200 J</p>
+              <p className="text-sm font-bold text-amber-200/70">120 → 200 J</p>
             </div>
           </div>
           <div className="flex items-start gap-2">
@@ -737,6 +737,8 @@ export default function WitnessedAdultArrestPage() {
   const [scenario, setScenario] = useState<ScenarioId>("two-rescuer");
   const [defib, setDefib] = useState<Defib>("lp15");
   const [tab, setTab] = useState<Tab>("algorithm");
+  const [roscOpen, setRoscOpen] = useState(false);
+  const [noRoscOpen, setNoRoscOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 pb-8">
@@ -830,7 +832,7 @@ export default function WitnessedAdultArrestPage() {
                   >
                     <p className="text-sm font-bold">{d === "lp15" ? "LP15" : "Zoll"}</p>
                     <p className="text-[0.65rem] text-slate-500 mt-0.5">
-                      {d === "lp15" ? "200 → 300 → 360 J" : "120 → 150 → 200 J"}
+                      {d === "lp15" ? "200 → 300 → 360 J" : "120 → 200 J"}
                     </p>
                   </button>
                 ))}
@@ -892,25 +894,74 @@ export default function WitnessedAdultArrestPage() {
             </section>
 
             {/* ROSC / Termination */}
-            <section className="grid grid-cols-2 gap-2">
-              <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-3 space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <HeartPulse className="h-4 w-4 text-emerald-400" />
-                  <p className="text-xs font-bold text-emerald-300">ROSC</p>
-                </div>
-                <p className="text-[0.7rem] text-emerald-200">Transition to post-arrest care</p>
-                <p className="text-[0.65rem] font-semibold text-emerald-400">→ CPG 2.6</p>
+            <section className="space-y-2">
+
+              {/* ROSC */}
+              <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 overflow-hidden">
+                <button type="button" onClick={() => setRoscOpen(o => !o)}
+                  className="flex w-full items-center gap-2 px-3 py-2.5">
+                  <HeartPulse className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <p className="flex-1 text-left text-xs font-bold text-emerald-300">ROSC</p>
+                  <p className="text-[0.62rem] font-semibold text-emerald-500 mr-1">CPG 2.6</p>
+                  {roscOpen
+                    ? <ChevronUp className="h-3.5 w-3.5 text-emerald-400" />
+                    : <ChevronDown className="h-3.5 w-3.5 text-emerald-400/50" />}
+                </button>
+                {roscOpen && (
+                  <div className="px-3 pb-3 space-y-2 border-t border-emerald-500/20">
+                    <p className="text-[0.7rem] text-emerald-200/70 pt-2">
+                      Transition to post-arrest care — initiate CPG 2.6 management.
+                    </p>
+                    <Link href="/tools/rosc"
+                      className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 active:scale-[0.98] transition-all">
+                      <HeartPulse className="h-3.5 w-3.5 shrink-0" />
+                      <span className="flex-1">Post-ROSC Care Tool</span>
+                      <span className="text-emerald-500">→</span>
+                    </Link>
+                    <Link href="/tools/cpg"
+                      className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2.5 text-xs font-semibold text-slate-300 hover:bg-slate-800 active:scale-[0.98] transition-all">
+                      <span className="flex-1">CPG 2.6 — Post-Cardiac Arrest Care</span>
+                      <span className="text-slate-500">→</span>
+                    </Link>
+                  </div>
+                )}
               </div>
-              <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-3 space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-slate-500" />
-                  <p className="text-xs font-bold text-slate-400">No ROSC</p>
-                </div>
-                <p className="text-[0.7rem] text-slate-400">
-                  Consider termination after 20 min with no response
-                </p>
-                <p className="text-[0.65rem] font-semibold text-slate-500">→ CPG 2.7</p>
+
+              {/* No ROSC */}
+              <div className="rounded-2xl border border-slate-700 bg-slate-900/60 overflow-hidden">
+                <button type="button" onClick={() => setNoRoscOpen(o => !o)}
+                  className="flex w-full items-center gap-2 px-3 py-2.5">
+                  <Clock className="h-4 w-4 text-slate-500 shrink-0" />
+                  <p className="flex-1 text-left text-xs font-bold text-slate-400">No ROSC</p>
+                  <p className="text-[0.62rem] font-semibold text-slate-600 mr-1">CPG 2.7</p>
+                  {noRoscOpen
+                    ? <ChevronUp className="h-3.5 w-3.5 text-slate-500" />
+                    : <ChevronDown className="h-3.5 w-3.5 text-slate-600" />}
+                </button>
+                {noRoscOpen && (
+                  <div className="px-3 pb-3 space-y-2 border-t border-slate-700/50">
+                    <p className="text-[0.7rem] text-slate-400 pt-2">
+                      Consider termination after 20 min with no response.
+                    </p>
+                    <Link href="/tools/cpg"
+                      className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2.5 text-xs font-semibold text-slate-300 hover:bg-slate-800 active:scale-[0.98] transition-all">
+                      <span className="flex-1">CPG 2.7 — Termination of Resuscitation</span>
+                      <span className="text-slate-500">→</span>
+                    </Link>
+                    <Link href="/tools/sop"
+                      className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2.5 text-xs font-semibold text-slate-300 hover:bg-slate-800 active:scale-[0.98] transition-all">
+                      <span className="flex-1">SOP — Scene & Deceased Management</span>
+                      <span className="text-slate-500">→</span>
+                    </Link>
+                    <Link href="/tools/cpm"
+                      className="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2.5 text-xs font-semibold text-slate-300 hover:bg-slate-800 active:scale-[0.98] transition-all">
+                      <span className="flex-1">CPM v4.0 — Clinical Procedures</span>
+                      <span className="text-slate-500">→</span>
+                    </Link>
+                  </div>
+                )}
               </div>
+
             </section>
 
             <p className="text-[0.65rem] text-slate-600 pb-2">

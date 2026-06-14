@@ -1,0 +1,3 @@
+## 2026-06-05 - Two-Step Reset Confirmation for Clinical Safety
+**Learning:** In high-pressure clinical environments (like a resuscitation timer), accidental destructive actions (Reset) can lead to significant data loss and stress. A two-step "Confirm?" pattern with a short (3s) auto-revert timeout provides a balance between speed and safety. High-contrast visual feedback (e.g., `bg-red-600`) is essential to distinguish the confirmation state.
+**Action:** Always implement a two-step confirmation with a timeout and distinct styling for high-risk reset/delete actions in medical or mission-critical tools. Ensure `setTimeout` is cleaned up on unmount.

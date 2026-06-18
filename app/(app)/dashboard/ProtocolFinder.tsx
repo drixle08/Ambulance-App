@@ -265,7 +265,7 @@ export function ProtocolFinder() {
                             {entry.title}
                           </p>
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {entry.section} Â· p.{entry.printedPage}
+                            {entry.section} · p.{entry.printedPage}
                           </p>
                         </div>
                         <span className="shrink-0 rounded-full bg-cyan-100 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-400">

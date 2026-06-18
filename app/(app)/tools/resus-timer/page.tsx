@@ -63,6 +63,8 @@ export default function ResuscitationTimerPage() {
   // Drug tracking
   const [lastAdrenalineAt, setLastAdrenalineAt] = useState<number | null>(null);
   const [amiodaroneDose, setAmiodaroneDose] = useState<0 | 1 | 2>(0);
+  const [isConfirmingReset, setIsConfirmingReset] = useState(false);
+
   const voiceSupported = useMemo(() => {
     if (typeof window === "undefined") return false;
     const SpeechRec: SpeechRecognitionConstructor | undefined =
@@ -97,6 +99,13 @@ export default function ResuscitationTimerPage() {
   // Drug refs (avoid stale closures in setInterval)
   const lastAdrenalineAtRef = useRef<number | null>(null);
   const amiodaroneDoseRef = useRef<0 | 1 | 2>(0);
+  const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     elapsedRef.current = elapsedSeconds;
@@ -289,6 +298,22 @@ export default function ResuscitationTimerPage() {
   }, [addLog, isRunning]);
 
   const handleReset = useCallback(() => {
+    if (!isConfirmingReset) {
+      vibrate(35);
+      setIsConfirmingReset(true);
+      if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+      resetTimeoutRef.current = setTimeout(() => {
+        setIsConfirmingReset(false);
+      }, 3000);
+      return;
+    }
+
+    if (resetTimeoutRef.current) {
+      clearTimeout(resetTimeoutRef.current);
+      resetTimeoutRef.current = null;
+    }
+    setIsConfirmingReset(false);
+
     vibrate([35, 35, 35]);
     setIsRunning(false);
     setPhase("CPR");
@@ -308,7 +333,7 @@ export default function ResuscitationTimerPage() {
     setAmiodaroneDose(0);
     if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     addLog("Timer reset");
-  }, [addLog]);
+  }, [addLog, isConfirmingReset]);
 
   const handleShock = () => {
     vibrate([90, 45, 90]);
@@ -720,9 +745,13 @@ export default function ResuscitationTimerPage() {
           <button
             type="button"
             onClick={handleReset}
-            className="h-16 min-w-28 rounded-3xl border border-slate-700 bg-slate-900 text-base font-black text-slate-100 shadow-md active:translate-y-[1px]"
+            className={`h-16 min-w-28 rounded-3xl border font-black transition-colors shadow-md active:translate-y-[1px] ${
+              isConfirmingReset
+                ? "border-red-500 bg-red-600 text-white text-sm"
+                : "border-slate-700 bg-slate-900 text-slate-100 text-base"
+            }`}
           >
-            Reset
+            {isConfirmingReset ? "Confirm Reset?" : "Reset"}
           </button>
         </section>
 

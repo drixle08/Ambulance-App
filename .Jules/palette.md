@@ -1,0 +1,3 @@
+## 2025-05-15 - Clinical Action Confirmation Pattern
+**Learning:** In high-pressure clinical environments, guarding destructive actions (like resetting a resus timer) with a two-step confirmation pattern is essential to prevent accidental data loss. This pattern should include a visual change (e.g., high-contrast red), a clear label change (e.g., "Confirm?"), and an auto-revert timeout (e.g., 3 seconds) to return to the safe state if no action is taken.
+**Action:** Use a `useState` for confirmation status and a `useRef` for the auto-revert timeout, ensuring proper cleanup in `useEffect` to prevent memory leaks.

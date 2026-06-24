@@ -60,6 +60,8 @@ export default function ResuscitationTimerPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [otherDialogOpen, setOtherDialogOpen] = useState(false);
   const [otherText, setOtherText] = useState("");
+  const [isConfirmingReset, setIsConfirmingReset] = useState(false);
+  const confirmTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // Drug tracking
   const [lastAdrenalineAt, setLastAdrenalineAt] = useState<number | null>(null);
   const [amiodaroneDose, setAmiodaroneDose] = useState<0 | 1 | 2>(0);
@@ -113,6 +115,12 @@ export default function ResuscitationTimerPage() {
   useEffect(() => {
     cycleRef.current = cycleNumber;
   }, [cycleNumber]);
+
+  useEffect(() => {
+    return () => {
+      if (confirmTimeoutRef.current) clearTimeout(confirmTimeoutRef.current);
+    };
+  }, []);
 
   // Persist voice preference
   useEffect(() => {
@@ -309,6 +317,21 @@ export default function ResuscitationTimerPage() {
     if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     addLog("Timer reset");
   }, [addLog]);
+
+  const triggerReset = useCallback(() => {
+    if (!isConfirmingReset) {
+      setIsConfirmingReset(true);
+      vibrate(40);
+      if (confirmTimeoutRef.current) clearTimeout(confirmTimeoutRef.current);
+      confirmTimeoutRef.current = setTimeout(() => {
+        setIsConfirmingReset(false);
+      }, 3000);
+    } else {
+      if (confirmTimeoutRef.current) clearTimeout(confirmTimeoutRef.current);
+      setIsConfirmingReset(false);
+      handleReset();
+    }
+  }, [isConfirmingReset, handleReset]);
 
   const handleShock = () => {
     vibrate([90, 45, 90]);
@@ -719,10 +742,14 @@ export default function ResuscitationTimerPage() {
           </button>
           <button
             type="button"
-            onClick={handleReset}
-            className="h-16 min-w-28 rounded-3xl border border-slate-700 bg-slate-900 text-base font-black text-slate-100 shadow-md active:translate-y-[1px]"
+            onClick={triggerReset}
+            className={`h-16 min-w-28 rounded-3xl border transition-colors ${
+              isConfirmingReset
+                ? "border-red-500 bg-red-600 text-white"
+                : "border-slate-700 bg-slate-900 text-slate-100"
+            } text-base font-black shadow-md active:translate-y-[1px]`}
           >
-            Reset
+            {isConfirmingReset ? "Confirm?" : "Reset"}
           </button>
         </section>
 

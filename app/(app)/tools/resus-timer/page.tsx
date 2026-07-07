@@ -60,6 +60,9 @@ export default function ResuscitationTimerPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [otherDialogOpen, setOtherDialogOpen] = useState(false);
   const [otherText, setOtherText] = useState("");
+  const [resetConfirm, setResetConfirm] = useState(false);
+  const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Drug tracking
   const [lastAdrenalineAt, setLastAdrenalineAt] = useState<number | null>(null);
   const [amiodaroneDose, setAmiodaroneDose] = useState<0 | 1 | 2>(0);
@@ -288,8 +291,7 @@ export default function ResuscitationTimerPage() {
     setIsRunning(true);
   }, [addLog, isRunning]);
 
-  const handleReset = useCallback(() => {
-    vibrate([35, 35, 35]);
+  const performReset = useCallback(() => {
     setIsRunning(false);
     setPhase("CPR");
     phaseRef.current = "CPR";
@@ -308,7 +310,35 @@ export default function ResuscitationTimerPage() {
     setAmiodaroneDose(0);
     if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     addLog("Timer reset");
+    setResetConfirm(false);
   }, [addLog]);
+
+  const handleReset = useCallback(() => {
+    if (resetTimeoutRef.current) {
+      clearTimeout(resetTimeoutRef.current);
+      resetTimeoutRef.current = null;
+    }
+
+    if (resetConfirm) {
+      vibrate([35, 35, 35]);
+      performReset();
+    } else {
+      vibrate(25);
+      setResetConfirm(true);
+      resetTimeoutRef.current = setTimeout(() => {
+        setResetConfirm(false);
+        resetTimeoutRef.current = null;
+      }, 3000);
+    }
+  }, [resetConfirm, performReset]);
+
+  useEffect(() => {
+    return () => {
+      if (resetTimeoutRef.current) {
+        clearTimeout(resetTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleShock = () => {
     vibrate([90, 45, 90]);
@@ -451,7 +481,7 @@ export default function ResuscitationTimerPage() {
       if (recentCommand) return;
 
       if (hasReset) {
-        handleReset();
+        performReset();
         lastVoiceCommandAtRef.current = now;
         return;
       }
@@ -496,7 +526,7 @@ export default function ResuscitationTimerPage() {
       recognitionRef.current = null;
       setVoiceListening(false);
     };
-  }, [handleReset, handleStartPause, voiceEnabled, voiceSupported]);
+  }, [performReset, handleStartPause, voiceEnabled, voiceSupported]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
@@ -720,9 +750,13 @@ export default function ResuscitationTimerPage() {
           <button
             type="button"
             onClick={handleReset}
-            className="h-16 min-w-28 rounded-3xl border border-slate-700 bg-slate-900 text-base font-black text-slate-100 shadow-md active:translate-y-[1px]"
+            className={`h-16 min-w-28 rounded-3xl border text-base font-black transition-colors shadow-md active:translate-y-[1px] ${
+              resetConfirm
+                ? "border-red-600 bg-red-600 text-white"
+                : "border-slate-700 bg-slate-900 text-slate-100"
+            }`}
           >
-            Reset
+            {resetConfirm ? "Confirm?" : "Reset"}
           </button>
         </section>
 

@@ -210,6 +210,7 @@ export default function VitalsByAgePage() {
             type="button"
             onClick={() => router.back()}
             className="p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+            aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>

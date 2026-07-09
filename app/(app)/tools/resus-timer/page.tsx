@@ -58,6 +58,7 @@ export default function ResuscitationTimerPage() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [metronomeOn, setMetronomeOn] = useState(true);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [isConfirmingReset, setIsConfirmingReset] = useState(false);
   const [otherDialogOpen, setOtherDialogOpen] = useState(false);
   const [otherText, setOtherText] = useState("");
   // Drug tracking
@@ -97,6 +98,7 @@ export default function ResuscitationTimerPage() {
   // Drug refs (avoid stale closures in setInterval)
   const lastAdrenalineAtRef = useRef<number | null>(null);
   const amiodaroneDoseRef = useRef<0 | 1 | 2>(0);
+  const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     elapsedRef.current = elapsedSeconds;
@@ -123,6 +125,13 @@ export default function ResuscitationTimerPage() {
       // ignore storage errors
     }
   }, [voiceEnabled]);
+
+  // Cleanup reset confirmation timeout
+  useEffect(() => {
+    return () => {
+      if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+    };
+  }, []);
 
   const getAudioContext = useCallback((): AudioContext | null => {
     if (typeof window === "undefined") return null;
@@ -289,6 +298,19 @@ export default function ResuscitationTimerPage() {
   }, [addLog, isRunning]);
 
   const handleReset = useCallback(() => {
+    if (!isConfirmingReset) {
+      vibrate(35);
+      setIsConfirmingReset(true);
+      if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+      resetTimeoutRef.current = setTimeout(() => {
+        setIsConfirmingReset(false);
+      }, 3000);
+      return;
+    }
+
+    if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+    setIsConfirmingReset(false);
+
     vibrate([35, 35, 35]);
     setIsRunning(false);
     setPhase("CPR");
@@ -308,7 +330,7 @@ export default function ResuscitationTimerPage() {
     setAmiodaroneDose(0);
     if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     addLog("Timer reset");
-  }, [addLog]);
+  }, [addLog, isConfirmingReset]);
 
   const handleShock = () => {
     vibrate([90, 45, 90]);
@@ -720,9 +742,13 @@ export default function ResuscitationTimerPage() {
           <button
             type="button"
             onClick={handleReset}
-            className="h-16 min-w-28 rounded-3xl border border-slate-700 bg-slate-900 text-base font-black text-slate-100 shadow-md active:translate-y-[1px]"
+            className={`h-16 min-w-28 rounded-3xl border transition-colors ${
+              isConfirmingReset
+                ? "border-red-500 bg-red-600 text-white"
+                : "border-slate-700 bg-slate-900 text-slate-100"
+            } text-base font-black shadow-md active:translate-y-[1px]`}
           >
-            Reset
+            {isConfirmingReset ? "Confirm?" : "Reset"}
           </button>
         </section>
 

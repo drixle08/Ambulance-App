@@ -319,8 +319,8 @@ const BUNDLES: Bundle[] = [
       {
         id: "asth-mag",
         label: "Magnesium Sulphate IV",
-        sublabel: "2 g IV over 20 min",
-        detail: "2 g (4 mL of 50% solution) diluted in 100 mL NaCl 0.9%. Infuse over 20 minutes. Single dose. Smooth muscle relaxant → bronchodilation.",
+        sublabel: "2 g IV over 10 min",
+        detail: "2 g (4 mL of 50% solution) diluted in 100 mL NaCl 0.9%. Infuse over 10 minutes. May repeat once to a max dose of 4 g. Smooth muscle relaxant → bronchodilation.",
         caution: "Rapid infusion → flushing, hypotension, arrhythmia. Monitor BP throughout infusion.",
       },
       {

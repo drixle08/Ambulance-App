@@ -224,7 +224,7 @@ const BUNDLES: Bundle[] = [
         id: "sed-bp",
         label: "BP every 5 minutes",
         sublabel: "Automated NIBP — q5 min minimum",
-        detail: "q5 min minimum; increase frequency if haemodynamically unstable. Target MAP >65 mmHg (>80 mmHg if TBI). Document MAP trend.",
+        detail: "q5 min minimum; increase frequency if haemodynamically unstable. Target MAP >65 mmHg (isolated TBI: 70–80 mmHg · TBI + polytrauma: ≥65 mmHg). Document MAP trend.",
       },
       {
         id: "sed-etco2",
@@ -378,7 +378,7 @@ const BUNDLES: Bundle[] = [
         sublabel: "250 mL bolus → target SBP 80–90 mmHg",
         note: "Permissive hypotension",
         detail: "250 mL NaCl 0.9% IV bolus. Reassess after each bolus. Target SBP 80–90 mmHg (permissive hypotension — reduces ongoing blood loss). Avoid >2 L crystalloid.",
-        caution: "Exception — TBI: maintain MAP ≥80 mmHg. Penetrating torso: target SBP ~80 until surgical haemostasis.",
+        caution: "Exception — TBI: target MAP 70–80 mmHg if isolated, ≥65 mmHg if polytrauma. Penetrating torso: target SBP ~80 until surgical haemostasis.",
       },
       {
         id: "trauma-o2",

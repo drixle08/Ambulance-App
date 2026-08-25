@@ -159,8 +159,8 @@ const BUNDLES: Bundle[] = [
       {
         id: "apo-gtn",
         label: "GTN",
-        sublabel: "300–600 mcg SL q5 min  |  IV 5–10 mcg/min",
-        detail: "SL: 300–600 mcg (1–2 sprays or 1 tablet) q5 min, max 3 doses.\nIV infusion: Start 5–10 mcg/min. Titrate in 5–10 mcg/min steps q3–5 min. Usual range 10–100 mcg/min.",
+        sublabel: "400–1200 mcg SL q5 min  |  IV 5–10 mcg/min",
+        detail: "SL: 400–1200 mcg (1–3 sprays) q5 min and SBP >100 mmHg, max 3 doses.\nIV infusion: Start 5–10 mcg/min. Titrate in 5–10 mcg/min steps q3–5 min. Usual range 10–100 mcg/min.",
         caution: "Hold if: SBP <100 · HR <50 or >100 · inferior/RV STEMI · PDE-5 inhibitor within 24–48 h (sildenafil / tadalafil)",
       },
       {
@@ -430,8 +430,8 @@ const BUNDLES: Bundle[] = [
       {
         id: "stemi-gtn",
         label: "GTN",
-        sublabel: "300–600 mcg SL q5 min  |  IV 5–10 mcg/min",
-        detail: "SL: 300–600 mcg q5 min, max 3 doses.\nIV infusion: Start 5–10 mcg/min, titrate to symptom relief and haemodynamic tolerance.",
+        sublabel: "400 mcg SL (1 spray) q5 min  |  IV 5–10 mcg/min",
+        detail: "SL: 400 mcg (1 spray), repeat PRN q5 min and SBP >100 mmHg.\nIV infusion: Start 5–10 mcg/min, titrate to symptom relief and haemodynamic tolerance.",
         caution: "Hold if: SBP <100 · HR <50 or >100 · inferior STEMI (RV infarct) · PDE-5 inhibitor within 24–48 h",
       },
       {

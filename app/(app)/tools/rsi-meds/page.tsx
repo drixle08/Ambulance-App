@@ -544,7 +544,7 @@ function ConfirmContent() {
         {[
           { label: "Adult male", value: "8.0–9.0 mm ID · Depth at lips 23 cm" },
           { label: "Adult female", value: "7.0–8.0 mm ID · Depth at lips 21 cm" },
-          { label: "Paeds uncuffed", value: "(Age ÷ 4) + 4 mm · Depth (Age × 3) + 12 cm" },
+          { label: "Paeds uncuffed", value: "(Age ÷ 4) + 4 mm · Depth (Age ÷ 2) + 12 cm" },
           { label: "Paeds cuffed", value: "(Age ÷ 4) + 3.5 mm · Cuff ≤20 cmH₂O" },
         ].map(({ label, value }) => (
           <div key={label} className="flex items-baseline gap-2 mb-1">

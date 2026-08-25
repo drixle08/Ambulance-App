@@ -204,7 +204,7 @@ const BUNDLES: Bundle[] = [
         id: "crit-spo2",
         label: "SpO₂ — opposite arm to BP",
         sublabel: "Contralateral limb to NIBP cuff",
-        detail: "SpO₂ probe on opposite arm/finger to BP cuff — prevents artefact during NIBP cycles. Target SpO₂ 94–98% (93–95% in COPD/chronic hypercapnia).",
+        detail: "SpO₂ probe on opposite arm/finger to BP cuff — prevents artefact during NIBP cycles. Target SpO₂ 94–98% (88–92% in COPD/chronic hypercapnia).",
       },
       {
         id: "crit-ecg",

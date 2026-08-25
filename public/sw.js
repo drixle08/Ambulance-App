@@ -44,7 +44,6 @@ self.addEventListener("install", (event) => {
           }
         })
       );
-      self.skipWaiting();
     })()
   );
 });
@@ -59,6 +58,16 @@ self.addEventListener("activate", (event) => {
       await self.clients.claim();
     })()
   );
+});
+
+// The new worker installs and precaches in the background but stays in the
+// "waiting" state until the page explicitly asks it to take over. This lets
+// the UI surface an "update available" prompt instead of silently swapping
+// versions out from under a crew mid-shift.
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {

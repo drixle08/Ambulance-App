@@ -25,7 +25,7 @@ const summaryText =
   "PREPARE: 100% O₂ ×3–5 min, SpO₂ >95%, sniffing/ramped position, 3 ETT sizes + bougie + suction, IV/IO access, drugs drawn, failed airway plan ready. " +
   "PRE-TREAT (T−3 min): Fentanyl 1–3 mcg/kg IV slow push — OMIT if haemodynamic compromise, opioid/BZD/alcohol toxidrome, suspected raised ICP without haemodynamic reserve. " +
   "Paeds atropine 0.02 mg/kg IV (min 0.1 mg, max 0.5 mg). " +
-  "INDUCE (T=0): Ketamine 1.5–2 mg/kg IV. If haemodynamically compromised: 1 mg/kg. Alt: Midazolam 0.1 mg/kg IV. " +
+  "INDUCE (T=0): Ketamine 1–2 mg/kg IV — adjust based on haemodynamic stability (reduce toward 1 mg/kg if compromised). Alt: Midazolam 0.1 mg/kg IV. " +
   "PARALYSE: Succinylcholine 1.5 mg/kg IV — onset 30–60 s, duration 8–12 min. " +
   "If Sux CI: Rocuronium 1.2 mg/kg IV — onset 60–90 s, duration 45–70 min. " +
   "Sux CI: hyperkalaemia, rhabdomyolysis, burns/crush >48h, neuromuscular disease. " +
@@ -447,11 +447,11 @@ function InduceContent() {
     <>
       <RsiDrugCard
         name="Ketamine"
-        dose="1.5–2 mg/kg IV"
+        dose="1–2 mg/kg IV"
         route="IV"
         onset="30–60 sec"
         note="First-line prehospital induction agent. Dissociative — maintains airway reflexes and haemodynamic stability. Bronchodilator effect is advantageous in bronchospasm."
-        alt="Haemodynamically compromised: reduce to 1–1.5 mg/kg IV"
+        alt="Haemodynamically compromised: reduce toward 1 mg/kg IV — adjust dose based on haemodynamic stability"
         omit="suspected raised intracranial pressure without haemodynamic instability (relative CI), known severe/uncontrolled hypertension"
         omitSub="If Ketamine contraindicated, use Midazolam. Note: Ketamine may actually be safe in isolated TBI — discuss with CCP/MO."
       />
@@ -898,7 +898,7 @@ export default function RsiMedsPage() {
               { label: "Fentanyl lead time", value: "T−3 min", color: "text-amber-300" },
               { label: "Sux dose", value: "1.5 mg/kg", color: "text-rose-300" },
               { label: "Rocuronium (RSI)", value: "1.2 mg/kg", color: "text-rose-300" },
-              { label: "Ketamine induction", value: "1.5–2 mg/kg", color: "text-violet-300" },
+              { label: "Ketamine induction", value: "1–2 mg/kg", color: "text-violet-300" },
               { label: "Post-intubation ETCO₂", value: "35–45 mmHg", color: "text-emerald-300" },
             ].map(({ label, value, color }) => (
               <div key={label} className="flex items-baseline gap-1">

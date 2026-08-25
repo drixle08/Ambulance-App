@@ -120,9 +120,9 @@ const VASOPRESSOR_OPTIONS: DoseOption[] = [
   {
     id: "vaso-nora",
     label: "Noradrenaline",
-    dose: "0.01–0.5 mcg/kg/min",
+    dose: "0.01–0.3 mcg/kg/min",
     route: "IV infusion",
-    detail: "Preparation: 4 mg in 50 mL (80 mcg/mL) or per local protocol. Start 0.01–0.05 mcg/kg/min. Titrate q5 min to MAP ≥65 mmHg.",
+    detail: "Preparation: 4 mg in 50 mL (80 mcg/mL) or per local protocol. Start 0.01–0.05 mcg/kg/min, increase by 0.05 mcg/kg/min if required. Titrate q5 min to MAP ≥65 mmHg.",
     caution: "Extravasation → tissue necrosis. Central access preferred. First-line vasopressor.",
   },
   {

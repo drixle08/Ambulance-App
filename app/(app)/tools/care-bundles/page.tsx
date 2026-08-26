@@ -144,6 +144,10 @@ const BUNDLES: Bundle[] = [
     color: "sky",
     items: [
       {
+        // CPG p.76 (4.5 APO): PEEP 5→15 cmH2O confirmed. Extended scope, not CPG-stated:
+        // 2.5 cmH2O titration step, SpO2 94-98% range (CPG gives only a >94% floor, no
+        // ceiling), continuous ETCO2 mention, and the contraindication list (CPG's only
+        // related statement is permissive of CPAP with reduced LOC, not a GCS<10 cutoff).
         id: "apo-cpap",
         label: "CPAP",
         sublabel: "5 → 15 cmH₂O  |  FiO₂ to SpO₂ 94–98%",
@@ -151,6 +155,7 @@ const BUNDLES: Bundle[] = [
         caution: "Contraindicated: active vomiting · facial trauma · GCS <10 · suspected pneumothorax",
       },
       {
+        // Extended scope — no numeric ETCO2 target appears anywhere in CPG v2.5.
         id: "apo-etco2",
         label: "ETCO₂",
         sublabel: "Target 35–45 mmHg",
@@ -164,6 +169,8 @@ const BUNDLES: Bundle[] = [
         caution: "Hold if: SBP <100 · HR <50 or >100 · inferior/RV STEMI · PDE-5 inhibitor within 24–48 h (sildenafil / tadalafil)",
       },
       {
+        // CPG p.76 (4.5 APO): "12-lead ECG" is a listed algorithm step. Transmission
+        // instruction is extended scope (general practice, not APO-specific in CPG).
         id: "apo-12ecg",
         label: "12-lead ECG",
         sublabel: "Obtain → interpret → transmit",

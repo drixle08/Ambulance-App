@@ -64,19 +64,27 @@ const COLOR: Record<BundleColor, ColorDef> = {
 
 const ADRENALINE_OPTIONS: DoseOption[] = [
   {
+    // CPG p.285/110: 500mcg (0.5mg) IM, repeat q5min confirmed. Injection site
+    // is extended scope (CPG only says rotate sites, doesn't specify thigh).
+    // "Max 3 doses" corrected -- CPG frames the 3rd dose as an escalation
+    // trigger to IV push-dose adrenaline, not a hard stop (CPG p.108).
     id: "adr-im",
     label: "Adrenaline IM",
     dose: "500 mcg (0.5 mg)",
     route: "IM — anterolateral thigh",
-    detail: "Use 1:1,000 (1 mg/mL). Inject into anterolateral thigh. May repeat q5 min. Max 3 doses.",
+    detail: "Use 1:1,000 (1 mg/mL). Inject into anterolateral thigh. May repeat q5 min. If unresponsive after 3 doses, escalate to IV push-dose adrenaline.",
     caution: "Confirm 1:1,000 concentration for IM. Do NOT use 1:10,000 IM.",
   },
   {
+    // CPG p.284-285/110: push-dose range corrected from 50-100mcg to
+    // 20-50mcg (formulary max single dose is 1mcg/kg, max 50mcg). Dilution
+    // corrected from 0.1mg/mL to the CPG's stated 10mcg/mL prep -- the
+    // previous instructions were 10x more concentrated than CPG specifies.
     id: "adr-iv",
     label: "Adrenaline IV",
-    dose: "50–100 mcg (0.05–0.1 mg)",
+    dose: "20–50 mcg (max single dose 50 mcg)",
     route: "IV slow bolus",
-    detail: "Dilute 1:1,000 → 1:10,000: draw 1 mL adrenaline into 9 mL NaCl (0.1 mg/mL). Give 0.5–1 mL (50–100 mcg) slow IV. Titrate to response.",
+    detail: "Mix 1 mg (1:1,000, 1 mL) into 100 mL NaCl = 10 mcg/mL. Give 2–5 mL (20–50 mcg) slow IV. Titrate to response.",
     caution: "Continuous ECG mandatory. Risk of arrhythmia. Reserve for refractory cases / cardiovascular collapse.",
   },
 ];
@@ -290,25 +298,31 @@ const BUNDLES: Bundle[] = [
     color: "orange",
     items: [
       {
+        // IV range corrected alongside ADRENALINE_OPTIONS above (CPG p.284-285/110).
         id: "ana-adr",
         label: "Adrenaline",
-        sublabel: "500 mcg IM  |  50–100 mcg IV",
+        sublabel: "500 mcg IM  |  20–50 mcg IV",
         options: ADRENALINE_OPTIONS,
       },
       {
+        // CPG p.309-310/109-110: "IM/IV/IO 50mg — Single dose" -- corrected from
+        // a 25-50mg range to the CPG's fixed 50mg dose.
         id: "ana-diph",
         label: "Diphenhydramine IV",
-        sublabel: "25–50 mg IV slow",
-        detail: "25–50 mg slow IV over 2–3 min. H₁ antihistamine — adjunct to adrenaline, not a replacement. Reduces urticaria and angioedema.",
+        sublabel: "50 mg IV slow",
+        detail: "50 mg slow IV/IO over 2–3 min. H₁ antihistamine — adjunct to adrenaline, not a replacement. Reduces urticaria and angioedema.",
         caution: "Does NOT treat hypotension or bronchospasm. Adrenaline remains primary treatment.",
       },
       {
+        // CPG p.110: "IV Fluids 500-1000ml repeat as required" -- corrected
+        // from a fixed 1,000 mL to the CPG's repeatable 500-1000 mL bolus.
         id: "ana-fluids",
         label: "Fluids IV",
-        sublabel: "1,000 mL NaCl 0.9% rapid bolus",
-        detail: "Rapid 1 L bolus NaCl 0.9% IV (pressure bag if required). Repeat PRN. Distributive shock — large volumes may be needed. Reassess BP and HR after each bolus.",
+        sublabel: "500–1,000 mL NaCl 0.9%, repeat PRN",
+        detail: "500 mL–1 L bolus NaCl 0.9% IV (pressure bag if required). Repeat PRN. Distributive shock — large volumes may be needed. Reassess BP and HR after each bolus.",
       },
       {
+        // CPG p.327/109-110: "IM/IV/IO 200mg — Single dose" confirmed.
         id: "ana-hydro",
         label: "Hydrocortisone IV",
         sublabel: "200 mg IV",

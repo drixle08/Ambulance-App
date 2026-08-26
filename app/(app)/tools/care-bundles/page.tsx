@@ -503,12 +503,22 @@ const BUNDLES: Bundle[] = [
     color: "emerald",
     items: [
       {
+        // NOTE: CPG p.68's ACS algorithm lists only Penthrox and Fentanyl for
+        // STEMI/ACS analgesia -- Ketamine isn't listed, and its own formulary
+        // entry flags suspected ACS as a precaution requiring reduced dosing.
+        // ANALGESIA_OPTIONS is shared with Major Trauma, where Ketamine is
+        // appropriate; splitting the option set per bundle is a structural
+        // change beyond a value fix, not made here -- flagged for review.
         id: "stemi-analg",
         label: "Analgesia",
         sublabel: "Select agent ↓",
         options: ANALGESIA_OPTIONS,
       },
       {
+        // CPG p.67-68: "Aspirin - 300mg" confirmed for both STEMI and ACS-Other
+        // pathways. Extended scope: "chewed" administration detail (CPG doesn't
+        // specify; chewing-speeds-absorption is standard pharmacology, not
+        // contradicted by anything in CPG).
         id: "stemi-asp",
         label: "Aspirin",
         sublabel: "300 mg PO — chewed",
@@ -516,6 +526,8 @@ const BUNDLES: Bundle[] = [
         caution: "Hold if: aspirin allergy · active GI haemorrhage · severe thrombocytopaenia",
       },
       {
+        // CPG p.66-68: "Clopidogrel - 600mg (AP only to administer following
+        // Clinical Desk advice)"; withhold-if-non-diagnostic rule confirmed.
         id: "stemi-clop",
         label: "Clopidogrel",
         sublabel: "600 mg PO — STEMI only",
@@ -523,10 +535,12 @@ const BUNDLES: Bundle[] = [
         caution: "Withhold for suspected STEMI when the initial ECG does not meet STEMI criteria, and hold if active major bleeding or true contraindication.",
       },
       {
+        // CPG p.66: "Consider the A/P position as the primary placement" for
+        // STEMI -- corrected from "anterior-lateral" as the stated method.
         id: "stemi-defib",
         label: "Defib pads on",
-        sublabel: "Hands-free pads — monitor mode",
-        detail: "Apply anterior-lateral hands-free defib pads immediately on confirmed STEMI. High risk of VF. Continuous rhythm monitoring. Crew briefed to defibrillate immediately if VF.",
+        sublabel: "Anterior-posterior preferred — monitor mode",
+        detail: "Apply defib pads immediately on confirmed STEMI, A/P position as primary placement (anterior-lateral if A/P not practical). High risk of VF. Continuous rhythm monitoring. Crew briefed to defibrillate immediately if VF.",
       },
       {
         id: "stemi-gtn",
@@ -536,10 +550,24 @@ const BUNDLES: Bundle[] = [
         caution: "Hold if: SBP <100 · HR <50 or >100 · inferior STEMI (RV infarct) · PDE-5 inhibitor within 24–48 h",
       },
       {
+        // CPG p.65-67 checked directly: the CPG does NOT itself quantify STE
+        // mm/lead-count thresholds for STEMI (treated as a known clinical
+        // skill) -- that numeric criterion here is extended scope, not CPG-
+        // stated. What IS CPG-confirmed: ST depression in V1-V3 = posterior
+        // STEMI equivalent (corrected from being folded into the STE/mm
+        // criteria above -- it's a distinct finding, not an elevation
+        // threshold). "New LBBB" corrected to match CPG's actual stance:
+        // "Isolated LBBB without symptoms suggestive of a STEMI should be
+        // transported to the nearest ED, not Heart Hospital" -- the opposite
+        // of treating LBBB as a bypass trigger. "Transmit to cath lab /
+        // pre-notify cardiology / repeat every 15 min" replaced with CPG's
+        // actual terminology and repeat rule: notify Heart Hospital, and (for
+        // suspected-but-non-diagnostic STEMI only) repeat 12-lead on ED
+        // arrival before unloading -- not a periodic en-route interval.
         id: "stemi-12ecg",
         label: "12-lead ECG",
-        sublabel: "Obtain + transmit to cath lab",
-        detail: "Perform 12-lead immediately. Identify: STE ≥1 mm in ≥2 contiguous leads (≥2 mm in V₁–V₃), new LBBB. Transmit to cath lab. Pre-notify cardiology. Repeat every 15 min.",
+        sublabel: "Obtain → notify Heart Hospital",
+        detail: "Perform 12-lead immediately. STEMI-meeting ECG, or ST depression in V₁–V₃ (posterior STEMI equivalent) → Transport P1 to Heart Hospital, notify en route. Isolated LBBB without STEMI symptoms → nearest ED, not Heart Hospital. If suspected but non-diagnostic: withhold Clopidogrel, repeat 12-lead on ED arrival before unloading.",
       },
     ],
   },

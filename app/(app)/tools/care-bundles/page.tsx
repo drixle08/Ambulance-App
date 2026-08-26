@@ -391,19 +391,28 @@ const BUNDLES: Bundle[] = [
     color: "teal",
     items: [
       {
+        // CPG p.301-302/277: 6mg single dose confirmed; oral route added
+        // (CPG: "IM or oral route may be used if IV access not available",
+        // previously omitted). Trigger broadened to match CPG's actual
+        // criterion -- not purely an SpO2<93% cutoff, but any patient on CPAP
+        // or requiring supplemental O2 to maintain SpO2 >93%.
         id: "covid-dexa",
-        label: "Dexamethasone IV / IM",
+        label: "Dexamethasone IV / IM / PO",
         sublabel: "6 mg — single dose",
-        note: "if SpO₂ < 93%",
-        detail: "6 mg IV or IM as a single pre-hospital dose. Anti-inflammatory — reduces cytokine storm in COVID-19 pneumonitis. IV preferred if access available.",
-        caution: "Administer only if SpO₂ <93% on supplemental O₂. Immunosuppressive — document administration.",
+        note: "if on CPAP or needs O₂ to keep SpO₂ > 93%",
+        detail: "6 mg IV, IM, or PO as a single pre-hospital dose. Anti-inflammatory — reduces cytokine storm in COVID-19 pneumonitis. IV preferred if access available; oral/IM if not.",
+        caution: "Administer if on CPAP, or requires supplemental O₂ to maintain SpO₂ >93%. Immunosuppressive — document administration.",
       },
       {
+        // CPG p.277 (17.1): "PEEP at 10cmH2O, increase up to 12-15 cmH2O" --
+        // corrected from 5->10; both the start and ceiling were too low. Trigger
+        // corrected from "RR > 30" to "RR >= 30" to match CPG's stated cutoff.
+        // Contraindication list is extended scope -- no such list in CPG.
         id: "covid-cpap",
         label: "CPAP",
-        sublabel: "5 → 10 cmH₂O  |  FiO₂ to SpO₂ 94–98%",
-        note: "if RR > 30 or SpO₂ < 93%",
-        detail: "Start PEEP 5 cmH₂O. Titrate to 10 cmH₂O if tolerated and SpO₂ improving. Adjust FiO₂ for SpO₂ 94–98%. Monitor for fatigue — patient must maintain airway.",
+        sublabel: "10 → 12–15 cmH₂O  |  FiO₂ to SpO₂ 94–98%",
+        note: "if RR ≥ 30 or SpO₂ < 93%",
+        detail: "Start PEEP 10 cmH₂O. Titrate up to 12–15 cmH₂O if tolerated and SpO₂ improving. Adjust FiO₂ for SpO₂ 94–98%. Monitor for fatigue — patient must maintain airway.",
         caution: "Contraindicated: GCS <10 · vomiting · haemodynamic instability · inability to protect airway",
       },
     ],

@@ -577,27 +577,49 @@ const BUNDLES: Bundle[] = [
     color: "indigo",
     items: [
       {
+        // CPG p.58: B/E/F/A/S/T definitions confirmed.
         id: "stroke-befast",
         label: "BEFAST Assessment",
         sublabel: "Balance · Eyes · Face · Arms · Speech · Time",
         detail: "B — Balance: sudden loss of coordination or balance\nE — Eyes: sudden vision change (blurred, double, loss)\nF — Face: facial droop (ask patient to smile)\nA — Arms: arm or leg drift or weakness\nS — Speech: slurred, wrong words, no speech\nT — Time: record exact onset time. If unknown → time last seen well.",
       },
       {
+        // CPG p.58: <15h/uncertain-onset window confirmed (checked in a prior
+        // pass). "John Hunter Hospital" corrected to "HGH" (Hamad General
+        // Hospital) -- CPG never names any other facility; the label above
+        // already correctly said "HGH", only this detail text had the wrong
+        // name. Extended scope, kept: the "~1.9 million neurons/min" statistic
+        // doesn't appear in CPG (a commonly-cited stroke-education figure, not
+        // contradicted by anything in the document).
         id: "stroke-p1",
         label: "Priority 1 → HGH",
         sublabel: "Pre-notify stroke team",
         note: "< 15 h from onset, or uncertain onset time",
-        detail: "Pre-notify John Hunter Hospital stroke team on route. Bypass other facilities if within criteria. Every 1 min of delay = ~1.9 million neurons lost. Document: GCS, BEFAST result, onset time, last seen well time.",
+        detail: "Pre-notify HGH stroke team on route. Bypass other facilities if within criteria. Every 1 min of delay = ~1.9 million neurons lost. Document: GCS, BEFAST result, onset time, last seen well time.",
         caution: "Uncertain onset time = treat as eligible (default to P1). Do not delay transport for further assessment.",
       },
       {
+        // CPG p.111/305-306: <4.0 mmol/L threshold confirmed. Dose corrected
+        // from 100 mL to CPG's "15-20g D10W (150-200ml)". Recheck instruction
+        // corrected from a fixed 5-min timer to CPG's actual rule: "repeat if
+        // patient remains hypoglycaemic" -- CPG doesn't specify a time interval.
         id: "stroke-rbs",
         label: "RBS",
         sublabel: "Check BSL — treat if < 4.0 mmol/L",
-        detail: "Check blood glucose on all stroke patients — hypoglycaemia mimics stroke. If BSL <4.0 mmol/L: administer 100 mL of 10% glucose IV. Recheck BSL after 5 min. Document result.",
+        detail: "Check blood glucose on all stroke patients — hypoglycaemia mimics stroke. If BSL <4.0 mmol/L: administer 150–200 mL (15–20 g) Dextrose 10% IV. Repeat if patient remains hypoglycaemic. Document result.",
         caution: "Do NOT treat hyperglycaemia in the field — worsens outcome in ischaemic stroke",
       },
       {
+        // Extended scope, kept per policy — CPG's stroke BP guidance (p.58-60)
+        // is monitor-only and qualitative ("do not attempt to reduce BP using
+        // nitrates if hypertensive"); no active-treatment thresholds, target
+        // reduction percentage, or "avoid SBP<140" figure appear anywhere in
+        // CPG. FLAGGED FOR CLINICAL REVIEW: this isn't a minor omission --
+        // CPG's silence here reflects a deliberate permissive-hypertension
+        // stance in acute stroke, and this bundle actively directs BP-lowering
+        // against thresholds CPG doesn't set. Worth explicit governance
+        // sign-off given the direction of the discrepancy (CPG: don't
+        // intervene; bundle: intervene above defined numbers).
         id: "stroke-bp",
         label: "Regular BP monitoring",
         sublabel: "Monitor — do NOT aggressively treat",

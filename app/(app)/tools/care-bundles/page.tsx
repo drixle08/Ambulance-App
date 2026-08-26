@@ -91,14 +91,24 @@ const ADRENALINE_OPTIONS: DoseOption[] = [
 
 const ANALGESIA_OPTIONS: DoseOption[] = [
   {
+    // CPG p.347-348: onset corrected from "6-10 breaths" to CPG's "1-3
+    // minutes"; repeat corrected from "if required" to CPG's "may repeat
+    // once after 25 minutes". FLAGGED — could not confirm from CPG source:
+    // the "15 mL/week" cap has no CPG basis (CPG states only a 6mL/24h
+    // limit, no weekly figure). Left as-is per the keep-unsourced-values
+    // policy, but unclear whether this is a deliberate departmental safety
+    // margin or an error — needs a human clinical read, not a guess.
     id: "analg-methox",
     label: "Methoxyflurane (Penthrox)",
     dose: "3 mL inhaled",
     route: "Inhaled — Penthrox inhaler",
-    detail: "3 mL per inhaler, self-administered. Onset 6–10 breaths. Can repeat with second 3 mL inhaler if required. Max 6 mL/day, 15 mL/week.",
+    detail: "3 mL per inhaler, self-administered. Onset 1–3 min. May repeat once (second 3 mL inhaler) after 25 min. Max 6 mL/day, 15 mL/week.",
     caution: "Avoid in renal/hepatic impairment, altered conscious state, or haemodynamic instability.",
   },
   {
+    // Extended scope — Morphine does not appear anywhere in CPG v2.5 (full-
+    // text search of the entire document returns zero matches). Kept as
+    // departmental extended scope per policy; dosing here is not CPG-verified.
     id: "analg-morph",
     label: "Morphine",
     dose: "2.5–5 mg IV  |  0.1 mg/kg IN",
@@ -107,25 +117,32 @@ const ANALGESIA_OPTIONS: DoseOption[] = [
     caution: "Monitor RR. Naloxone ready. Avoid in hypovolaemia without concurrent fluid resuscitation.",
   },
   {
+    // CPG p.316-317: IV corrected from a flat 25-50mcg to the CPG's weight-
+    // based "1mcg/kg at 20mcg aliquots, repeat PRN every 1-2 min, max 200mcg
+    // total". IN dose (1-2mcg/kg, max 200mcg) already matched, unchanged.
     id: "analg-fent",
     label: "Fentanyl",
-    dose: "25–50 mcg IV  |  1–2 mcg/kg IN",
+    dose: "1 mcg/kg IV (20 mcg aliquots)  |  1–2 mcg/kg IN",
     route: "IV slow / Intranasal",
-    detail: "IV: 25–50 mcg slow IV. Repeat q5 min to effect. Max 200 mcg.\nIN: 1–2 mcg/kg (max 200 mcg). Use atomiser. Split between nostrils.",
+    detail: "IV: 1 mcg/kg in 20 mcg aliquots, slow IV. Repeat PRN q1–2 min to effect. Max 200 mcg total.\nIN: 1–2 mcg/kg (max 200 mcg). Use atomiser. Split between nostrils.",
     caution: "Rapid respiratory depression possible. Continuous monitoring required.",
   },
   {
+    // CPG p.336-337: dose corrected from 0.1-0.3mg/kg to CPG's "IV/IO
+    // 0.25-0.5mg/kg", and "repeat once" corrected to CPG's "Repeat PRN".
     id: "analg-ket",
     label: "Ketamine (sub-anaesthetic)",
-    dose: "0.1–0.3 mg/kg IV",
+    dose: "0.25–0.5 mg/kg IV",
     route: "IV slow bolus",
-    detail: "Sub-anaesthetic dose for analgesia. Give slow IV over 2–3 min. Can repeat once. Dissociative at higher doses.",
+    detail: "Sub-anaesthetic dose for analgesia. Give slow IV over 2–3 min (avoid rapid administration). Repeat PRN. Dissociative at higher doses.",
     caution: "Monitor airway and haemodynamics. Emergence reactions possible. Have airway equipment ready.",
   },
 ];
 
 const VASOPRESSOR_OPTIONS: DoseOption[] = [
   {
+    // CPG p.357 (formulary), corroborated p.168/170/173/52-53: 0.01-0.3
+    // mcg/kg/min confirmed (corrected from 0.01-0.5 in a prior pass).
     id: "vaso-nora",
     label: "Noradrenaline",
     dose: "0.01–0.3 mcg/kg/min",
@@ -134,6 +151,12 @@ const VASOPRESSOR_OPTIONS: DoseOption[] = [
     caution: "Extravasation → tissue necrosis. Central access preferred. First-line vasopressor.",
   },
   {
+    // Extended scope — Metaraminol does not appear anywhere in CPG v2.5 (full-
+    // text search of the entire document returns zero matches). CPG's actual
+    // vasopressor escalation for trauma/haemorrhage is Noradrenaline ->
+    // Phenylephrine -> Adrenaline infusion (p.167-170), neither of which
+    // Metaraminol nor Phenylephrine currently appear as an option here.
+    // Kept as departmental extended scope per policy; dosing not CPG-verified.
     id: "vaso-meta",
     label: "Metaraminol",
     dose: "0.5–1 mg IV bolus",
@@ -429,21 +452,34 @@ const BUNDLES: Bundle[] = [
         options: ANALGESIA_OPTIONS,
       },
       {
+        // CPG p.167: "maintain MAP just above 65mmHg" -- corrected trigger
+        // from "MAP < 50" (no "50" figure appears anywhere in CPG) to <65.
         id: "trauma-vaso",
         label: "Vasopressor",
-        sublabel: "If MAP < 50 after fluid bolus",
+        sublabel: "If MAP < 65 despite fluids",
         note: "Refractory hypotension despite fluids",
         options: VASOPRESSOR_OPTIONS,
       },
       {
+        // CPG p.167 (also 169-170): "Aim to maintain a MAP 65mmHg for adults...
+        // IV fluid 250ml boluses (Max 1L)" -- target parameter corrected from
+        // SBP 80-90 (permissive hypotension) to CPG's MAP 65 target, and cap
+        // corrected from >2L to the CPG's 1L. FLAGGED: the "penetrating torso
+        // SBP~80" caution has no CPG source and is expressed in SBP terms
+        // while the rest of this item is now MAP-based per the fix above --
+        // kept as extended scope per policy, but worth a clinical read since
+        // mixing SBP/MAP framing in the same item could read as inconsistent
+        // in the field.
         id: "trauma-fluids",
         label: "Fluids IV",
-        sublabel: "250 mL bolus → target SBP 80–90 mmHg",
-        note: "Permissive hypotension",
-        detail: "250 mL NaCl 0.9% IV bolus. Reassess after each bolus. Target SBP 80–90 mmHg (permissive hypotension — reduces ongoing blood loss). Avoid >2 L crystalloid.",
-        caution: "Exception — TBI: target MAP 70–80 mmHg if isolated, ≥65 mmHg if polytrauma. Penetrating torso: target SBP ~80 until surgical haemostasis.",
+        sublabel: "250 mL bolus → target MAP 65 mmHg",
+        note: "Permissive resuscitation",
+        detail: "250 mL NaCl 0.9% IV bolus. Reassess after each bolus. Target MAP just above 65 mmHg — do not attempt to restore normotension. Max 1 L crystalloid.",
+        caution: "Exception — TBI: target MAP 70–80 mmHg if isolated, ≥65 mmHg if polytrauma. Penetrating torso: target SBP ~80 until surgical haemostasis (extended scope, not in CPG).",
       },
       {
+        // Extended scope — CPG states only a >94% floor for trauma oxygen
+        // target; the 98% hyperoxia ceiling doesn't appear anywhere in CPG.
         id: "trauma-o2",
         label: "Oxygen",
         sublabel: "Target SpO₂ 94–98%",
@@ -451,6 +487,8 @@ const BUNDLES: Bundle[] = [
         caution: "Maintain SpO₂ 94–98%. Do not chase 100%.",
       },
       {
+        // CPG p.377-378: dose, dilution, duration, <3h window, and TBI GCS<=12
+        // trigger all confirmed.
         id: "trauma-txa",
         label: "TXA IV",
         sublabel: "2 g in 100 mL NaCl over 10 min",

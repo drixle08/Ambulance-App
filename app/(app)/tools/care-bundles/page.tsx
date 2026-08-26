@@ -337,28 +337,34 @@ const BUNDLES: Bundle[] = [
     color: "amber",
     items: [
       {
+        // IV range corrected alongside ADRENALINE_OPTIONS (CPG p.284-285/85).
         id: "asth-adr",
         label: "Adrenaline",
-        sublabel: "500 mcg IM  |  50–100 mcg IV",
+        sublabel: "500 mcg IM  |  20–50 mcg IV",
         options: ADRENALINE_OPTIONS,
       },
       {
+        // CPG p.85/84: "Fluid bolus - 250-500ml repeat as required"; overall
+        // adult cap 1L. Corrected from a fixed 500-1,000mL bolus.
         id: "asth-fluids",
         label: "Fluids IV",
-        sublabel: "500–1,000 mL NaCl 0.9%",
-        detail: "500 mL–1 L NaCl 0.9% IV. Patients are often dehydrated from increased work of breathing. IV fluid supports preload during elevated intrathoracic pressures.",
+        sublabel: "250–500 mL bolus, repeat PRN (max 1 L)",
+        detail: "250–500 mL NaCl 0.9% IV bolus, repeat as required (max 1 L total). Patients are often dehydrated from increased work of breathing. IV fluid supports preload during elevated intrathoracic pressures.",
       },
       {
+        // CPG p.85/327: "Hydrocortisone 200mg IV" confirmed.
         id: "asth-hydro",
         label: "Hydrocortisone IV",
         sublabel: "200 mg IV",
         detail: "200 mg IV slow. Reduces bronchial inflammation. Onset 4–6 hours — adjunct to bronchodilators for acute phase.",
       },
       {
+        // CPG p.85/84/333: dose and 20-min interval confirmed; "max 3 doses"
+        // corrected to CPG's "may be repeated once after 20 minutes" = max 2.
         id: "asth-ipra",
         label: "Ipratropium Bromide NEB",
-        sublabel: "500 mcg NEB — max 3 doses",
-        detail: "500 mcg (0.5 mg) nebulised via O₂ at 6–8 L/min. Combine with salbutamol in same NEB cup (synergistic). Allow 20 min between doses. Max 3 doses.",
+        sublabel: "500 mcg NEB — max 2 doses",
+        detail: "500 mcg (0.5 mg) nebulised via O₂ at 6–8 L/min. Combine with salbutamol in same NEB cup (synergistic). May repeat once after 20 min. If further doses required, request CCP assistance.",
         caution: "Less effective as sole bronchodilator — use in combination with salbutamol.",
       },
       {
@@ -369,6 +375,9 @@ const BUNDLES: Bundle[] = [
         caution: "Rapid infusion → flushing, hypotension, arrhythmia. Monitor BP throughout infusion.",
       },
       {
+        // CPG p.85/372: 5mg dose confirmed ("5mg repeat as required"). Extended
+        // scope: "back-to-back continuously" -- CPG only says "repeat as
+        // required", doesn't specify pacing for the life-threatening tier.
         id: "asth-salb",
         label: "Salbutamol NEB",
         sublabel: "5 mg NEB — back-to-back continuous",

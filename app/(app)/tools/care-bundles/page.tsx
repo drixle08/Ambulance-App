@@ -184,36 +184,51 @@ const BUNDLES: Bundle[] = [
     color: "red",
     items: [
       {
+        // CPG p.19 (general monitoring standard): "every 5 minutes for unstable/
+        // critically ill or injured patients" -- corrected from q2min, which CPG
+        // reserves specifically for patients on an Adrenaline or Phenylephrine
+        // infusion, not as the general critical-patient cadence. The SBP/pulse-
+        // pressure flags below are extended scope -- not stated anywhere in CPG.
         id: "crit-bp",
-        label: "BP every 2 minutes",
-        sublabel: "Automated NIBP — q2 min cycle",
-        detail: "Set NIBP to cycle q2 min. Document trend. Flags: SBP <90 (shock), SBP >180 (hypertensive emergency), pulse pressure <25 (tamponade/cardiogenic), wide pulse pressure (aortic regurgitation, sepsis).",
+        label: "BP every 5 minutes",
+        sublabel: "Automated NIBP — q5 min cycle",
+        detail: "Set NIBP to cycle q5 min (q2 min if on Adrenaline/Phenylephrine infusion). Document trend. Flags: SBP <90 (shock), SBP >180 (hypertensive emergency), pulse pressure <25 (tamponade/cardiogenic), wide pulse pressure (aortic regurgitation, sepsis).",
       },
       {
+        // CPG p.19: "Consider placing defib pads in the A/P position" for
+        // critically ill/confirmed AMI patients.
         id: "crit-defib",
         label: "Defib pads on",
         sublabel: "Hands-free pads — monitor mode",
         detail: "Apply anterior-lateral (or anterior-posterior) defibrillation pads. Select monitor mode. Enable continuous rhythm display. Ready for immediate cardioversion or defibrillation.",
       },
       {
+        // CPG p.19/37-47: continuous/mandatory-if-intubated ETCO2 confirmed.
+        // Extended scope: the 35-45 mmHg numeric target -- no target range
+        // appears anywhere in CPG v2.5.
         id: "crit-etco2",
         label: "ETCO₂",
         sublabel: "Target 35–45 mmHg",
         detail: "Continuous waveform capnography. If intubated: mandatory. Sudden ETCO₂ drop → check perfusion, tube position, PE. Trending ETCO₂ reflects cardiac output during CPR.",
       },
       {
+        // Extended scope — QRS beep setting and the 130/40 bpm alarm limits
+        // do not appear anywhere in CPG v2.5.
         id: "crit-qrs",
         label: "QRS / HR tone HIGH",
         sublabel: "Audible alarm — max sensitivity",
         detail: "Enable QRS beep on maximum audible volume. Set HR high alarm 130 bpm, low alarm 40 bpm. Audible monitoring frees attention for other tasks while maintaining rhythm awareness.",
       },
       {
+        // COPD figure corrected to CPG p.87 (5.2 COPD) in a prior pass. Extended
+        // scope: the general 94-98% target -- CPG states only a >94% floor.
         id: "crit-spo2",
         label: "SpO₂ — opposite arm to BP",
         sublabel: "Contralateral limb to NIBP cuff",
         detail: "SpO₂ probe on opposite arm/finger to BP cuff — prevents artefact during NIBP cycles. Target SpO₂ 94–98% (88–92% in COPD/chronic hypercapnia).",
       },
       {
+        // CPG p.17/19: "HR (4-lead ECG/Pads)"; "12-lead ECG (when appropriate)".
         id: "crit-ecg",
         label: "4 / 12-lead ECG",
         sublabel: "Baseline + repeat PRN",

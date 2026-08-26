@@ -243,12 +243,17 @@ const BUNDLES: Bundle[] = [
     tip: "Fulfilling the All Critical bundle automatically fulfils this bundle — treat all sedated patients as critical.",
     items: [
       {
+        // CPG p.200-202 (11.3 Procedural Sedation): 5-min monitoring interval
+        // confirmed. TBI MAP split corrected to CPG p.169/51 in a prior pass.
         id: "sed-bp",
         label: "BP every 5 minutes",
         sublabel: "Automated NIBP — q5 min minimum",
         detail: "q5 min minimum; increase frequency if haemodynamically unstable. Target MAP >65 mmHg (isolated TBI: 70–80 mmHg · TBI + polytrauma: ≥65 mmHg). Document MAP trend.",
       },
       {
+        // CPG p.197/37-47: mandatory-if-intubated and tube-placement confirmation
+        // both confirmed. Extended scope: 35-45 mmHg target and 30-35 mmHg raised-
+        // ICP target -- CPG's TBI guidance on CO2 is qualitative only, no numbers.
         id: "sed-etco2",
         label: "ETCO₂ — mandatory",
         sublabel: "Continuous waveform — 35–45 mmHg",
@@ -256,12 +261,16 @@ const BUNDLES: Bundle[] = [
         caution: "Loss of ETCO₂ waveform = assume tube displacement until proven otherwise. Stop and reassess.",
       },
       {
+        // Extended scope — CPG states only a >94% floor; the 98% hyperoxia
+        // ceiling and "avoid hyperoxia" caution do not appear anywhere in CPG.
         id: "sed-spo2",
         label: "SpO₂ — opposite arm to BP",
         sublabel: "Contralateral limb to NIBP cuff",
         detail: "Post-intubation target SpO₂ 94–98%. Avoid hyperoxia (>98%) — associated with worse neurological outcomes post-arrest/TBI. Titrate FiO₂ down once stable.",
       },
       {
+        // CPG p.201-202: 4-lead ECG is mandatory sedation monitoring. Arrhythmia
+        // rationale text is supplementary teaching, not itself a CPG quote.
         id: "sed-4ecg",
         label: "4-lead ECG",
         sublabel: "Continuous cardiac monitoring",
@@ -504,37 +513,23 @@ const BUNDLES: Bundle[] = [
 // ── Ventilation calculator ────────────────────────────────────────────────────
 
 function VentilationCalculator({ color }: { color: BundleColor }) {
-  const [sex, setSex] = useState<"M" | "F">("M");
   const [heightCm, setHeightCm] = useState<string>("");
   const c = COLOR[color];
 
   const h = parseFloat(heightCm);
-  const ibw =
-    !isNaN(h) && h > 100
-      ? Math.max(30, sex === "M" ? 50 + 0.91 * (h - 152.4) : 45.5 + 0.91 * (h - 152.4))
-      : null;
+  // CPG p.207: "Calculate ideal body weight (IBW) in kg = height (cm) - 100" --
+  // a single flat formula, no sex split. Corrected from the Devine formula
+  // (previously sex-differentiated, based on height - 152.4), which is why the
+  // sex toggle that used to sit above the height input has been removed -- it
+  // no longer affects the CPG-specified calculation. 30kg floor is extended
+  // scope (a sensible clamp for short stature, not itself a CPG figure).
+  const ibw = !isNaN(h) && h > 100 ? Math.max(30, h - 100) : null;
 
   const tvLow = ibw != null ? Math.round(ibw * 6) : null;
   const tvHigh = ibw != null ? Math.round(ibw * 8) : null;
 
   return (
     <div className="mt-3 space-y-3">
-      {/* Sex toggle */}
-      <div className="flex gap-2">
-        {(["M", "F"] as const).map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => setSex(s)}
-            className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-colors ${
-              sex === s ? c.optSel + " border" : c.optUnsel + " border"
-            }`}
-          >
-            {s === "M" ? "Male" : "Female"}
-          </button>
-        ))}
-      </div>
-
       {/* Height input */}
       <div className="flex items-center gap-3 rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-3">
         <Wind className="h-4 w-4 shrink-0 text-slate-500" />
@@ -558,7 +553,11 @@ function VentilationCalculator({ color }: { color: BundleColor }) {
             {[
               { label: "IBW", value: `${ibw.toFixed(1)} kg` },
               { label: "Tidal Volume", value: `${tvLow}–${tvHigh} mL` },
-              { label: "Rate", value: "10–12 / min" },
+              // CPG p.204 gives condition-specific rates (Normal Lungs 12-14 ·
+              // Asthma/COPD 5-10 · APO/ARDS 12-16), not one flat figure. This
+              // calculator has no lung-condition selector, so it defaults to
+              // the Normal Lungs rate -- the other two bands aren't covered.
+              { label: "Rate", value: "12–14 / min" },
               { label: "PEEP (start)", value: "5 cmH₂O" },
               { label: "I:E ratio", value: "1 : 2" },
               { label: "FiO₂ (start)", value: "100% → titrate" },
@@ -570,7 +569,7 @@ function VentilationCalculator({ color }: { color: BundleColor }) {
             ))}
           </div>
           <p className="text-[0.65rem] opacity-60">
-            IBW: {sex === "M" ? "50" : "45.5"} + 0.91 × (height − 152.4 cm) · Tidal volume 6–8 mL/kg IBW
+            IBW: height (cm) − 100 · Tidal volume 6–8 mL/kg IBW · Rate shown is for normal lungs (CPG: Asthma/COPD 5–10, APO/ARDS 12–16)
           </p>
         </div>
       ) : (

@@ -50,27 +50,27 @@ const SECTIONS: CharteSection[] = [
     letter: "H",
     title: "History",
     phase: "Subjective",
-    helper: "Document the history of present illness or mechanism of injury, PMH, allergies, medications, and other pertinent data.",
-    placeholder:
-      "Example: Symptoms began at 08:30 after exertion. PMH asthma, uses salbutamol inhaler, NKDA. Family reports worsening over 2 hours.",
+    helper:
+      "Start with what you found on arrival: scene/windshield survey, how and where the patient was found, and your general impression. Then the history of present illness or mechanism of injury, and relevant history from patient, family or bystanders.",
+    placeholder: "Type the history here…",
   },
   {
     id: "assessment",
     letter: "A",
     title: "Assessment",
     phase: "Objective",
-    helper: "Document primary survey/general impression, primary assessment findings, then secondary assessment findings including SAMPLE and OPQRST.",
-    placeholder:
-      "Example: Patient was found sitting on bed, alert, oriented, and in respiratory distress. Primary assessment: airway patent, speaking short phrases, increased work of breathing, bilateral wheeze, SpO2 88% RA improved to 96% on O2. Secondary assessment: no trauma noted, SAMPLE and OPQRST completed. Working impression: acute asthma exacerbation.",
+    helper:
+      "Primary survey first (CPG 1.1). Medical: LOC-ABC — level of consciousness (AVPU), Airway, Breathing, Circulation. Trauma: CC-LOC-ABC — Catastrophic haemorrhage/C-spine control first, then LOC-ABC. Paediatrics: include the PAT (CPG 1.2). Then secondary survey: vital signs, SAMPLE, OPQRST, and a rapid trauma survey or head-to-toe exam as appropriate. Finish with your working impression.",
+    placeholder: "Type the assessment here…",
   },
   {
     id: "treatment",
     letter: "R",
-    title: "Rx Treatment",
-    phase: "Treatment",
-    helper: "Document each intervention, medication, dose, route, time, indication, and patient response.",
-    placeholder:
-      "Example: 09:12 salbutamol/ipratropium nebulized for wheeze and hypoxia. Work of breathing improved and SpO2 increased to 96%.",
+    title: "Rx Treatment/Management",
+    phase: "Non-pharmacological",
+    helper:
+      "Document non-pharmacological management only — medications go in the separate medication section of the patient record. Include positioning, airway management, oxygen therapy, haemorrhage control, C-spine/splinting, wound care, cooling/warming and reassurance, with times. Record the patient's response and repeat vital signs.",
+    placeholder: "Type the treatment/management here…",
   },
   {
     id: "transport",

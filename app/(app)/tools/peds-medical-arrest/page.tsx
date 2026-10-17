@@ -41,10 +41,10 @@ const TS = [
 ];
 
 const summaryText =
-  "Paediatric medical cardiac arrest — CPG 2.3 (HMCAS v2.5 2026). Confirmed arrest. Commenced CPR (100–120/min, >1/3 AP chest diameter), delivered 5 BVM rescue breaths, attached defibrillator pads. " +
-  "VF/VT: single shock 4 J/kg, resume 2-min CPR cycles, SGA with HME/filter + continuous compressions + EtCO₂ (ventilate every 3–5 sec), IV/IO, adrenaline 0.01 mg/kg (0.1 mL/kg 1:10,000) from cycle 3 then every 4 min, amiodarone 5 mg/kg for refractory VF/VT, A-P vector change after 3 shocks. " +
+  "Paediatric medical cardiac arrest — CPG 2.3 (HMCAS v2.6 2026). Confirmed arrest. Commenced CPR (100–120/min, >1/3 AP chest diameter), delivered 5 BVM rescue breaths, attached defibrillator pads. " +
+  "VF/VT: single shock 4 J/kg (A-P pads primary <25 kg), resume 2-min CPR cycles, SGA with HME/filter + continuous compressions + EtCO₂ (ventilation rate by age: <1y 25, 1–8y 20, 8–12y 15, >12y 10/min), IV/IO, adrenaline 0.01 mg/kg (max 1 mg; 0.1 mL/kg 1:10,000) after 4 min of CPR then every 4 min, amiodarone 5 mg/kg (max 300 mg) after the 3rd shock and 5 mg/kg (max 150 mg) after the 5th. " +
   "Asystole/PEA: no shock, 2-min CPR cycles, SGA, IV/IO, adrenaline 0.01 mg/kg ASAP then every 4 min, treat reversible H's & T's. " +
-  "CCP: joule escalation after 3 shocks — +2 J/kg increments to max 10 J/kg or adult dose; consider ETI at ~10 min; Ketamine 1 mg/kg for CPR-induced consciousness. " +
+  "CCP: joule escalation after 5 shocks — +2 J increments to max 8 J/kg or adult dose; consider ETI at ~10 min; Ketamine 1 mg/kg for CPR-induced consciousness. " +
   "Do NOT terminate in field — transport with CPR in progress per CPG 2.7. ROSC → CPG 2.6.";
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
@@ -248,7 +248,7 @@ function ShockablePathway() {
         <ActionItem text="Immediately resume CPR — 2 minutes" />
         <ActionItem
           text="Insert SGA → switch to continuous compressions"
-          sub="Attach HME/filter · EtCO₂ waveform · Ventilate every 3–5 sec"
+          sub="HME/filter · EtCO₂ · Ventilate <1y 25 · 1–8y 20 · 8–12y 15 · >12y 10 /min"
         />
         <ActionItem text="Assess rhythm at end of 2-min cycle" />
       </CycleCard>
@@ -272,25 +272,16 @@ function ShockablePathway() {
         borderColor="border-amber-500/25"
       >
         <PedsShockItem cycleNum={3} />
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-2.5 flex flex-col gap-1">
-          <p className="text-[0.6rem] font-bold uppercase tracking-widest text-amber-500/80 px-1">
-            Vector change after 3 shocks
-          </p>
-          <ActionItem
-            text="Change to anterior-posterior pad placement if still in VF/VT"
-            sub="Pad 1: left posterior below scapula · Pad 2: left anterior midline to nipple"
-          />
-        </div>
         <ActionItem text="Resume CPR — 2 minutes" />
         <DrugItem
           name="Adrenaline"
-          dose="0.01 mg/kg IV/IO"
-          sub="= 0.1 mL/kg of 1:10,000 — first dose; repeat every 4 min"
+          dose="0.01 mg/kg IV/IO (max 1 mg)"
+          sub="After 4 min of CPR · 0.1 mL/kg of 1:10,000 — repeat every 4 min"
         />
         <DrugItem
           name="Amiodarone"
-          dose="5 mg/kg IV/IO"
-          sub="Refractory VF/VT only — use WAAFELSS for exact mg"
+          dose="5 mg/kg IV/IO (max 300 mg)"
+          sub="After the 3rd shock — use WAAFELSS for exact mg"
         />
       </CycleCard>
 
@@ -308,12 +299,12 @@ function ShockablePathway() {
         />
         <DrugItem
           name="Amiodarone"
-          dose="5 mg/kg IV/IO"
-          sub="Repeat for continued refractory VF/VT"
+          dose="5 mg/kg IV/IO (max 150 mg)"
+          sub="After the 5th shock"
         />
         <ActionItem text="Reassess rhythm + reversible causes each cycle" />
         <CcpBox>
-          <CcpNoteItem text="Joule escalation: after 3 shocks, increase +2 J/kg per cycle — max 10 J/kg or adult dose" />
+          <CcpNoteItem text="Joule escalation: after 5 shocks, increase +2 J per shock — max 8 J/kg or adult dose" />
           <CcpNoteItem text="Consider ETI after ~10 min if suitable ETT size available" />
           <CcpNoteItem text="Gastric tube via SGA (or OGT if ETT) — prevent aspiration" />
           <CcpNoteItem text="CPR-induced consciousness → Ketamine 1 mg/kg IV/IO" />
@@ -338,7 +329,7 @@ function NonShockablePathway() {
         <ActionItem text="2-min CPR cycles — minimise all interruptions" />
         <ActionItem
           text="Insert SGA → switch to continuous compressions"
-          sub="Attach HME/filter · EtCO₂ waveform · Ventilate every 3–5 sec"
+          sub="HME/filter · EtCO₂ · Ventilate <1y 25 · 1–8y 20 · 8–12y 15 · >12y 10 /min"
         />
         <ActionItem text="Establish IV / IO access" />
         <DrugItem
@@ -429,6 +420,7 @@ function ReferenceTab() {
             "Change compressor every 2 minutes to avoid fatigue",
             "Minimise all interruptions — pause < 5 sec for rhythm check",
             "Avoid excessive ventilation — hyperventilation worsens outcome",
+            "Ventilation rate: <1y 25 · 1–8y 20 · 8–12y 15 · >12y 10 breaths/min",
             "SGA air leak during continuous compressions → revert to 15:2",
           ].map((item, i) => (
             <p key={i} className="text-xs text-slate-300 flex gap-2">
@@ -543,7 +535,7 @@ function ReferenceTab() {
         <div className="p-3 space-y-3">
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
             <p className="text-[0.65rem] font-bold uppercase tracking-wider text-amber-500 mb-1">
-              All shocks — AP or both
+              All shocks
             </p>
             <p className="text-lg font-black text-amber-200">
               4 J/kg — first and subsequent
@@ -558,8 +550,8 @@ function ReferenceTab() {
               Pad placement
             </p>
             {[
-              "Standard: right infraclavicular + left lateral chest (V6 position)",
-              "A-P (vector change after 3 shocks): left posterior below scapula + left anterior midline to nipple",
+              "<25 kg: anterior-posterior is the primary position — left posterior below scapula + left anterior midline to nipple",
+              ">25 kg: anterior-lateral (right infraclavicular + left lateral chest, V6) or anterior-posterior",
             ].map((item, i) => (
               <p key={i} className="text-xs text-slate-300 flex gap-2 mb-1">
                 <span className="text-slate-600 shrink-0">·</span>
@@ -575,8 +567,8 @@ function ReferenceTab() {
                 Joule escalation (CCP only)
               </p>
               <p className="text-xs text-slate-300 leading-5">
-                After 3 shocks without rhythm change, escalate by +2 J/kg per
-                cycle to a maximum of 10 J/kg or adult dose (200 J biphasic).
+                After 5 shocks, CCPs may escalate in 2 J increments for every
+                subsequent shock to a maximum of 8 J/kg or adult dose.
               </p>
             </div>
           </div>
@@ -590,13 +582,13 @@ function ReferenceTab() {
               Adrenaline
             </p>
             <p className="text-xs text-slate-300">
-              0.01 mg/kg IV/IO = 0.1 mL/kg of 1:10,000
+              0.01 mg/kg IV/IO (max 1 mg) = 0.1 mL/kg of 1:10,000
             </p>
             <p className="text-xs text-slate-400 mt-0.5">
               Asystole/PEA: give ASAP after IV/IO established
             </p>
             <p className="text-xs text-slate-400 mt-0.5">
-              VF/VT: first dose at cycle 3 (after 3rd shock)
+              VF/VT: first dose after 4 min of CPR
             </p>
             <p className="text-xs text-slate-400 mt-0.5">
               All rhythms: repeat every 4 min throughout arrest
@@ -608,10 +600,10 @@ function ReferenceTab() {
               Amiodarone — refractory VF/VT only
             </p>
             <p className="text-xs text-slate-300">
-              5 mg/kg IV/IO — first dose at cycle 3 (with adrenaline)
+              5 mg/kg IV/IO (max 300 mg) — after the 3rd shock
             </p>
             <p className="text-xs text-slate-300 mt-0.5">
-              5 mg/kg IV/IO — repeat dose for continued refractory VF/VT
+              5 mg/kg IV/IO (max 150 mg) — after the 5th shock
             </p>
             <p className="text-xs text-slate-400 mt-0.5">
               Use WAAFELSS calculator for exact mg/volume
@@ -642,12 +634,12 @@ function ReferenceTab() {
                 "Weight",
                 "0–12m: (months×0.5)+4 · 1–5y: (age×2)+8 · 6–14y: (age×3)+7",
               ],
-              ["A", "Airway", "Open, position, adjunct"],
-              ["A", "Adrenaline / Amiodarone", "0.01 mg/kg · 5 mg/kg (VF/VT)"],
-              ["F", "Fluids", "10–20 mL/kg isotonic · up to 3 boluses"],
-              ["E", "Energy", "4 J/kg · CCP: escalate to max 10 J/kg"],
+              ["A", "Adrenaline", "0.01 mg/kg = 0.1 mL/kg of 1:10,000"],
+              ["A", "Amiodarone", "5 mg/kg IV/IO (VF/VT)"],
+              ["F", "Fluids", "10 mL/kg × 3"],
+              ["E", "Energy", "4 J/kg · CCP: +2 J increments to max 8 J/kg"],
               ["L", "Laryngeal (airway sizes)", "SGA 1/1.5/2/2.5 · ETT: (age÷4)+4 uncuffed"],
-              ["S", "Sugar", "2.5 mL/kg of 10% Dextrose IV/IO"],
+              ["S", "Sugar", "2 mL/kg of 10% Dextrose IV/IO (0.2 g/kg)"],
               ["S", "Systolic BP target", "(age × 2) + 70 mmHg"],
             ] as [string, string, string][]
           ).map(([letter, label, detail], i) => (
@@ -688,7 +680,7 @@ export default function PedsMedicalArrestPage() {
           </Link>
           <div className="flex-1 min-w-0">
             <p className="text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-emerald-400">
-              CPG 2.3 · v2.5 2026
+              CPG 2.3 · v2.6 2026
             </p>
             <h1 className="text-sm font-semibold leading-tight text-slate-50">
               Paediatric Medical Cardiac Arrest
@@ -784,7 +776,10 @@ export default function PedsMedicalArrestPage() {
                   text="5 rescue breaths via BVM before first rhythm check"
                   sub="Paediatric-specific — 5 initial BVM breaths, then resume CPR"
                 />
-                <ActionItem text="Attach defibrillator pads while CPR in progress" />
+                <ActionItem
+                  text="Attach defibrillator pads while CPR in progress"
+                  sub="Anterior-posterior is primary for <25 kg · A-L or A-P for >25 kg"
+                />
                 <ActionItem
                   text="Call for backup — assign clear team roles"
                   sub="Airway · Compressions · IV access · Documentation"
@@ -947,7 +942,7 @@ export default function PedsMedicalArrestPage() {
             </section>
 
             <p className="text-[0.65rem] text-slate-600 pb-2">
-              CPG 2.3 · HMCAS v2.5 2026. Quick reference only — always follow
+              CPG 2.3 · HMCAS v2.6 2026. Quick reference only — always follow
               the full current guideline and Clinical Coordination advice.
             </p>
           </>
@@ -958,7 +953,7 @@ export default function PedsMedicalArrestPage() {
           <>
             <ReferenceTab />
             <p className="text-[0.65rem] text-slate-600 pb-2">
-              CPG 2.3 · HMCAS v2.5 2026. Quick reference only.
+              CPG 2.3 · HMCAS v2.6 2026. Quick reference only.
             </p>
           </>
         )}

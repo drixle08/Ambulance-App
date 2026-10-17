@@ -30,6 +30,7 @@ const MECHANISM_CRITERIA: Criterion[] = [
   { id: "mvc-ejection", label: "Ejection (partial or complete) from vehicle, incl. ATV" },
   { id: "mvc-trapped", label: "Person trapped under/in vehicle or extrication ≥20 min" },
   { id: "mvc-rollover", label: "Red/Yellow MVC rollover — roof deformity ≥40 cm" },
+  { id: "mvc-seatbelt", label: "Abdominal 'seat belt sign'", helper: "Bruising / abrasions along the seat belt's path" },
   { id: "moto", label: "Red/Yellow motorcycle accident — speed ≥30 km/hr" },
   { id: "ped-cyclist", label: "Red/Yellow pedestrian / paediatric / bicyclist struck (thrown, run over, or impact ≥20 km/hr)" },
   {

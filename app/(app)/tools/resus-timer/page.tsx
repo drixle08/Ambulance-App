@@ -337,9 +337,9 @@ export default function ResuscitationTimerPage() {
     setAmiodaroneDose(next);
     if (next === 1) {
       addLog("Amiodarone 300mg IV given (1st dose — after 3rd shock)");
-      speak("Amiodarone 300 milligrams given. Next dose: 150 milligrams after the next shock.");
+      speak("Amiodarone 300 milligrams given. Next dose: 150 milligrams after the fifth shock.");
     } else {
-      addLog("Amiodarone 150mg IV given (2nd dose — after 4th shock)");
+      addLog("Amiodarone 150mg IV given (2nd dose — after 5th shock)");
       speak("Amiodarone 150 milligrams given. Maximum doses reached.");
     }
   }, [addLog, speak]);
@@ -662,7 +662,7 @@ export default function ResuscitationTimerPage() {
                     <span className="text-xs font-bold text-violet-300">Amiodarone 150mg IV</span>
                     <span className="text-[0.65rem] font-semibold text-violet-400">2nd dose</span>
                   </div>
-                  <p className="mt-0.5 text-[0.6rem] text-slate-500">Due after next shock · CPG: after 4th shock</p>
+                  <p className="mt-0.5 text-[0.6rem] text-slate-500">Due after the 5th shock (CPG 2.1)</p>
                 </div>
               )}
               {amiodaroneDose >= 2 && (

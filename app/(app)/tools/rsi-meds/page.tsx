@@ -21,7 +21,7 @@ import {
 // ─── Summary ──────────────────────────────────────────────────────────────────
 
 const summaryText =
-  "RSI Medications — CPG 11.1 HMCAS v2.5 2026 (CCP scope). " +
+  "RSI Medications — CPG 11.1 HMCAS v2.6 2026 (CCP scope). " +
   "PREPARE: 100% O₂ ×3–5 min, SpO₂ >95%, sniffing/ramped position, 3 ETT sizes + bougie + suction, IV/IO access, drugs drawn, failed airway plan ready. " +
   "PRE-TREAT (T−3 min): Fentanyl 1–3 mcg/kg IV slow push — OMIT if haemodynamic compromise, opioid/BZD/alcohol toxidrome, suspected raised ICP without haemodynamic reserve. " +
   "Paeds atropine 0.02 mg/kg IV (min 0.1 mg, max 0.5 mg). " +
@@ -868,7 +868,7 @@ export default function RsiMedsPage() {
           </Link>
           <div className="flex-1 min-w-0">
             <p className="text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-violet-400">
-              CPG 11.1 · v2.5 2026 · CCP
+              CPG 11.1 · v2.6 2026 · CCP
             </p>
             <h1 className="text-sm font-semibold leading-tight text-slate-50">
               RSI Medications — Pre &amp; Post Dosing
@@ -923,7 +923,7 @@ export default function RsiMedsPage() {
         ))}
 
         <p className="text-[0.65rem] text-slate-600 pb-2 pt-1">
-          CPG 11.1 · HMCAS v2.5 2026 · CCP scope. Quick reference only — integrate
+          CPG 11.1 · HMCAS v2.6 2026 · CCP scope. Quick reference only — integrate
           with patient presentation, authorised drugs list, and Clinical Coordination advice.
         </p>
       </main>

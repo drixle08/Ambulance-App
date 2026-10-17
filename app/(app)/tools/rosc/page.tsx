@@ -26,15 +26,15 @@ import {
 // ─── Summary ──────────────────────────────────────────────────────────────────
 
 const summaryText =
-  "Post-ROSC care — CPG 2.6 HMCAS v2.5 2026. " +
+  "Post-ROSC care — CPG 2.6 HMCAS v2.6 2026. " +
   "DO NOT move patient rapidly for ≥10 min post-ROSC (re-arrest risk). " +
-  "Airway: SpO2 >94%, advanced airway, HME/filter, EtCO2 waveform, do NOT hyperventilate — elevated EtCO2 expected, do not correct prehospitally. " +
+  "Airway: SpO2 94–98% (avoid prolonged 100%), advanced airway, HME/filter, EtCO2 waveform, do NOT hyperventilate — elevated EtCO2 expected, do not correct prehospitally. " +
   "Adults: SBP >90 mmHg, MAP ≥65 mmHg (isolated TBI: MAP 70–80). Fluids 250 mL boluses max 1–2L (max 1L major haemorrhage). BGL: correct if <4.0 mmol/L → 50 mL D10W; avoid >6.7 mmol/L. " +
-  "Paeds: SpO2 >94%, SBP ≥(age×2)+70, fluids 10–20 mL/kg bolus repeat once PRN. BGL <4.0 → 2.5 mL/kg D10W (max 50 mL). " +
+  "Paeds: SpO2 94–98%, SBP ≥(age×2)+70, fluids 10–20 mL/kg bolus repeat once PRN. BGL <4.0 → 2 mL/kg D10W (max 50 mL). " +
   "12-lead ECG all ROSC patients. STEMI → Heart Hospital PCI. " +
   "CCP: Noradrenaline 0.01–0.3 mcg/kg/min; Phenylephrine 25–100 mcg bolus / 100 mcg/min infusion; Adrenaline infusion 0.05–0.3 mcg/kg/min if refractory. " +
   "Transport: STEMI → PCI centre (Priority 1), trauma → trauma centre, paeds → paediatric centre. ECMO consideration: witnessed arrest ≤45 min (CPG 2.9). " +
-  "Avoid hypotension, hypoxia, extreme CO2, hypo/hyperthermia.";
+  "Temperature: avoid hyperthermia; adult comatose ROSC after medical arrest → icepacks to axillae and groin, do not let temp drop below 33 °C, update hospital. Avoid hypotension, hypoxia, extreme CO2.";
 
 // ─── Checklist config ─────────────────────────────────────────────────────────
 
@@ -71,7 +71,7 @@ const SECTION_META: SectionMeta[] = [
   {
     id: "airway",
     title: "Airway & Ventilation",
-    subtitle: "SpO₂ >94% · Avoid hyperventilation · EtCO₂",
+    subtitle: "SpO₂ 94–98% · Avoid hyperventilation · EtCO₂",
     icon: <Wind className="w-4 h-4" />,
     color: "sky",
   },
@@ -99,7 +99,7 @@ const SECTION_META: SectionMeta[] = [
   {
     id: "temperature",
     title: "Temperature",
-    subtitle: "Normothermia · Avoid hypo/hyperthermia",
+    subtitle: "Avoid hyperthermia · Icepack cooling (adult) ≥33 °C",
     icon: <Thermometer className="w-4 h-4" />,
     color: "amber",
   },
@@ -306,8 +306,8 @@ function AirwayContent() {
       <ActionItem text="Insert or maintain advanced airway if oxygenation or ventilation suboptimal" />
       <ActionItem text="Attach HME/filter — EtCO₂ waveform capnography mandatory" />
       <ActionItem
-        text="Target SpO₂ >94% — titrate oxygen delivery to maintain"
-        sub="Avoid prolonged hypoxia and unnecessary hyperoxia"
+        text="Titrate oxygen to SpO₂ 94–98%"
+        sub="Avoid hyperoxaemia (SpO₂ 100% for prolonged periods)"
       />
       <WarnItem
         text="Do NOT hyperventilate"
@@ -381,7 +381,7 @@ function GlucoseContent() {
 
       <SubLabel label="Paediatric" color="amber" />
       <ActionItem
-        text="Correct if BGL < 4.0 mmol/L → 2.5 mL/kg Dextrose 10% IV/IO (max 50 mL)"
+        text="Correct if BGL < 4.0 mmol/L → 2 mL/kg Dextrose 10% IV/IO (max 50 mL)"
         sub="Reassess after 10 min — repeat if required to normalise BGL"
       />
     </>
@@ -409,11 +409,15 @@ function TemperatureContent() {
   return (
     <>
       <ActionItem text="Monitor temperature throughout post-arrest management" />
-      <ActionItem text="Aim for normothermia during transport and handover" />
       <WarnItem
-        text="Avoid hyperthermia and hypothermia"
-        sub="Both worsen neurological outcome — active management required if temperature abnormal"
+        text="Avoid hyperthermia"
+        sub="Worsens neurological outcome"
       />
+      <ActionItem
+        text="Adult comatose ROSC after medical arrest: cool with icepacks in the axillae and groin"
+        sub="Neuroprotection · update the receiving hospital on cooling measures"
+      />
+      <WarnItem text="Do not allow temperature to drop below 33 °C" />
     </>
   );
 }
@@ -700,7 +704,7 @@ export default function RoscPage() {
 
           <div className="flex-1 min-w-0">
             <p className="text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-emerald-400">
-              CPG 2.6 · v2.5 2026
+              CPG 2.6 · v2.6 2026
             </p>
             <h1 className="text-sm font-semibold leading-tight text-slate-50">
               Post-Cardiac Arrest (ROSC) Care
@@ -746,7 +750,7 @@ export default function RoscPage() {
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             {[
-              { label: "SpO₂", value: ">94%", color: "text-sky-300" },
+              { label: "SpO₂", value: "94–98%", color: "text-sky-300" },
               { label: "SBP (adult)", value: ">90 mmHg", color: "text-rose-300" },
               { label: "MAP (adult)", value: "≥65 mmHg", color: "text-rose-300" },
               { label: "TBI MAP", value: "70–80 mmHg", color: "text-amber-300" },
@@ -792,7 +796,7 @@ export default function RoscPage() {
         )}
 
         <p className="text-[0.65rem] text-slate-600 pb-2 pt-1">
-          CPG 2.6 · HMCAS v2.5 2026. Quick reference only — integrate with
+          CPG 2.6 · HMCAS v2.6 2026. Quick reference only — integrate with
           underlying cause and relevant CPGs. Follow Clinical Coordination advice.
         </p>
       </main>

@@ -20,8 +20,7 @@ type ChangeCategory =
   | "New CPG"
   | "Medication"
   | "Trauma"
-  | "Formulary"
-  | "Document";
+  | "Formulary";
 
 type CpgChange = {
   id: number;
@@ -39,250 +38,248 @@ const FILTERS: ChangeCategory[] = [
   "Medication",
   "Trauma",
   "Formulary",
-  "Document",
 ];
 
 const CHANGES: CpgChange[] = [
   {
     id: 1,
-    cpg: "Abbreviation List",
-    title: "Abbreviations updated",
-    detail: "Abbreviation list updated to include IPC, infection prevention and control.",
-    category: "Document",
+    cpg: "CPG 2.1",
+    title: "Adult medical cardiac arrest updated",
+    detail: "Adult medical cardiac arrest updated to reflect ERC 2025 changes.",
+    category: "Clinical",
+    badge: "ERC 2025",
   },
   {
     id: 2,
-    cpg: "Page 11",
-    title: "CPG feedback email added",
-    detail:
-      "Staff can send CPG feedback, suggestions, or comments to HMCAS-Clinicalguideline@hamad.qa.",
-    category: "Document",
+    cpg: "CPG 2.2",
+    title: "Adult trauma cardiac arrest updated",
+    detail: "Adult trauma cardiac arrest updated to reflect ERC 2025 changes.",
+    category: "Clinical",
+    badge: "ERC 2025",
   },
   {
     id: 3,
-    cpg: "CPG 1.1",
-    title: "Monitoring frequency updated",
-    detail:
-      "A complete set of vital signs is required at minimum every 15 minutes, or 2 sets if patient contact time is less than 15 minutes.",
+    cpg: "CPG 2.3",
+    title: "Paediatric medical cardiac arrest updated",
+    detail: "Paediatric medical cardiac arrest updated to reflect ERC 2025 changes.",
     category: "Clinical",
+    badge: "ERC 2025",
   },
   {
     id: 4,
-    cpg: "CPG 1.2",
-    title: "Monitoring frequency updated",
-    detail:
-      "A complete set of vital signs is required at minimum every 15 minutes, or 2 sets if patient contact time is less than 15 minutes.",
+    cpg: "CPG 2.4",
+    title: "Paediatric trauma cardiac arrest updated",
+    detail: "Paediatric trauma cardiac arrest updated to reflect ERC 2025 changes.",
     category: "Clinical",
+    badge: "ERC 2025",
   },
   {
     id: 5,
-    cpg: "CPG 4.1",
-    title: "Clopidogrel dose updated for STEMI",
-    detail: "Clopidogrel loading dose updated to 600 mg for STEMI.",
-    category: "Medication",
-    badge: "Dose",
+    cpg: "CPG 2.5",
+    title: "Newborn & neonatal resuscitation updated",
+    detail: "Resuscitation of the newborn & neonates updated to reflect ERC 2025 changes.",
+    category: "Clinical",
+    badge: "ERC 2025",
   },
   {
     id: 6,
-    cpg: "CPG 4.2",
-    title: "Cardioversion sedation priority clarified",
-    detail:
-      "Special note added that procedural sedation should not be prioritized over TCP for patients presenting in extremis or peri-arrest.",
+    cpg: "CPG 2.6",
+    title: "Post cardiac arrest (ROSC) care updated",
+    detail: "Post cardiac arrest (ROSC) care updated to reflect ERC 2025 changes.",
     category: "Clinical",
+    badge: "ERC 2025",
   },
   {
     id: 7,
-    cpg: "CPG 4.3",
-    title: "Amiodarone infusion note added",
-    detail:
-      "Consider amiodarone infusion for unstable patients following 3 unsuccessful synchronized shocks.",
-    category: "Medication",
+    cpg: "CPG 2.8",
+    title: "Cardiac arrest in special circumstances updated",
+    detail: "Cardiac arrest in special circumstances updated to reflect ERC 2025 changes.",
+    category: "Clinical",
+    badge: "ERC 2025",
   },
   {
     id: 8,
-    cpg: "CPG 4.3",
-    title: "Cardioversion sedation priority clarified",
+    cpg: "CPG 3.1",
+    title: "Stroke window, decision tree and RACE added",
     detail:
-      "Special note added that procedural sedation should not be prioritized over synchronized cardioversion for patients presenting in extremis or peri-arrest.",
+      "Stroke CPG updated with new stroke window, transport decision tree and large vessel occlusion screening tool (RACE). All staff must watch the educational video on performing the RACE assessment: https://youtu.be/9-65gGKgx_k",
     category: "Clinical",
+    badge: "Must watch",
   },
   {
     id: 9,
-    cpg: "CPG 4.4",
-    title: "Amiodarone infusion note added",
-    detail:
-      "Consider amiodarone infusion for unstable patients following unsuccessful synchronized shocks.",
-    category: "Medication",
+    cpg: "CPG 4.3",
+    title: "Broad complex cardioversion joules updated",
+    detail: "Adult synchronised cardioversion joules updated for broad complex tachyarrhythmias.",
+    category: "Clinical",
+    badge: "Energy",
   },
   {
     id: 10,
     cpg: "CPG 4.4",
-    title: "Adenosine dosing sequence updated",
-    detail:
-      "After sedation and unsuccessful 12 mg adenosine, an 18 mg IV adenosine dose is added.",
-    category: "Medication",
-    badge: "Dose",
+    title: "Narrow complex cardioversion joules updated",
+    detail: "Adult synchronised cardioversion joules updated for narrow complex tachyarrhythmias.",
+    category: "Clinical",
+    badge: "Energy",
   },
   {
     id: 11,
-    cpg: "CPG 4.4",
-    title: "Cardioversion sedation priority clarified",
+    cpg: "CPG 6.4",
+    title: "CCP sign-off after antiemetic",
     detail:
-      "Special note added that procedural sedation should not be prioritized over synchronized cardioversion for patients presenting in extremis or peri-arrest.",
-    category: "Clinical",
+      "CCPs may sign off patients who have been administered an antiemetic. See CPG special notes for details.",
+    category: "Medication",
   },
   {
     id: 12,
-    cpg: "CPG 4.7",
-    title: "Acute Aortic Dissection added",
-    detail: "New CPG added for Acute Aortic Dissection.",
-    category: "New CPG",
-    badge: "New",
+    cpg: "CPG 10.1",
+    title: "Paediatric TXA added for APs",
+    detail: "TXA added to paediatric section of algorithm for APs.",
+    category: "Trauma",
+    badge: "TXA",
   },
   {
     id: 13,
-    cpg: "CPG 6.7",
-    title: "Adrenal Insufficiency added",
-    detail: "New CPG added for Adrenal Insufficiency.",
-    category: "New CPG",
-    badge: "New",
+    cpg: "CPG 10.2",
+    title: "Paediatric TXA added for APs and CCPs",
+    detail: "TXA added to paediatric section of algorithm for APs and CCPs.",
+    category: "Trauma",
+    badge: "TXA",
   },
   {
     id: 14,
-    cpg: "CPG 7.1",
-    title: "Droperidol removed from ABD",
-    detail: "Droperidol removed from the ABD CPG.",
-    category: "Medication",
-    badge: "Removed",
+    cpg: "CPG 10.3",
+    title: "Neurogenic shock and SMR guidance",
+    detail:
+      "Spinal Trauma CPG updated to provide further guidance on the management of neurogenic shock associated with spinal cord injuries and SMR principles.",
+    category: "Trauma",
   },
   {
     id: 15,
-    cpg: "CPG 10.3",
-    title: "NEXUS criterion amended",
-    detail:
-      "NEXUS criteria point 1 amended to state neck pain or tenderness rather than spinal pain or tenderness.",
+    cpg: "CPG 10.4",
+    title: "Paediatric TXA added for APs",
+    detail: "TXA added to paediatric section of algorithm for APs.",
     category: "Trauma",
+    badge: "TXA",
   },
   {
     id: 16,
-    cpg: "CPG 10.3",
-    title: "Standing-height falls guidance added",
-    detail: "Guidance provided for standing-height falls in elderly patients.",
+    cpg: "CPG 10.5",
+    title: "Paediatric TXA added for APs",
+    detail: "TXA added to paediatric section of algorithm for APs.",
     category: "Trauma",
+    badge: "TXA",
   },
   {
     id: 17,
-    cpg: "CPG 10.4",
-    title: "Flail chest splinting removed",
-    detail: "Splinting of flail chest removed. Effective analgesia is the management of choice.",
+    cpg: "CPG 10.6",
+    title: "Paediatric TXA added for APs",
+    detail: "TXA added to paediatric section of algorithm for APs.",
     category: "Trauma",
-    badge: "Removed",
+    badge: "TXA",
   },
   {
     id: 18,
-    cpg: "CPG 10.6",
-    title: "Pelvic binder indications updated",
-    detail: "Indications for pelvic binder application updated.",
+    cpg: "CPG 10.7",
+    title: "Paediatric TXA added for APs",
+    detail: "TXA added to paediatric section of algorithm for APs.",
     category: "Trauma",
+    badge: "TXA",
   },
   {
     id: 19,
-    cpg: "CPG 10.12",
-    title: "Ongoing Trauma Care Checklist added",
-    detail: "New CPG added for the Ongoing Trauma Care Checklist.",
-    category: "New CPG",
-    badge: "New",
+    cpg: "CPG 10.10",
+    title: "Seat belt sign added to bypass criteria",
+    detail: "Trauma bypass criteria updated to include positive 'seat belt sign'.",
+    category: "Trauma",
   },
   {
     id: 20,
-    cpg: "CPG 11.3",
-    title: "Safe Sedation renamed",
-    detail: "Title changed from Safe Sedation to Procedural Sedation.",
-    category: "Clinical",
+    cpg: "CPG 10.11",
+    title: "Paediatric TXA added for APs",
+    detail: "TXA added to paediatric section of algorithm for APs.",
+    category: "Trauma",
+    badge: "TXA",
   },
   {
     id: 21,
-    cpg: "CPG 11.3",
-    title: "Procedural sedation guidance updated",
-    detail:
-      "Medication choice, dosing, and indications for procedural sedation have been updated.",
-    category: "Medication",
-  },
-  {
-    id: 22,
-    cpg: "CPG 11.5",
-    title: "RSI checklist updated",
-    detail: "RSI checklist updated.",
-    category: "Clinical",
-  },
-  {
-    id: 23,
-    cpg: "CPG 13.8",
-    title: "Epistaxis added",
-    detail: "New CPG added for Epistaxis.",
+    cpg: "CPG 10.13",
+    title: "Vehicle Extrication & Care of the Trapped Patient added",
+    detail: "New CPG – Vehicle Extrication & Care of the Trapped Patient.",
     category: "New CPG",
     badge: "New",
   },
   {
+    id: 22,
+    cpg: "CPG 12.1",
+    title: "TXA removed from ectopic pregnancy",
+    detail: "TXA removed from Ectopic pregnancy algorithm.",
+    category: "Medication",
+    badge: "Removed",
+  },
+  {
+    id: 23,
+    cpg: "CPG 12.2",
+    title: "TXA removed from miscarriage",
+    detail: "TXA removed from miscarriage algorithm.",
+    category: "Medication",
+    badge: "Removed",
+  },
+  {
     id: 24,
-    cpg: "CPG 15.1",
-    title: "Blood transfusion transfer guidance added",
-    detail: "Guidance added for transfers with blood transfusions.",
-    category: "Clinical",
+    cpg: "CPG 12.3",
+    title: "TXA removed from placenta abruption",
+    detail: "TXA removed from placenta abruption algorithm.",
+    category: "Medication",
+    badge: "Removed",
   },
   {
     id: 25,
-    cpg: "CPG 15.4",
-    title: "ISDN approved for AP transfer",
-    detail:
-      "Isosorbide Dinitrate (ISDN) included in the list of approved medications for AP transfer.",
+    cpg: "CPG 12.4",
+    title: "TXA removed from placenta praevia",
+    detail: "TXA removed from placenta praevia algorithm.",
     category: "Medication",
+    badge: "Removed",
   },
   {
     id: 26,
-    cpg: "CPG 4.4",
-    title: "Blood products included",
-    detail: "CPG updated to include blood and blood products.",
-    category: "Clinical",
+    cpg: "CPG 12.13",
+    title: "Care of the Newborn added",
+    detail: "New CPG – Care of the Newborn.",
+    category: "New CPG",
+    badge: "New",
   },
   {
     id: 27,
-    cpg: "Adenosine",
-    title: "Adenosine formulary updated",
-    detail: "Formulary updated to reflect 18 mg adenosine as the 3rd dose.",
+    cpg: "TXA",
+    title: "TXA for paediatrics by APs",
+    detail: "TXA formulary updated to include administration to paediatrics by AP.",
     category: "Formulary",
-    badge: "Dose",
   },
   {
     id: 28,
-    cpg: "Clopidogrel",
-    title: "Clopidogrel formulary updated",
-    detail: "Formulary updated to reflect 600 mg dosing for STEMI.",
+    cpg: "TXA",
+    title: "TXA for paediatric isolated TBI",
+    detail:
+      "TXA indications updated to include paediatric isolated TBI with GCS ≤12 for AP and CCP.",
     category: "Formulary",
-    badge: "Dose",
+    badge: "Indication",
   },
   {
     id: 29,
-    cpg: "Hydrocortisone",
-    title: "Hydrocortisone formulary updated",
-    detail: "Formulary updated to reflect hydrocortisone dosing for adrenal insufficiency.",
+    cpg: "TXA",
+    title: "TXA obstetric indication: PPH only",
+    detail: "TXA obstetric indications updated to post-partum haemorrhage only.",
     category: "Formulary",
+    badge: "Indication",
   },
   {
     id: 30,
-    cpg: "Paracetamol",
-    title: "Paracetamol formulary updated",
+    cpg: "Ondansetron",
+    title: "Ondansetron CCP sign-off",
     detail:
-      "Formulary updated to reflect that IV paracetamol may be administered to paediatric patients and infants by APs.",
+      "Ondansetron Formulary updated to reflect CCPs sign off to APs following administration.",
     category: "Formulary",
-  },
-  {
-    id: 31,
-    cpg: "TXA",
-    title: "TXA formulary updated",
-    detail: "Formulary updated to reflect TXA dosing for epistaxis.",
-    category: "Formulary",
-    badge: "Dose",
   },
 ];
 
@@ -292,12 +289,6 @@ const CATEGORY_STYLE: Record<Exclude<ChangeCategory, "All">, string> = {
   Medication: "border-violet-500/30 bg-violet-500/10 text-violet-300",
   Trauma: "border-orange-500/30 bg-orange-500/10 text-orange-300",
   Formulary: "border-pink-500/30 bg-pink-500/10 text-pink-300",
-  Document: "border-slate-600 bg-slate-800 text-slate-300",
-};
-
-const DOCUMENT_PAGE_BY_LABEL: Record<string, number> = {
-  "Abbreviation List": 8,
-  "Page 11": 11,
 };
 
 function getTargetPage(change: CpgChange): number {
@@ -312,7 +303,7 @@ function getTargetPage(change: CpgChange): number {
   );
   if (medication) return medication.formularyPage;
 
-  return DOCUMENT_PAGE_BY_LABEL[change.cpg] ?? 1;
+  return 1;
 }
 
 function getCpgHref(change: CpgChange): string {
@@ -352,7 +343,7 @@ export default function CpgLatestChangesPage() {
           </button>
           <div className="min-w-0 flex-1">
             <p className="text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-amber-400">
-              Reference - CPG v2.5
+              Reference - CPG v2.6
             </p>
             <h1 className="truncate text-base font-bold leading-tight text-slate-100">
               Latest CPG Changes
@@ -388,9 +379,9 @@ export default function CpgLatestChangesPage() {
           <div className="flex items-start gap-3">
             <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
             <div>
-              <p className="text-sm font-semibold text-amber-100">22 April AS SC 26-27 CPG update</p>
+              <p className="text-sm font-semibold text-amber-100">AS SC 26-56 · CPG v2.6 update</p>
               <p className="mt-1 text-xs leading-5 text-amber-100/80">
-                Summary of the published change list for CPG v2.5. Always verify clinical decisions
+                Summary of the published change list for CPG v2.6. Always verify clinical decisions
                 against the full guideline.
               </p>
             </div>

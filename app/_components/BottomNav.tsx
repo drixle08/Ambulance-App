@@ -15,7 +15,7 @@ import {
 import { searchSopEntries, type SopEntry } from "@/lib/sopIndex";
 import { searchCpmEntries, type CpmEntry } from "@/lib/cpmIndex";
 
-const PDF_PATH = "/reference/cpg/cpg-v2.5-2026.pdf";
+const PDF_PATH = "/reference/cpg/cpg-v2.6-2026.pdf";
 
 // ─── Inline search result components ─────────────────────────────────────────
 

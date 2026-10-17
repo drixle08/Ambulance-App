@@ -55,6 +55,8 @@ interface DoseMode {
   durationMax?: number;
   durationDefault?: number;
   note?: string;
+  /** Cap on the weight-based total dose (mg), e.g. paediatric TXA max 1 g. */
+  maxTotalMg?: number;
   rsiPhase?: number;
   sedationGrid?: SedationGrid;
 }
@@ -470,7 +472,22 @@ const DRUGS: Drug[] = [
         concLabel: "20 mg/mL (2 g in 100 mL)",
         mixInstructions: "2 g (20 mL of 100 mg/mL TXA) + 80 mL NaCl 0.9% → 100 mL @ 20 mg/mL",
         infusionMinutes: 10,
-        note: "600 mL/h for 10 min",
+        note: "600 mL/h for 10 min · Adult (>14 y) major trauma <3 h: suspected/major haemorrhage or TBI GCS ≤12",
+      },
+      {
+        id: "pph",
+        label: "PPH",
+        description: "1 g over 10 min",
+        type: "g",
+        doseMin: 1,
+        doseMax: 1,
+        doseDefault: 1,
+        doseStep: 0.5,
+        concMcgMl: 10000,
+        concLabel: "10 mg/mL (1 g in 100 mL)",
+        mixInstructions: "1 g (10 mL of 100 mg/mL TXA) + 90 mL NaCl 0.9% → 100 mL @ 10 mg/mL",
+        infusionMinutes: 10,
+        note: "Post-partum major haemorrhage <3 h — the only obstetric TXA indication in CPG v2.6",
       },
       {
         id: "epistaxis-topical",
@@ -514,6 +531,8 @@ const DRUGS: Drug[] = [
         concLabel: "10 mg/mL",
         mixInstructions: "Dilute 15 mg/kg in NaCl 0.9% to achieve 10 mg/mL concentration",
         infusionMinutes: 10,
+        maxTotalMg: 1000,
+        note: "<14 y major trauma <3 h: suspected/confirmed major haemorrhage or TBI GCS ≤12 · Max 1 g · AP IV, CCP IV/IO",
       },
     ],
   },
@@ -602,10 +621,13 @@ function doCalc(mode: DoseMode, dose: number, weight: number, durMin: number): C
       return { kind: "fixed", flowRateMlH: fr, volumeMl: vol, durationMin: dur, dripsPerMin: (fr * 20) / 60, formula: `${dose} g → ${fmtNum(vol)} mL over ${dur} min` };
     }
     case "mg/kg": {
-      const totalMg = weight * dose;
+      const rawMg = weight * dose;
+      const capped = mode.maxTotalMg != null && rawMg > mode.maxTotalMg;
+      const totalMg = capped ? mode.maxTotalMg! : rawMg;
       const vol = (totalMg * 1000) / c;
       const fr = (vol * 60) / dur;
-      return { kind: "fixed", flowRateMlH: fr, volumeMl: vol, totalDoseMg: totalMg, durationMin: dur, dripsPerMin: (fr * 20) / 60, formula: `${weight} kg × ${dose} mg/kg = ${fmtNum(totalMg, 0)} mg → ${fmtNum(vol, 1)} mL over ${dur} min` };
+      const capNote = capped ? ` (capped at max ${fmtNum(totalMg, 0)} mg)` : "";
+      return { kind: "fixed", flowRateMlH: fr, volumeMl: vol, totalDoseMg: totalMg, durationMin: dur, dripsPerMin: (fr * 20) / 60, formula: `${weight} kg × ${dose} mg/kg = ${fmtNum(rawMg, 0)} mg${capNote} → ${fmtNum(vol, 1)} mL over ${dur} min` };
     }
     case "push_mcg": {
       const vol = dose / c;

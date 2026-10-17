@@ -106,7 +106,7 @@ const ANALGESIA_OPTIONS: DoseOption[] = [
     caution: "Avoid in renal/hepatic impairment, altered conscious state, or haemodynamic instability.",
   },
   {
-    // Extended scope — Morphine does not appear anywhere in CPG v2.5 (full-
+    // Extended scope — Morphine does not appear anywhere in CPG v2.6 (full-
     // text search of the entire document returns zero matches). Kept as
     // departmental extended scope per policy; dosing here is not CPG-verified.
     id: "analg-morph",
@@ -151,7 +151,7 @@ const VASOPRESSOR_OPTIONS: DoseOption[] = [
     caution: "Extravasation → tissue necrosis. Central access preferred. First-line vasopressor.",
   },
   {
-    // Extended scope — Metaraminol does not appear anywhere in CPG v2.5 (full-
+    // Extended scope — Metaraminol does not appear anywhere in CPG v2.6 (full-
     // text search of the entire document returns zero matches). CPG's actual
     // vasopressor escalation for trauma/haemorrhage is Noradrenaline ->
     // Phenylephrine -> Adrenaline infusion (p.167-170), neither of which
@@ -186,7 +186,7 @@ const BUNDLES: Bundle[] = [
         caution: "Contraindicated: active vomiting · facial trauma · GCS <10 · suspected pneumothorax",
       },
       {
-        // Extended scope — no numeric ETCO2 target appears anywhere in CPG v2.5.
+        // Extended scope — no numeric ETCO2 target appears anywhere in CPG v2.6.
         id: "apo-etco2",
         label: "ETCO₂",
         sublabel: "Target 35–45 mmHg",
@@ -236,7 +236,7 @@ const BUNDLES: Bundle[] = [
       {
         // CPG p.19/37-47: continuous/mandatory-if-intubated ETCO2 confirmed.
         // Extended scope: the 35-45 mmHg numeric target -- no target range
-        // appears anywhere in CPG v2.5.
+        // appears anywhere in CPG v2.6.
         id: "crit-etco2",
         label: "ETCO₂",
         sublabel: "Target 35–45 mmHg",
@@ -244,7 +244,7 @@ const BUNDLES: Bundle[] = [
       },
       {
         // Extended scope — QRS beep setting and the 130/40 bpm alarm limits
-        // do not appear anywhere in CPG v2.5.
+        // do not appear anywhere in CPG v2.6.
         id: "crit-qrs",
         label: "QRS / HR tone HIGH",
         sublabel: "Audible alarm — max sensitivity",
@@ -577,26 +577,22 @@ const BUNDLES: Bundle[] = [
     color: "indigo",
     items: [
       {
-        // CPG p.58: B/E/F/A/S/T definitions confirmed.
+        // CPG v2.6 p.63: B/E/F/A/S/T definitions; RACE added in v2.6.
         id: "stroke-befast",
-        label: "BEFAST Assessment",
+        label: "BEFAST + RACE",
         sublabel: "Balance · Eyes · Face · Arms · Speech · Time",
-        detail: "B — Balance: sudden loss of coordination or balance\nE — Eyes: sudden vision change (blurred, double, loss)\nF — Face: facial droop (ask patient to smile)\nA — Arms: arm or leg drift or weakness\nS — Speech: slurred, wrong words, no speech\nT — Time: record exact onset time. If unknown → time last seen well.",
+        detail: "B — Balance: sudden loss of coordination or balance\nE — Eyes: sudden vision change (blurred, double, loss)\nF — Face: facial droop (ask patient to smile)\nA — Arms: arm or leg drift or weakness\nS — Speech: slurred, wrong words, no speech\nT — Time: record exact onset time. If unknown → time last seen well.\nRACE (BEFAST positive, onset > 8 h & < 24 h): facial palsy, arm, leg, head & gaze deviation, aphasia (right hemiparesis) or agnosia (left). Total 0–9; ≥ 5 = possible large vessel occlusion. Use the Stroke tool to score.",
       },
       {
-        // CPG p.58: <15h/uncertain-onset window confirmed (checked in a prior
-        // pass). "John Hunter Hospital" corrected to "HGH" (Hamad General
-        // Hospital) -- CPG never names any other facility; the label above
-        // already correctly said "HGH", only this detail text had the wrong
-        // name. Extended scope, kept: the "~1.9 million neurons/min" statistic
-        // doesn't appear in CPG (a commonly-cited stroke-education figure, not
-        // contradicted by anything in the document).
+        // CPG v2.6 p.64 Stroke Transport Destination Decision Tree replaces the
+        // v2.5 <15h window. Extended scope, kept: the "~1.9 million neurons/min"
+        // statistic doesn't appear in CPG.
         id: "stroke-p1",
-        label: "Priority 1 → HGH",
-        sublabel: "Pre-notify stroke team",
-        note: "< 15 h from onset, or uncertain onset time",
-        detail: "Pre-notify HGH stroke team on route. Bypass other facilities if within criteria. Every 1 min of delay = ~1.9 million neurons lost. Document: GCS, BEFAST result, onset time, last seen well time.",
-        caution: "Uncertain onset time = treat as eligible (default to P1). Do not delay transport for further assessment.",
+        label: "Destination — decision tree",
+        sublabel: "≤ 8 h or wake-up/unknown → P1 HGH ED",
+        note: "BEFAST positive · RACE if > 8 h & < 24 h",
+        detail: "BEFAST positive and onset / last known well ≤ 8 h, or wake-up / unknown onset → P1 to HGH ED.\n> 8 h & < 24 h → perform RACE: ≥ 5 → P1 to HGH ED; < 5 → P2 to nearest appropriate ED.\n≥ 24 h → P2 to nearest appropriate ED.\nFor P1: update CC:E and prenotify (age, onset / last seen well, BEFAST, RACE, RBS, BP, anticoagulants, ETA). Every 1 min of delay = ~1.9 million neurons lost.",
+        caution: "Wake-up / unknown-onset stroke is treated as acute stroke (P1 HGH). Do not delay on scene waiting for a CCP — meet en route.",
       },
       {
         // CPG p.111/305-306: <4.0 mmol/L threshold confirmed. Dose corrected

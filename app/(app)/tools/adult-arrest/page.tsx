@@ -26,7 +26,7 @@ type Tab = "algorithm" | "reference";
 
 const DEFIB_ENERGY: Record<Defib, [string, string, string, string]> = {
   lp15: ["200 J", "300 J", "360 J", "360 J"],
-  zoll: ["120 J", "200 J", "200 J", "200 J"],
+  zoll: ["150 J", "200 J", "200 J", "200 J"],
 };
 
 const HS = [
@@ -47,7 +47,7 @@ const TS = [
 ];
 
 const summaryText =
-  "Adult unwitnessed medical cardiac arrest — CPG 2.1 (HMCAS v2.5 2026). Confirmed arrest, commenced CPR (100–120/min, ~5 cm depth), attached defibrillator. For VF/VT: single shocks (LP15: 200→300→360 J / Zoll: 120→150→200 J) with 2-min CPR cycles; SGA airway with HME/filter, continuous compressions, waveform capnography (EtCO₂); IV/IO access; adrenaline 1 mg IV/IO at cycle 3 then every 4 min; amiodarone 300 mg IV/IO then 150 mg for refractory VF/VT; vector change to A-P pads after 3 consecutive shocks; LUCAS applied at 6-min mark. For asystole/PEA: no shock; 2-min CPR cycles; SGA; IV/IO; adrenaline 1 mg ASAP then every 4 min; systematic H's & T's review (6H's: hypoxia, hypovolaemia, H⁺ acidosis, hypoglycaemia, K⁺ imbalance, hypothermia; 5T's: tension pneumo, tamponade, toxins, thrombosis-coronary, thrombosis-PE); LUCAS at 6-min mark. ROSC → CPG 2.6. Termination considered after 20 min with no response per CPG 2.7.";
+  "Adult unwitnessed medical cardiac arrest — CPG 2.1 (HMCAS v2.6 2026). Confirmed arrest, commenced CPR (100–120/min, 5–6 cm depth), attached defibrillator. For VF/VT: single shocks (LP15: 200→300→360 J / Zoll: 150→200→200 J) with 2-min CPR cycles; SGA airway with HME/filter, continuous compressions, waveform capnography (EtCO₂); IV/IO access; adrenaline 1 mg IV/IO after the 3rd shock then every 4 min; amiodarone 300 mg IV/IO after the 3rd shock and 150 mg after the 5th shock; vector change to A-P pads after 3 consecutive shocks; LUCAS applied at 6-min mark. For asystole/PEA: no shock; 2-min CPR cycles; SGA; IV/IO; adrenaline 1 mg ASAP then every 4 min; systematic H's & T's review (6H's: hypoxia, hypovolaemia, H⁺ acidosis, hypoglycaemia, K⁺ imbalance, hypothermia; 5T's: tension pneumo, tamponade, toxins, thrombosis-coronary, thrombosis-PE); LUCAS at 6-min mark. ROSC → CPG 2.6. Termination considered after 20 min with no response per CPG 2.7.";
 
 // ─── Primitive components ─────────────────────────────────────────────────────
 
@@ -288,12 +288,12 @@ function ShockablePathway({ defib }: { defib: Defib }) {
         <DrugItem
           name="Adrenaline"
           dose="1 mg IV / IO"
-          sub="Then 1 mg every 4 min thereafter"
+          sub="After the 3rd shock · then 1 mg every 4 min"
         />
         <DrugItem
           name="Amiodarone"
           dose="300 mg IV / IO"
-          sub="Refractory VF/VT — give slowly"
+          sub="After the 3rd shock — give slowly"
         />
       </CycleCard>
 
@@ -310,12 +310,12 @@ function ShockablePathway({ defib }: { defib: Defib }) {
         <DrugItem
           name="Amiodarone"
           dose="150 mg IV / IO"
-          sub="Repeat dose — max cumulative 450 mg"
+          sub="After the 5th shock — max cumulative 450 mg"
         />
         <ActionItem text="LUCAS continuous mode — ongoing" />
         <ActionItem text="Reassess rhythm + reversible causes each cycle" />
         <CcpBox>
-          <CcpNoteItem text="DSED: dual sequential defibrillation from shock 4+ (or once max joules reached). No vector change required before DSED. Once initiated, all subsequent shocks must be DSED." />
+          <CcpNoteItem text="DSED: refractory VF/VT after 3 consecutive shocks (shock 4+) or once max joules reached. No vector change required. Max 3 DSEDs — if still shockable, revert to standard A-P at max joules." />
           <CcpNoteItem text="Consider ETI after ~10 min of resuscitation — replace SGA if ROSC likely or transporting" />
           <CcpNoteItem text="Insert gastric tube via SGA, or OGT if ETT in situ — prevent aspiration" />
           <CcpNoteItem text="CPR-induced consciousness → Ketamine 1 mg/kg IV/IO" />
@@ -481,7 +481,7 @@ function ReferenceTab() {
           {[
             "SGA is the primary airway adjunct during cardiac arrest",
             "Attach HME/filter to SGA or ETT",
-            "EtCO₂ waveform capnography mandatory with all advanced airways — monitors cardiac output and indicates ROSC",
+            "EtCO₂ waveform capnography mandatory with all advanced airways — monitors CPR quality and indicates ROSC. Aim for EtCO₂ ≈ 25 mmHg",
           ].map((item, i) => (
             <p key={i} className="text-xs text-slate-300 flex gap-2">
               <span className="text-slate-600 shrink-0">·</span>
@@ -524,7 +524,7 @@ function ReferenceTab() {
               </div>
               <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-2.5">
                 <p className="text-[0.62rem] font-bold uppercase text-amber-500/70 mb-1">Zoll (Biphasic)</p>
-                <p className="text-sm font-bold text-amber-200/70">120 → 200 J</p>
+                <p className="text-sm font-bold text-amber-200/70">150 → 200 → 200 J</p>
               </div>
             </div>
           </div>
@@ -555,7 +555,7 @@ function ReferenceTab() {
                 DSED
               </p>
               <p className="text-xs text-slate-300 leading-5">
-                Dual sequential external defibrillation for refractory VF/VT after 3 consecutive shocks (or from shock 4+ when max joules reached). No vector change needed before DSED. Once initiated, all subsequent shocks must be DSED.
+                Dual sequential external defibrillation for refractory VF/VT after 3 consecutive shocks (i.e. shock 4+) or when max joules reached. No vector change needed before DSED. Maximum 3 DSEDs — if the shockable rhythm persists, revert to standard anterior-posterior defibrillation at maximum joules.
               </p>
             </div>
           </div>
@@ -572,13 +572,13 @@ function ReferenceTab() {
         <div className="p-3 space-y-3">
           <div>
             <p className="text-[0.62rem] font-bold uppercase tracking-wider text-emerald-500 mb-1.5">Adrenaline</p>
-            <p className="text-xs text-slate-300">1 mg IV/IO — first dose at cycle 3 (VF/VT) or ASAP (asystole/PEA)</p>
+            <p className="text-xs text-slate-300">1 mg IV/IO — after the 3rd shock (VF/VT) or ASAP (asystole/PEA)</p>
             <p className="text-xs text-slate-400 mt-0.5">Repeat every 4 min throughout resuscitation</p>
           </div>
           <div className="border-t border-slate-800 pt-3">
             <p className="text-[0.62rem] font-bold uppercase tracking-wider text-emerald-500 mb-1.5">Amiodarone — refractory VF/VT only</p>
-            <p className="text-xs text-slate-300">300 mg IV/IO — first dose (cycle 3)</p>
-            <p className="text-xs text-slate-300 mt-0.5">150 mg IV/IO — repeat dose</p>
+            <p className="text-xs text-slate-300">300 mg IV/IO — after the 3rd shock</p>
+            <p className="text-xs text-slate-300 mt-0.5">150 mg IV/IO — after the 5th shock</p>
             <p className="text-xs text-slate-400 mt-0.5">Maximum cumulative: 450 mg</p>
           </div>
           <div className="border-t border-slate-800 pt-3 flex items-start gap-1.5">
@@ -616,7 +616,7 @@ export default function AdultArrestPage() {
           </Link>
           <div className="flex-1 min-w-0">
             <p className="text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-red-400">
-              Resuscitation · CPG 2.1 · v2.5 2026
+              Resuscitation · CPG 2.1 · v2.6 2026
             </p>
             <h1 className="text-sm font-semibold leading-tight text-slate-50">
               Adult Medical Cardiac Arrest
@@ -692,7 +692,7 @@ export default function AdultArrestPage() {
                   >
                     <p className="text-sm font-bold">{d === "lp15" ? "LP15" : "Zoll"}</p>
                     <p className="text-[0.65rem] text-slate-500 mt-0.5">
-                      {d === "lp15" ? "200 → 300 → 360 J" : "120 → 200 J"}
+                      {d === "lp15" ? "200 → 300 → 360 J" : "150 → 200 → 200 J"}
                     </p>
                   </button>
                 ))}
@@ -843,7 +843,7 @@ export default function AdultArrestPage() {
             </section>
 
             <p className="text-[0.65rem] text-slate-600 pb-2">
-              CPG 2.1 · HMCAS v2.5 2026. Quick reference only — always follow the full current guideline and Clinical Coordination advice.
+              CPG 2.1 · HMCAS v2.6 2026. Quick reference only — always follow the full current guideline and Clinical Coordination advice.
             </p>
           </>
         )}
@@ -853,7 +853,7 @@ export default function AdultArrestPage() {
           <>
             <ReferenceTab />
             <p className="text-[0.65rem] text-slate-600 pb-2">
-              CPG 2.1 · HMCAS v2.5 2026. Quick reference only.
+              CPG 2.1 · HMCAS v2.6 2026. Quick reference only.
             </p>
           </>
         )}

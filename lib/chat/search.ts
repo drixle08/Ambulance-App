@@ -103,7 +103,7 @@ export function normaliseTokens(text: string): string[] {
 
 function cleanPageText(text: string): string {
   return text
-    .replace(/HMCAS CPG VERSION 2\. ?5 20\s?2\s?6 \d+/g, "")
+    .replace(/HMCAS CPG VERSION 2\. ?6 20\s?2\s?6 \d+/g, "")
     .replace(/▪?\s*BACK TO TABLE OF CONTENTS\s*▪?\s*(BACK TO FORMULARY)?/g, "")
     .replace(/Return to Table of Contents Version [\d.]+ – \w+ \d{4} Page \d+/g, "")
     .replace(/\s+/g, " ")

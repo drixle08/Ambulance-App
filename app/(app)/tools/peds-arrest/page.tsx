@@ -110,20 +110,19 @@ export default function PedsArrestPage() {
     !isNaN(parsedOverride) && parsedOverride > 0 ? parsedOverride : estWeight;
 
   // Doses
-  const adrMg = weight ? 0.01 * weight : null;
-  const adrMl = weight ? 0.1 * weight : null;
+  // CPG 2.3: 0.01 mg/kg, max 1 mg (= 10 mL of 1:10,000)
+  const adrMg = weight ? Math.min(0.01 * weight, 1) : null;
+  const adrMl = weight ? Math.min(0.1 * weight, 10) : null;
   const amioMgRaw = weight ? 5 * weight : null;
   const amioMg = amioMgRaw != null ? Math.min(amioMgRaw, 300) : null;
   const amioCapped = amioMgRaw != null && amioMgRaw > 300;
   // Amiodarone: 150 mg/3 mL = 50 mg/mL (undiluted)
   const amioMl = amioMg != null ? amioMg / 50 : null;
   const fluid10 = weight ? 10 * weight : null;
-  const fluid20 = weight ? 20 * weight : null;
   const defib4 = weight ? 4 * weight : null;
   const defib6 = weight ? 6 * weight : null;
   const defib8 = weight ? 8 * weight : null;
-  const defib10 = weight ? 10 * weight : null;
-  const dex10Vol = weight ? 2.5 * weight : null;
+  const dex10Vol = weight ? 2 * weight : null;
   const sbp = hasAge && ageYears > 0 ? 70 + 2 * ageYears : 70;
 
   // Airway sizing
@@ -165,8 +164,8 @@ export default function PedsArrestPage() {
       : `Paediatric arrest: ${ageYears}y ${ageMonths}m, weight ~${fmt(weight)} kg. ` +
         `Adrenaline 0.01 mg/kg ≈ ${fmt(adrMg, 3)} mg (${fmt(adrMl, 1)} mL of 1:10,000). ` +
         `Amiodarone 5 mg/kg ≈ ${fmt(amioMg, 1)} mg${amioCapped ? " (capped 300 mg)" : ""} (${fmt(amioMl, 1)} mL undiluted). ` +
-        `Fluids 10–20 mL/kg: bolus ${fmt(fluid10, 0)}–${fmt(fluid20, 0)} mL (up to 3 boluses). ` +
-        `First shock 4 J/kg ≈ ${fmt(defib4, 0)} J. ` +
+        `Fluids 10 mL/kg: bolus ${fmt(fluid10, 0)} mL (× 3). ` +
+        `First shock 4 J/kg ≈ ${fmt(defib4, 0)} J (CCP max 8 J/kg). Dextrose 10% 2 mL/kg ≈ ${fmt(dex10Vol, 0)} mL. ` +
         (sgaText ? `${sgaText}. ` : "") +
         (ettText ? `${ettText}. ` : "") +
         `Target SBP ≥ ${sbp} mmHg.`;
@@ -184,7 +183,7 @@ export default function PedsArrestPage() {
           </Link>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
-              CPG 2.3 · v2.5 2026
+              CPG 2.3 · v2.6 2026
             </p>
             <h1 className="text-base font-bold text-white leading-tight">
               Paediatric Arrest — WAAFELSS
@@ -320,7 +319,7 @@ export default function PedsArrestPage() {
             />
           </div>
           <p className="text-[10px] text-slate-600">
-            CPG v2.5 formulas — 0–12m: (months×0.5)+4 · 1–5y: (age×2)+8 ·
+            CPG v2.6 formulas — 0–12m: (months×0.5)+4 · 1–5y: (age×2)+8 ·
             6–14y: (age×3)+7
           </p>
         </section>
@@ -330,7 +329,7 @@ export default function PedsArrestPage() {
           <DoseCard
             letter="A"
             title="Adrenaline"
-            formula="0.01 mg/kg IV/IO — repeat every 4 min"
+            formula="0.01 mg/kg IV/IO (max 1 mg) — repeat every 4 min"
             color="emerald"
             icon={<Syringe className="w-5 h-5" />}
           >
@@ -341,7 +340,7 @@ export default function PedsArrestPage() {
           <DoseCard
             letter="A"
             title="Amiodarone"
-            formula="5 mg/kg IV/IO — refractory VF/VT"
+            formula="5 mg/kg IV/IO — after 3rd shock (max 300 mg) · after 5th (max 150 mg)"
             color="sky"
             icon={<Zap className="w-5 h-5" />}
           >
@@ -357,29 +356,25 @@ export default function PedsArrestPage() {
           <DoseCard
             letter="F"
             title="Fluids"
-            formula="10–20 mL/kg NaCl 0.9% — up to 3 boluses"
+            formula="10 mL/kg × 3"
             color="blue"
             icon={<Droplets className="w-5 h-5" />}
           >
             <BigValue value={fmt(fluid10, 0)} unit="mL" />
-            <SmallValue
-              value={`max ${fmt(fluid20, 0)} mL`}
-              unit="per bolus"
-            />
+            <SmallValue value="per bolus" unit="· up to 3" />
           </DoseCard>
 
           <DoseCard
             letter="E"
             title="Energy"
-            formula="4 → 10 J/kg"
+            formula="4 J/kg · CCP +2 J to max 8 J/kg"
             color="amber"
             icon={<Zap className="w-5 h-5" />}
           >
             <div className="grid grid-cols-2 gap-1">
               <ShockRow label="4 J/kg" value={fmt(defib4, 0)} />
               <ShockRow label="6 J/kg" value={fmt(defib6, 0)} />
-              <ShockRow label="8 J/kg" value={fmt(defib8, 0)} />
-              <ShockRow label="10 J/kg" value={fmt(defib10, 0)} />
+              <ShockRow label="8 J/kg max" value={fmt(defib8, 0)} />
             </div>
           </DoseCard>
         </div>
@@ -470,7 +465,7 @@ export default function PedsArrestPage() {
           <DoseCard
             letter="S"
             title="Sugar (Dextrose 10%)"
-            formula="2.5 mL/kg IV/IO"
+            formula="2 mL/kg IV/IO (0.2 g/kg)"
             color="yellow"
             icon={<Droplets className="w-5 h-5" />}
           >
@@ -501,8 +496,8 @@ export default function PedsArrestPage() {
             {(
               [
                 ["W", "Weight", false],
-                ["A", "Airway", false],
-                ["A", "Adrenaline / Amiodarone", false],
+                ["A", "Adrenaline", false],
+                ["A", "Amiodarone", false],
                 ["F", "Fluids", false],
                 ["E", "Energy (Defib)", false],
                 ["L", "Laryngeal (SGA & ETT sizing)", true],
@@ -534,9 +529,9 @@ export default function PedsArrestPage() {
         <div className="flex items-start gap-2 rounded-xl border border-slate-800 bg-slate-900/40 p-3">
           <Heart className="w-4 h-4 text-rose-500 mt-0.5 flex-shrink-0" />
           <p className="text-[11px] text-slate-500 leading-relaxed">
-            Cross-check all doses against your HMCAS CPG v2.5, resuscitation
-            chart, and clinical judgement. Do NOT terminate paediatric
-            resuscitation in the field — transport to hospital.
+            Cross-check all doses against your HMCAS CPG v2.6, resuscitation
+            chart, and clinical judgement. Termination of paediatric resuscitation
+            is not routine — only in special circumstances (CPG 2.7).
           </p>
         </div>
       </main>

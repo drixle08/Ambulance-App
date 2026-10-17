@@ -164,8 +164,15 @@ export const TOOL_GROUPS: ToolGroup[] = [
       {
         name: "Stroke BEFAST",
         href: "/tools/stroke",
-        tagline: "BEFAST stroke screen with onset bands and transport priority guidance.",
+        tagline: "BEFAST stroke screen with the v2.6 transport destination decision tree.",
         meta: "CPG Stroke",
+        icon: "Brain",
+      },
+      {
+        name: "RACE Scale (Stroke LVO)",
+        href: "/tools/race",
+        tagline: "Rapid Arterial oCclusion Evaluation — RACE ≥ 5 suggests large vessel occlusion.",
+        meta: "CPG 3.1",
         icon: "Brain",
       },
       {

@@ -4,6 +4,15 @@ import { useState } from "react";
 import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 import {
+  EMPTY_RACE,
+  RACE_LVO_THRESHOLD,
+  RACE_VIDEO_URL,
+  raceItems as getRaceItems,
+  raceTotal,
+  type Hemiparesis,
+  type RaceScores,
+} from "@/lib/race";
+import {
   ArrowLeft,
   RotateCcw,
   Clock,
@@ -24,7 +33,6 @@ import {
 type BEFASTState = "normal" | "abnormal" | "unknown";
 // CPG 3.1 (v2.6) Stroke Transport Destination Decision Tree onset bands.
 type OnsetBand = "le8" | "8to24" | "ge24" | "unknown";
-type Hemiparesis = "right" | "left";
 
 const ONSET_OPTIONS = [
   { id: "le8", label: "≤ 8 hours", sub: "Onset / last known well" },
@@ -39,84 +47,6 @@ const ONSET_LABEL: Record<OnsetBand, string> = {
   ge24: "≥ 24 h",
   unknown: "Wake-up / unknown onset",
 };
-
-// ─── RACE scale (Rapid Arterial oCclusion Evaluation) ────────────────────────
-
-type RaceKey = "face" | "arm" | "leg" | "gaze" | "cortical";
-
-type RaceItem = {
-  key: RaceKey;
-  label: string;
-  options: { score: number; label: string }[];
-};
-
-const RACE_ITEMS: RaceItem[] = [
-  {
-    key: "face",
-    label: "Facial palsy",
-    options: [
-      { score: 0, label: "Absent" },
-      { score: 1, label: "Mild" },
-      { score: 2, label: "Moderate / severe" },
-    ],
-  },
-  {
-    key: "arm",
-    label: "Arm motor impairment",
-    options: [
-      { score: 0, label: "Normal / mild" },
-      { score: 1, label: "Moderate" },
-      { score: 2, label: "Severe" },
-    ],
-  },
-  {
-    key: "leg",
-    label: "Leg motor impairment",
-    options: [
-      { score: 0, label: "Normal / mild" },
-      { score: 1, label: "Moderate" },
-      { score: 2, label: "Severe" },
-    ],
-  },
-  {
-    key: "gaze",
-    label: "Head & gaze deviation",
-    options: [
-      { score: 0, label: "Absent" },
-      { score: 1, label: "Present" },
-    ],
-  },
-];
-
-const APHASIA_ITEM: RaceItem = {
-  key: "cortical",
-  label: "Aphasia — “Close your eyes” & “Make a fist”",
-  options: [
-    { score: 0, label: "Performs both tasks" },
-    { score: 1, label: "Performs 1 task" },
-    { score: 2, label: "Performs neither" },
-  ],
-};
-
-const AGNOSIA_ITEM: RaceItem = {
-  key: "cortical",
-  label: "Agnosia — “Whose arm is this?” & “Lift both arms and clap”",
-  options: [
-    { score: 0, label: "Recognises arm and impairment" },
-    { score: 1, label: "Unable to recognise arm or impairment" },
-    { score: 2, label: "Unable to recognise both" },
-  ],
-};
-
-const EMPTY_RACE: Record<RaceKey, number | null> = {
-  face: null,
-  arm: null,
-  leg: null,
-  gaze: null,
-  cortical: null,
-};
-
-const RACE_VIDEO_URL = "https://youtu.be/9-65gGKgx_k";
 
 type Destination = {
   tone: "none" | "p1" | "p2" | "pending";
@@ -168,7 +98,7 @@ function getDestination(
       steps: ["Onset / last known well > 8 h and < 24 h — complete every RACE item below."],
     };
   }
-  if (raceScore >= 5) {
+  if (raceScore >= RACE_LVO_THRESHOLD) {
     return { ...p1, steps: [`RACE ${raceScore} (≥ 5) — possible large vessel occlusion.`, ...p1.steps] };
   }
   return {
@@ -232,7 +162,7 @@ export default function StrokeBefastPage() {
     speech: "normal",
   });
   const [hemiparesis, setHemiparesis] = useState<Hemiparesis>("right");
-  const [race, setRace] = useState<Record<RaceKey, number | null>>(EMPTY_RACE);
+  const [race, setRace] = useState<RaceScores>(EMPTY_RACE);
 
   function setState(key: BEFASTKey, val: BEFASTState) {
     setStates((prev) => ({ ...prev, [key]: val }));
@@ -245,11 +175,8 @@ export default function StrokeBefastPage() {
     setRace(EMPTY_RACE);
   }
 
-  const raceItems = [...RACE_ITEMS, hemiparesis === "right" ? APHASIA_ITEM : AGNOSIA_ITEM];
-  const raceComplete = Object.values(race).every((v) => v !== null);
-  const raceScore = raceComplete
-    ? Object.values(race).reduce<number>((sum, v) => sum + (v ?? 0), 0)
-    : null;
+  const raceItems = getRaceItems(hemiparesis);
+  const raceScore = raceTotal(race);
 
   const abnormalKeys = BEFAST_ITEMS.filter(
     (i) => states[i.key] === "abnormal"

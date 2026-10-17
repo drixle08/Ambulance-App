@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 import { searchCpgChunks, type CpgChunk } from "@/lib/cpgChat/retriever";
 import { searchSopChunks, type SopChunk } from "@/lib/sopChat/retriever";
 import { searchCpmChunks, type CpmChunk } from "@/lib/cpmChat/retriever";
 import { searchSopEntries } from "@/lib/sopIndex";
+import { parseChatRequest, type HistoryMessage } from "@/lib/chatGuard";
 
 export const runtime = "nodejs";
 
@@ -15,12 +17,7 @@ type Source = {
   type: "cpg" | "sop" | "cpm";
 };
 
-type HistoryMessage = {
-  role: "user" | "assistant";
-  content: string;
-};
-
-const DEFAULT_MODEL = "gpt-4o-mini";
+const DEFAULT_MODEL = "claude-opus-5-5";
 const CPG_SOURCE_LABEL = "CPG v2.5";
 const CPM_SOURCE_LABEL = "CPM v4.0";
 
@@ -170,16 +167,18 @@ function buildSourceLine(cpgSources: Source[], sopSources: Source[], cpmSources:
 
 // ─── OpenAI call ─────────────────────────────────────────────────────────────
 
-async function callOpenAI(
+let client: Anthropic | null = null;
+
+async function callClaude(
   query: string,
   context: string,
   sourceLine: string,
   history: HistoryMessage[]
 ): Promise<string | null> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return null;
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+  client ??= new Anthropic();
 
-  const model = process.env.OPENAI_MODEL || DEFAULT_MODEL;
+  const model = process.env.ANTHROPIC_MODEL || DEFAULT_MODEL;
 
   const userContent = [
     `Question: ${query}`,
@@ -191,61 +190,48 @@ async function callOpenAI(
     sourceLine || "None",
   ].join("\n");
 
-  const messages = [
-    { role: "system" as const, content: SYSTEM_PROMPT },
-    ...history.slice(-6).map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    })),
-    { role: "user" as const, content: userContent },
-  ];
-
-  const resp = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
+  try {
+    const response = await client.beta.messages.create({
       model,
-      temperature: 0.2,
-      max_tokens: 800,
-      messages,
-    }),
-  });
+      max_tokens: 16000,
+      output_config: { effort: "medium" },
+      // On a safety-classifier decline (e.g. toxicology questions), retry on a fallback model.
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      system: SYSTEM_PROMPT,
+      messages: [
+        ...history.slice(-6).map((m) => ({ role: m.role, content: m.content })),
+        { role: "user", content: userContent },
+      ],
+    });
 
-  if (!resp.ok) {
-    const text = await resp.text().catch(() => "");
-    console.error("[cpg-chat] OpenAI error", resp.status, text);
+    if (response.stop_reason === "refusal") {
+      console.warn("[cpg-chat] Claude refusal", response.stop_details?.category);
+      return null;
+    }
+
+    const text = response.content
+      .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
+      .map((b) => b.text)
+      .join("")
+      .trim();
+    return text || null;
+  } catch (error) {
+    if (error instanceof Anthropic.APIError) {
+      console.error("[cpg-chat] Claude API error", error.status, error.message);
+    } else {
+      console.error("[cpg-chat] Claude request failed", error);
+    }
     return null;
   }
-
-  const data = await resp.json();
-  return data?.choices?.[0]?.message?.content?.trim() ?? null;
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null);
-  const query = typeof body?.query === "string" ? body.query.trim() : "";
-
-  if (!query) {
-    return NextResponse.json({ error: "Missing query" }, { status: 400 });
-  }
-
-  const rawHistory: unknown[] = Array.isArray(body?.history) ? body.history : [];
-  const history: HistoryMessage[] = rawHistory
-    .filter(
-      (m): m is { role: string; content: string } =>
-        typeof m === "object" &&
-        m !== null &&
-        typeof (m as Record<string, unknown>).role === "string" &&
-        typeof (m as Record<string, unknown>).content === "string"
-    )
-    .filter((m) => m.role === "user" || m.role === "assistant")
-    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }))
-    .slice(-6);
+  const parsed = await parseChatRequest(req);
+  if ("error" in parsed) return parsed.error;
+  const { query, history } = parsed;
 
   // Search CPG, SOP, and CPM in parallel
   const [cpgChunks, sopChunks, cpmChunks] = await Promise.all([
@@ -269,7 +255,7 @@ export async function POST(req: NextRequest) {
   const sourceLine = buildSourceLine(cpgSources, sopSources, cpmSources);
   const context = buildContext(cpgChunks, sopChunks, cpmChunks);
 
-  const answer = await callOpenAI(query, context, sourceLine, history);
+  const answer = await callClaude(query, context, sourceLine, history);
 
   const finalAnswer = (() => {
     if (!answer) return null;

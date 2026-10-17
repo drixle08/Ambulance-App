@@ -29,7 +29,7 @@ A lightweight PWA built with Next.js 16 and Tailwind CSS that delivers quick-ref
 
 ## CPG Chat setup
 - The CPG Chat tool uses the on-disk index at `public/cpg-index.json`. Regenerate it after swapping the PDF by running `npm run build:cpg-index`.
-- To enable generated answers, provide `OPENAI_API_KEY` (and optionally `OPENAI_MODEL`, default `gpt-4o-mini`). Without a key, the chat returns top CPG excerpts with page links.
+- To enable generated answers, provide `ANTHROPIC_API_KEY` (and optionally `ANTHROPIC_MODEL`, default `claude-opus-5-5`). Without a key, the chat returns top CPG excerpts with page links.
 
 ## PWA notes
 - Manifest is available at `/manifest.webmanifest` and the app targets `/dashboard` as the start URL.

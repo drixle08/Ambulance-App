@@ -8,8 +8,24 @@ import {
   Clipboard,
   ClipboardCheck,
   Copy,
+  Download,
   FilePenLine,
+  FolderOpen,
+  RotateCcw,
+  Save,
+  Trash2,
 } from "lucide-react";
+import {
+  SAVED_CHART_TTL_MS,
+  clearDraft,
+  deleteSavedChart,
+  replaceDraft,
+  saveChart,
+  updateDraftSection,
+  useChartDraft,
+  useSavedCharts,
+  type DraftMap,
+} from "./chartStore";
 
 type CharteSection = {
   id: string;
@@ -67,14 +83,44 @@ const SECTIONS: CharteSection[] = [
   },
 ];
 
-type DraftMap = Record<string, string>;
-
-function buildInitialDraft(): DraftMap {
-  return Object.fromEntries(SECTIONS.map((section) => [section.id, ""])) as DraftMap;
-}
-
 function formatSection(section: CharteSection, value: string) {
   return `${section.title}: ${value.trim()}`;
+}
+
+function buildNarrative(draft: DraftMap) {
+  return SECTIONS.filter((section) => draft[section.id]?.trim())
+    .map((section) => formatSection(section, draft[section.id]))
+    .join("\n\n");
+}
+
+function chartTitle(draft: DraftMap) {
+  const complaint = draft["chief-complaint"]?.trim().replace(/\s+/g, " ");
+  if (!complaint) return "Untitled chart";
+  return complaint.length > 60 ? `${complaint.slice(0, 60)}…` : complaint;
+}
+
+function formatTime(timestamp: number) {
+  return new Date(timestamp).toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function downloadNote(draft: DraftMap, timestamp: number) {
+  const date = new Date(timestamp);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const stamp = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}`;
+  const text = `CHART Documentation\n${date.toLocaleString()}\n\n${buildNarrative(draft)}\n`;
+  const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `chart-${stamp}.txt`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 async function writeClipboard(text: string) {
@@ -96,18 +142,36 @@ async function writeClipboard(text: string) {
 
 export default function DocumentationPage() {
   const router = useRouter();
-  const [draft, setDraft] = useState<DraftMap>(() => buildInitialDraft());
+  const draft = useChartDraft();
+  const savedCharts = useSavedCharts();
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [justSaved, setJustSaved] = useState(false);
 
-  const completedCount = SECTIONS.filter((section) => draft[section.id].trim()).length;
+  const completedCount = SECTIONS.filter((section) => draft[section.id]?.trim()).length;
+  const narrative = useMemo(() => buildNarrative(draft), [draft]);
+  const hasContent = narrative.length > 0;
 
-  const narrative = useMemo(
-    () =>
-      SECTIONS.filter((section) => draft[section.id].trim())
-        .map((section) => formatSection(section, draft[section.id]))
-        .join("\n\n"),
-    [draft]
-  );
+  function handleSave() {
+    if (!hasContent) return;
+    saveChart(draft, chartTitle(draft));
+    setJustSaved(true);
+    window.setTimeout(() => setJustSaved(false), 1400);
+  }
+
+  function handleClear() {
+    if (!hasContent) return;
+    if (window.confirm("Clear all CHART fields? Saved charts are not affected.")) clearDraft();
+  }
+
+  function handleOpen(savedDraft: DraftMap) {
+    if (hasContent && !window.confirm("Replace the chart you're writing with this saved one?")) return;
+    replaceDraft(savedDraft);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleDelete(id: string) {
+    if (window.confirm("Delete this saved chart?")) deleteSavedChart(id);
+  }
 
   async function copyText(id: string, text: string) {
     const cleanText = text.trim();
@@ -118,10 +182,6 @@ export default function DocumentationPage() {
     window.setTimeout(() => {
       setCopiedId((current) => (current === id ? null : current));
     }, 1400);
-  }
-
-  function updateSection(id: string, value: string) {
-    setDraft((current) => ({ ...current, [id]: value }));
   }
 
   return (
@@ -157,7 +217,8 @@ export default function DocumentationPage() {
             <div className="min-w-0">
               <p className="text-sm font-semibold text-blue-100">Structured narrative format</p>
               <p className="mt-1 text-xs leading-5 text-blue-100/80">
-                Complete each CHART field, then copy individual sections into the patient record.
+                Complete each CHART field, then copy individual sections into the patient record. Your draft is kept
+                if you leave this page, until you close the app or clear it.
               </p>
             </div>
           </div>
@@ -183,9 +244,39 @@ export default function DocumentationPage() {
           </button>
         </section>
 
+        <section className="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!hasContent}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2 py-2.5 text-xs font-bold text-emerald-200 transition-colors hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {justSaved ? <ClipboardCheck className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+            {justSaved ? "Saved" : "Save chart"}
+          </button>
+          <button
+            type="button"
+            onClick={() => downloadNote(draft, Date.now())}
+            disabled={!hasContent}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-2 py-2.5 text-xs font-bold text-slate-200 transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Download className="h-4 w-4" />
+            Download
+          </button>
+          <button
+            type="button"
+            onClick={handleClear}
+            disabled={!hasContent}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-2 py-2.5 text-xs font-bold text-red-200 transition-colors hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Clear chart
+          </button>
+        </section>
+
         <section className="flex flex-col gap-3">
           {SECTIONS.map((section) => {
-            const value = draft[section.id];
+            const value = draft[section.id] ?? "";
             const hasText = value.trim().length > 0;
             const copied = copiedId === section.id;
 
@@ -210,7 +301,7 @@ export default function DocumentationPage() {
                 <div className="space-y-3 p-3">
                   <textarea
                     value={value}
-                    onChange={(event) => updateSection(section.id, event.target.value)}
+                    onChange={(event) => updateDraftSection(section.id, event.target.value)}
                     placeholder={section.placeholder}
                     rows={4}
                     className="min-h-28 w-full resize-y rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm leading-6 text-slate-100 outline-none placeholder:text-slate-600 focus:border-blue-400"
@@ -252,6 +343,62 @@ export default function DocumentationPage() {
           <pre className="min-h-32 whitespace-pre-wrap rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs leading-5 text-slate-300">
             {narrative || "Completed sections will appear here."}
           </pre>
+        </section>
+
+        <section className="rounded-lg border border-slate-800 bg-slate-900 p-3">
+          <div className="mb-1 flex items-center justify-between gap-3">
+            <h2 className="text-sm font-bold text-slate-100">Saved charts</h2>
+            <span className="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+              {savedCharts.length} saved
+            </span>
+          </div>
+          <p className="mb-3 text-xs leading-5 text-slate-500">
+            Stored only on this device and deleted automatically after {SAVED_CHART_TTL_MS / 3_600_000} hours.
+            They contain patient information — delete them once the record is complete.
+          </p>
+          {savedCharts.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-slate-800 px-3 py-4 text-center text-xs text-slate-500">
+              No saved charts yet. Use Save chart to keep a copy.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {savedCharts.map((chart) => (
+                <li
+                  key={chart.id}
+                  className="flex items-center gap-2 rounded-lg border border-slate-800 bg-slate-950 px-3 py-2"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-100">{chart.title}</p>
+                    <p className="text-[0.65rem] text-slate-500">{formatTime(chart.savedAt)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleOpen(chart.draft)}
+                    className="rounded-lg p-2 text-slate-300 transition-colors hover:bg-slate-800 hover:text-slate-50"
+                    aria-label={`Open chart: ${chart.title}`}
+                  >
+                    <FolderOpen className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => downloadNote(chart.draft, chart.savedAt)}
+                    className="rounded-lg p-2 text-slate-300 transition-colors hover:bg-slate-800 hover:text-slate-50"
+                    aria-label={`Download chart: ${chart.title}`}
+                  >
+                    <Download className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(chart.id)}
+                    className="rounded-lg p-2 text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200"
+                    aria-label={`Delete chart: ${chart.title}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </main>
     </div>

@@ -324,6 +324,13 @@ export default function CpgChatPage() {
 
       const data = await resp.json();
 
+      if (!resp.ok) {
+        setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
+        setInput(trimmed);
+        setError(typeof data?.error === "string" ? data.error : "Something went wrong — please try again.");
+        return;
+      }
+
       const sources: SourceDoc[] = Array.isArray(data?.sources)
         ? data.sources.map((s: { id?: unknown; page?: unknown; printedPage?: unknown; pdfUrl?: unknown; label?: unknown; type?: unknown }) => ({
             id: String(s?.id ?? crypto.randomUUID()),
@@ -535,6 +542,7 @@ export default function CpgChatPage() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               rows={1}
+              maxLength={1000}
               placeholder="Ask a CPG, SOP, or CPM question… (Enter to send)"
               disabled={isSending}
               className="flex-1 resize-none rounded-xl border border-slate-700 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors disabled:opacity-50 max-h-36 overflow-y-auto"

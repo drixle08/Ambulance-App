@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useState } from "react";
+import { memo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -27,6 +27,26 @@ import { CSS } from "@dnd-kit/utilities";
 import { TOOL_GROUPS, type ToolGroup } from "./data";
 
 const ORDER_KEY = "dashboard-group-order";
+
+function readSavedOrder(): string | null {
+  try { return localStorage.getItem(ORDER_KEY); } catch { return null; }
+}
+
+function applyOrder(saved: string | null): ToolGroup[] {
+  if (!saved) return TOOL_GROUPS;
+  try {
+    const order = JSON.parse(saved) as string[];
+    const sorted = order
+      .map((slug) => TOOL_GROUPS.find((g) => g.slug === slug))
+      .filter(Boolean) as ToolGroup[];
+    const missing = TOOL_GROUPS.filter((g) => !order.includes(g.slug));
+    return sorted.length > 0 ? [...sorted, ...missing] : TOOL_GROUPS;
+  } catch {
+    return TOOL_GROUPS;
+  }
+}
+
+const noopSubscribe = () => () => {};
 
 const ICON_MAP: Record<string, LucideIcon> = {
   ShieldAlert, HeartPulse, Wind, Brain, BookOpen, Activity,
@@ -111,22 +131,11 @@ const SortableCard = memo(function SortableCard({
 });
 
 export function DashboardGrid() {
-  const [groups, setGroups] = useState<ToolGroup[]>(TOOL_GROUPS);
+  // Saved order is read from localStorage after hydration (server snapshot is null).
+  const savedOrder = useSyncExternalStore(noopSubscribe, readSavedOrder, () => null);
+  const [draggedGroups, setDraggedGroups] = useState<ToolGroup[] | null>(null);
+  const groups = draggedGroups ?? applyOrder(savedOrder);
   const [anyDragging, setAnyDragging] = useState(false);
-
-  // Restore saved order on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(ORDER_KEY);
-      if (!saved) return;
-      const order = JSON.parse(saved) as string[];
-      const sorted = order
-        .map((slug) => TOOL_GROUPS.find((g) => g.slug === slug))
-        .filter(Boolean) as ToolGroup[];
-      const missing = TOOL_GROUPS.filter((g) => !order.includes(g.slug));
-      if (sorted.length > 0) setGroups([...sorted, ...missing]);
-    } catch { /* ignore */ }
-  }, []);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -146,15 +155,13 @@ export function DashboardGrid() {
     setAnyDragging(false);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    setGroups((prev) => {
-      const from = prev.findIndex((g) => g.slug === active.id);
-      const to   = prev.findIndex((g) => g.slug === over.id);
-      const next = arrayMove(prev, from, to);
-      try {
-        localStorage.setItem(ORDER_KEY, JSON.stringify(next.map((g) => g.slug)));
-      } catch { /* ignore */ }
-      return next;
-    });
+    const from = groups.findIndex((g) => g.slug === active.id);
+    const to   = groups.findIndex((g) => g.slug === over.id);
+    const next = arrayMove(groups, from, to);
+    setDraggedGroups(next);
+    try {
+      localStorage.setItem(ORDER_KEY, JSON.stringify(next.map((g) => g.slug)));
+    } catch { /* ignore */ }
   }
 
   return (

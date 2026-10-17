@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { searchSopChunks, type SopChunk } from "@/lib/sopChat/retriever";
 import { searchSopEntries } from "@/lib/sopIndex";
+import { parseChatRequest, type HistoryMessage } from "@/lib/chatGuard";
 
 export const runtime = "nodejs";
 
@@ -11,11 +12,6 @@ type Source = {
   sopUrl: string;
   label: string;
   code?: string;
-};
-
-type HistoryMessage = {
-  role: "user" | "assistant";
-  content: string;
 };
 
 const DEFAULT_MODEL = "gpt-4o-mini";
@@ -143,25 +139,9 @@ async function callOpenAI(
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null);
-  const query = typeof body?.query === "string" ? body.query.trim() : "";
-
-  if (!query) {
-    return NextResponse.json({ error: "Missing query" }, { status: 400 });
-  }
-
-  const rawHistory: unknown[] = Array.isArray(body?.history) ? body.history : [];
-  const history: HistoryMessage[] = rawHistory
-    .filter(
-      (m): m is { role: string; content: string } =>
-        typeof m === "object" &&
-        m !== null &&
-        typeof (m as Record<string, unknown>).role === "string" &&
-        typeof (m as Record<string, unknown>).content === "string"
-    )
-    .filter((m) => m.role === "user" || m.role === "assistant")
-    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }))
-    .slice(-6);
+  const parsed = await parseChatRequest(req);
+  if ("error" in parsed) return parsed.error;
+  const { query, history } = parsed;
 
   const topChunks = await searchSopChunks(query, 8);
 

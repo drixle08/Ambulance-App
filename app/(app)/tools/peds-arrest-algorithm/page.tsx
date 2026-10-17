@@ -371,7 +371,7 @@ function ReferenceTab() {
       <Accordion title="Reversible causes" sub="6 H's · 5 T's" defaultOpen>
         <div className="grid grid-cols-2 divide-x divide-slate-800">
           <div className="p-3 space-y-1.5">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">H's</p>
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">H&apos;s</p>
             {HS.map((h, i) => (
               <p key={i} className="text-xs text-slate-300 flex gap-2">
                 <span className="text-slate-600 shrink-0">·</span>{h}
@@ -379,7 +379,7 @@ function ReferenceTab() {
             ))}
           </div>
           <div className="p-3 space-y-1.5">
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">T's</p>
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">T&apos;s</p>
             {TS.map((t, i) => (
               <p key={i} className="text-xs text-slate-300 flex gap-2">
                 <span className="text-slate-600 shrink-0">·</span>{t}

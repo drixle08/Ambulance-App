@@ -69,7 +69,7 @@ const SECTIONS: CharteSection[] = [
     title: "Rx Treatment/Management",
     phase: "Non-pharmacological",
     helper:
-      "Document non-pharmacological management only — medications go in the separate medication section of the patient record. Include positioning, airway management, oxygen therapy, haemorrhage control, C-spine/splinting, wound care, cooling/warming and reassurance, with times. Record the patient's response and repeat vital signs.",
+      "Document non-pharmacological management only — medications go in the separate medication section of the patient record. Include positioning, airway management, oxygen therapy, haemorrhage control, C-spine/splinting, wound care, cooling/warming and reassurance, with times.",
     placeholder: "Type the treatment/management here…",
   },
   {
@@ -77,7 +77,8 @@ const SECTIONS: CharteSection[] = [
     letter: "T",
     title: "Transport/Outcome",
     phase: "Disposition",
-    helper: "Document transport priority, destination, patient condition during transport, reassessments, and transfer of care.",
+    helper:
+      "Document transport priority, destination, patient condition during transport, reassessments, and transfer of care. Include a final set of vital signs before handover.",
     placeholder:
       "Example: Transported priority 2 to ED due to persistent respiratory distress. Reassessed en route with no deterioration. Verbal handover given to triage RN.",
   },

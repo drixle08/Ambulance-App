@@ -60,6 +60,9 @@ export default function ResuscitationTimerPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [otherDialogOpen, setOtherDialogOpen] = useState(false);
   const [otherText, setOtherText] = useState("");
+  const [confirmReset, setConfirmReset] = useState(false);
+  const resetTimeoutRef = useRef<number | null>(null);
+
   // Drug tracking
   const [lastAdrenalineAt, setLastAdrenalineAt] = useState<number | null>(null);
   const [amiodaroneDose, setAmiodaroneDose] = useState<0 | 1 | 2>(0);
@@ -309,6 +312,31 @@ export default function ResuscitationTimerPage() {
     if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     addLog("Timer reset");
   }, [addLog]);
+
+  const onResetClick = useCallback(() => {
+    if (confirmReset) {
+      if (resetTimeoutRef.current) {
+        window.clearTimeout(resetTimeoutRef.current);
+        resetTimeoutRef.current = null;
+      }
+      handleReset();
+      setConfirmReset(false);
+    } else {
+      vibrate(25);
+      setConfirmReset(true);
+      resetTimeoutRef.current = window.setTimeout(() => {
+        setConfirmReset(false);
+        resetTimeoutRef.current = null;
+      }, 3000);
+    }
+  }, [confirmReset, handleReset]);
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (resetTimeoutRef.current) window.clearTimeout(resetTimeoutRef.current);
+    };
+  }, []);
 
   const handleShock = () => {
     vibrate([90, 45, 90]);
@@ -719,10 +747,14 @@ export default function ResuscitationTimerPage() {
           </button>
           <button
             type="button"
-            onClick={handleReset}
-            className="h-16 min-w-28 rounded-3xl border border-slate-700 bg-slate-900 text-base font-black text-slate-100 shadow-md active:translate-y-[1px]"
+            onClick={onResetClick}
+            className={`h-16 min-w-28 rounded-3xl border transition-all shadow-md active:translate-y-[1px] font-black ${
+              confirmReset
+                ? "border-red-500 bg-red-600 text-white ring-4 ring-red-500/20"
+                : "border-slate-700 bg-slate-900 text-slate-100 text-base"
+            }`}
           >
-            Reset
+            {confirmReset ? "Confirm?" : "Reset"}
           </button>
         </section>
 

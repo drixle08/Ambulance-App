@@ -1,0 +1,3 @@
+## 2025-05-15 - [Clinical UX: High-Stakes Confirmation Patterns]
+**Learning:** In high-pressure clinical environments (like a resuscitation), destructive actions such as 'Reset' must have a physical and visual confirmation step to prevent accidental data loss. A 3-second auto-revert pattern balances safety with speed, while high-contrast color shifts (e.g., bg-red-600) and haptic feedback provide multi-modal confirmation.
+**Action:** Always implement a two-step confirmation with auto-revert and haptic feedback for high-risk clinical state changes, and ensure voice commands bypass touch-specific safety steps if appropriate.

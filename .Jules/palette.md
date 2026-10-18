@@ -1,0 +1,3 @@
+## 2025-06-26 - [Resus Timer Reset Confirmation]
+**Learning:** In high-pressure clinical environments, high-stakes actions like resetting a resuscitation timer require a "soft" confirmation step (e.g., a 2-step click with a short auto-revert timeout) to prevent accidental data loss while remaining efficient. Combining this with high-contrast visual cues (red background) and haptic feedback ensures the user is aware of the state change even when their focus is divided.
+**Action:** Use a two-step confirmation pattern with a 3-second auto-revert timeout for destructive or high-risk interactions in clinical tools.

@@ -63,6 +63,7 @@ export default function ResuscitationTimerPage() {
   // Drug tracking
   const [lastAdrenalineAt, setLastAdrenalineAt] = useState<number | null>(null);
   const [amiodaroneDose, setAmiodaroneDose] = useState<0 | 1 | 2>(0);
+  const [isResetConfirming, setIsResetConfirming] = useState(false);
   const voiceSupported = useMemo(() => {
     if (typeof window === "undefined") return false;
     const SpeechRec: SpeechRecognitionConstructor | undefined =
@@ -97,6 +98,7 @@ export default function ResuscitationTimerPage() {
   // Drug refs (avoid stale closures in setInterval)
   const lastAdrenalineAtRef = useRef<number | null>(null);
   const amiodaroneDoseRef = useRef<0 | 1 | 2>(0);
+  const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     elapsedRef.current = elapsedSeconds;
@@ -109,6 +111,15 @@ export default function ResuscitationTimerPage() {
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (resetTimeoutRef.current) {
+        clearTimeout(resetTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     cycleRef.current = cycleNumber;
@@ -288,7 +299,7 @@ export default function ResuscitationTimerPage() {
     setIsRunning(true);
   }, [addLog, isRunning]);
 
-  const handleReset = useCallback(() => {
+  const performReset = useCallback(() => {
     vibrate([35, 35, 35]);
     setIsRunning(false);
     setPhase("CPR");
@@ -306,9 +317,28 @@ export default function ResuscitationTimerPage() {
     setLastAdrenalineAt(null);
     amiodaroneDoseRef.current = 0;
     setAmiodaroneDose(0);
+    setIsResetConfirming(false);
+    if (resetTimeoutRef.current) {
+      clearTimeout(resetTimeoutRef.current);
+      resetTimeoutRef.current = null;
+    }
     if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     addLog("Timer reset");
   }, [addLog]);
+
+  const handleResetClick = useCallback(() => {
+    if (!isResetConfirming) {
+      vibrate(25);
+      setIsResetConfirming(true);
+      if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current);
+      resetTimeoutRef.current = setTimeout(() => {
+        setIsResetConfirming(false);
+        resetTimeoutRef.current = null;
+      }, 3000);
+    } else {
+      performReset();
+    }
+  }, [isResetConfirming, performReset]);
 
   const handleShock = () => {
     vibrate([90, 45, 90]);
@@ -451,7 +481,7 @@ export default function ResuscitationTimerPage() {
       if (recentCommand) return;
 
       if (hasReset) {
-        handleReset();
+        performReset();
         lastVoiceCommandAtRef.current = now;
         return;
       }
@@ -496,7 +526,7 @@ export default function ResuscitationTimerPage() {
       recognitionRef.current = null;
       setVoiceListening(false);
     };
-  }, [handleReset, handleStartPause, voiceEnabled, voiceSupported]);
+  }, [performReset, handleStartPause, voiceEnabled, voiceSupported]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
@@ -719,10 +749,15 @@ export default function ResuscitationTimerPage() {
           </button>
           <button
             type="button"
-            onClick={handleReset}
-            className="h-16 min-w-28 rounded-3xl border border-slate-700 bg-slate-900 text-base font-black text-slate-100 shadow-md active:translate-y-[1px]"
+            onClick={handleResetClick}
+            aria-label={isResetConfirming ? "Confirm reset" : "Reset timer"}
+            className={`h-16 min-w-28 rounded-3xl border transition-all active:translate-y-[1px] shadow-md text-base font-black ${
+              isResetConfirming
+                ? "border-red-500 bg-red-600 text-white ring-4 ring-red-500/20"
+                : "border-slate-700 bg-slate-900 text-slate-100"
+            }`}
           >
-            Reset
+            {isResetConfirming ? "Confirm?" : "Reset"}
           </button>
         </section>
 

@@ -1,0 +1,3 @@
+## 2025-05-15 - Safety Confirmation Pattern for Clinical Destructive Actions
+**Learning:** In high-stress clinical environments (like cardiac arrest), destructive actions like 'Reset' require a physical and visual speed-bump to prevent accidental data loss without adding cognitive load. Multi-modal feedback (haptics) combined with a time-limited confirmation state (3s auto-revert) ensures safety while maintaining workflow speed.
+**Action:** Implement two-step confirmation with `resetConfirm` state, `bg-red-600` visual transition, 25ms haptic pulse on the first tap, and a `useRef` based 3s auto-revert timeout for all destructive interactions in clinical tools.

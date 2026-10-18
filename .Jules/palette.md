@@ -1,0 +1,3 @@
+## 2026-07-07 - Safety Confirmation Pattern for Resus Timer
+**Learning:** In high-stress clinical environments, critical destructive actions (like resetting a resuscitation timer) benefit from a two-step "Double-tap to Confirm" pattern. Combining a high-contrast visual change (red background), tactile feedback (vibration), and a short auto-revert timeout (3 seconds) provides a safe but efficient buffer against accidental data loss without adding significant cognitive load.
+**Action:** Implement similar confirmation patterns for other irreversible clinical logging actions, ensuring voice commands remain direct to avoid friction in hands-free scenarios.

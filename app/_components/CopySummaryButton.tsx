@@ -38,6 +38,7 @@ export function CopySummaryButton({
   return (
     <button
       type="button"
+      aria-live="polite"
       onClick={handleCopy}
       className={classNames(
         "rounded-full border px-3 py-1.5 text-[11px] font-medium transition flex items-center gap-1.5",

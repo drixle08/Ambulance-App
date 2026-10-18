@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Copy } from "lucide-react";
 
 function classNames(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -28,6 +29,7 @@ export function CopySummaryButton({
         return;
       }
       await navigator.clipboard.writeText(summaryText);
+      navigator.vibrate?.(15);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -47,7 +49,12 @@ export function CopySummaryButton({
         className
       )}
     >
-      {copied ? copiedLabel : label}
+      {copied ? (
+        <Check size={12} className="shrink-0" />
+      ) : (
+        <Copy size={12} className="shrink-0" />
+      )}
+      <span aria-live="polite">{copied ? copiedLabel : label}</span>
     </button>
   );
 }

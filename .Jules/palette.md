@@ -1,0 +1,3 @@
+## 2025-05-15 - Guarding Destructive Clinical Actions
+**Learning:** In high-pressure clinical environments (like cardiac arrest), destructive UI actions such as "Reset" must be guarded against accidental touch while remaining highly efficient for intentional use. A two-step confirmation with a short auto-revert timeout (e.g., 3 seconds) provides safety without significant delay. Visual feedback (red high-contrast styling) and haptic feedback on the initial click are essential for immediate state awareness.
+**Action:** Use the `resetConfirm` pattern with `setTimeout` and `vibrate` for all reset/clear operations in critical tools. Ensure voice commands bypass confirmation for hands-free speed.

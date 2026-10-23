@@ -12,8 +12,8 @@ export default function DashboardPage() {
         <div className="flex items-center gap-2">
           <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-500/15 text-xs font-bold text-emerald-400">AP</span>
           <div>
-            <p className="text-sm font-bold text-slate-100 leading-none">Ambulance Paramedic</p>
-            <p className="text-[0.6rem] uppercase tracking-widest text-slate-500">Clinical Tools</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-none">Ambulance Paramedic</p>
+            <p className="text-[0.6rem] uppercase tracking-widest text-slate-600 dark:text-slate-400">Clinical Tools</p>
           </div>
         </div>
       </div>

@@ -5,7 +5,7 @@ import { Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
-  const { theme, resolvedTheme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme, forcedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   // Wait until we're on the client to read theme/resolvedTheme
@@ -18,6 +18,9 @@ export function ThemeToggle() {
     // Render nothing on the server / first paint to avoid hydration mismatch
     return null;
   }
+
+  // Theme is fixed on this screen (tool screens are dark-only), so a toggle would do nothing.
+  if (forcedTheme) return null;
 
   const currentTheme = (theme === "system" ? resolvedTheme : theme) || "dark";
   const nextTheme = currentTheme === "dark" ? "light" : "dark";

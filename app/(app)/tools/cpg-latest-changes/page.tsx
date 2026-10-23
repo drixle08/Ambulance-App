@@ -13,6 +13,10 @@ import {
   Sparkles,
 } from "lucide-react";
 import { CPG_ENTRIES, MEDICATION_ENTRIES } from "@/lib/cpgIndex";
+import { cpgEdition } from "@/lib/cpgEdition";
+
+// The edition this change log describes — on the next CPG release this page needs rewriting.
+const EDITION = cpgEdition("2.6");
 
 type ChangeCategory =
   | "All"
@@ -343,7 +347,7 @@ export default function CpgLatestChangesPage() {
           </button>
           <div className="min-w-0 flex-1">
             <p className="text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-amber-400">
-              Reference - CPG v2.6
+              Reference - CPG {EDITION.tag}
             </p>
             <h1 className="truncate text-base font-bold leading-tight text-slate-100">
               Latest CPG Changes
@@ -379,9 +383,9 @@ export default function CpgLatestChangesPage() {
           <div className="flex items-start gap-3">
             <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
             <div>
-              <p className="text-sm font-semibold text-amber-100">AS SC 26-56 · CPG v2.6 update</p>
+              <p className="text-sm font-semibold text-amber-100">AS SC 26-56 · CPG {EDITION.tag} update</p>
               <p className="mt-1 text-xs leading-5 text-amber-100/80">
-                Summary of the published change list for CPG v2.6. Always verify clinical decisions
+                Summary of the published change list for CPG {EDITION.tag}. Always verify clinical decisions
                 against the full guideline.
               </p>
             </div>

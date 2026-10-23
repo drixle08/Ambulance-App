@@ -1,3 +1,4 @@
+import { CPG, cpgEdition } from "@/lib/cpgEdition";
 export type Tool = {
   name: string;
   href: string;
@@ -82,35 +83,35 @@ export const TOOL_GROUPS: ToolGroup[] = [
         name: "Adult Cardiac Arrest (Unwitnessed)",
         href: "/tools/adult-arrest",
         tagline: "CPG 2.1 algorithm — rhythm selector, LP15/Zoll energy, cycle-by-cycle actions, H's & T's, and CCP scope.",
-        meta: "CPG 2.1 · v2.6 2026",
+        meta: `CPG 2.1 · ${cpgEdition("2.6").short}`,
         icon: "HeartOff",
       },
       {
         name: "Adult Cardiac Arrest - Witnessed",
         href: "/tools/witnessed-adult-arrest",
         tagline: "CPG 2.1 scenario flows — 2-rescuer, solo (pads on/off), CCP stacked shocks, LP15/Zoll energy, and CCP scope.",
-        meta: "CPG 2.1 · v2.6 2026",
+        meta: `CPG 2.1 · ${cpgEdition("2.6").short}`,
         icon: "Eye",
       },
       {
         name: "Paediatric Medical Cardiac Arrest",
         href: "/tools/peds-medical-arrest",
         tagline: "CPG 2.3 algorithm — rhythm selector, 4 J/kg shocks, cycle-by-cycle actions, H's & T's, and CCP scope.",
-        meta: "CPG 2.3 · v2.6 2026",
+        meta: `CPG 2.3 · ${cpgEdition("2.6").short}`,
         icon: "Baby",
       },
       {
         name: "Paediatric Arrest (WAAFELSS)",
         href: "/tools/peds-arrest",
         tagline: "Weight-based drugs, shocks, fluids, and airway sizing (SGA & ETT) for paediatric cardiac arrest.",
-        meta: "CPG 2.3 · v2.6 2026",
+        meta: `CPG 2.3 · ${cpgEdition("2.6").short}`,
         icon: "Calculator",
       },
       {
         name: "Post-Cardiac Arrest (ROSC) Care",
         href: "/tools/rosc",
         tagline: "SpO₂/BP/BGL targets, airway, vasopressors, glucose management, and transport destination guidance after ROSC.",
-        meta: "CPG 2.6 · v2.6 2026",
+        meta: `CPG 2.6 · ${cpgEdition("2.6").short}`,
         icon: "TrendingUp",
       },
       {
@@ -164,7 +165,7 @@ export const TOOL_GROUPS: ToolGroup[] = [
       {
         name: "Stroke BEFAST",
         href: "/tools/stroke",
-        tagline: "BEFAST stroke screen with the v2.6 transport destination decision tree.",
+        tagline: `BEFAST stroke screen with the ${cpgEdition("2.6").tag} transport destination decision tree.`,
         meta: "CPG Stroke",
         icon: "Brain",
       },
@@ -276,7 +277,7 @@ export const TOOL_GROUPS: ToolGroup[] = [
         icon: "Gauge",
       },
       {
-        name: "CPG v2.6 (2026)",
+        name: CPG.label,
         href: "/tools/cpg",
         tagline: "Full Clinical Practice Guidelines — browse and jump to any page in-app.",
         meta: "Reference",
@@ -285,8 +286,8 @@ export const TOOL_GROUPS: ToolGroup[] = [
       {
         name: "CPG Latest Changes",
         href: "/tools/cpg-latest-changes",
-        tagline: "CPG v2.6 update log with amended protocols, new CPGs, and formulary changes.",
-        meta: "CPG v2.6 Update",
+        tagline: `CPG ${cpgEdition("2.6").tag} update log with amended protocols, new CPGs, and formulary changes.`,
+        meta: `CPG ${cpgEdition("2.6").tag} Update`,
         icon: "RefreshCcw",
       },
       {

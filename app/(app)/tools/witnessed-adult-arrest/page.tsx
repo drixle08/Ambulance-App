@@ -18,6 +18,10 @@ import {
   Timer,
   Info,
 } from "lucide-react";
+import { cpgEdition } from "@/lib/cpgEdition";
+
+// Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
+const EDITION = cpgEdition("2.6");
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,7 +37,7 @@ const DEFIB_ENERGY: Record<Defib, [string, string, string, string]> = {
 };
 
 const summaryText =
-  "Adult witnessed medical cardiac arrest (witnessed by HMCAS staff during transport/care) — CPG 2.1 (v2.6 2026). Pads in AP position. If pads not on: CPR immediately, attach pads, analyse rhythm. If pads on: analyse rhythm first, then treat. For VF/VT: single shocks (LP15: 200→300→360 J / Zoll: 150→200→200 J) with immediate CPR after each shock; or CCP stacked shocks (3 consecutive without CPR between) for witnessed VF/VT. For VF/VT: adrenaline 1 mg IV/IO after the 3rd shock then every 4 min; amiodarone 300 mg after the 3rd shock and 150 mg after the 5th. For asystole/PEA: CPR, early adrenaline 1 mg IV/IO ASAP then every 4 min. SGA airway with HME/filter, continuous compressions, waveform capnography (EtCO₂). LUCAS at 6-min mark. Vector change A-P pads after 3 shocks (AP). DSED from shock 4+, max 3 (CCP). ROSC → CPG 2.6. Termination after 20 min with no response per CPG 2.7.";
+  "Adult witnessed medical cardiac arrest (witnessed by HMCAS staff during transport/care) — CPG 2.1 (" + EDITION.short + "). Pads in AP position. If pads not on: CPR immediately, attach pads, analyse rhythm. If pads on: analyse rhythm first, then treat. For VF/VT: single shocks (LP15: 200→300→360 J / Zoll: 150→200→200 J) with immediate CPR after each shock; or CCP stacked shocks (3 consecutive without CPR between) for witnessed VF/VT. For VF/VT: adrenaline 1 mg IV/IO after the 3rd shock then every 4 min; amiodarone 300 mg after the 3rd shock and 150 mg after the 5th. For asystole/PEA: CPR, early adrenaline 1 mg IV/IO ASAP then every 4 min. SGA airway with HME/filter, continuous compressions, waveform capnography (EtCO₂). LUCAS at 6-min mark. Vector change A-P pads after 3 shocks (AP). DSED from shock 4+, max 3 (CCP). ROSC → CPG 2.6. Termination after 20 min with no response per CPG 2.7.";
 
 // ─── Primitive components (same language as unwitnessed) ──────────────────────
 
@@ -753,7 +757,7 @@ export default function WitnessedAdultArrestPage() {
           </Link>
           <div className="flex-1 min-w-0">
             <p className="text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-red-400">
-              Resuscitation · CPG 2.1 · v2.6 2026
+              Resuscitation · CPG 2.1 · {EDITION.short}
             </p>
             <h1 className="text-sm font-semibold leading-tight text-slate-50">
               Adult Cardiac Arrest — Witnessed
@@ -965,7 +969,7 @@ export default function WitnessedAdultArrestPage() {
             </section>
 
             <p className="text-[0.65rem] text-slate-600 pb-2">
-              CPG 2.1 · HMCAS v2.6 2026. Quick reference only — always follow the full current guideline and Clinical Coordination advice.
+              CPG 2.1 · HMCAS {EDITION.short}. Quick reference only — always follow the full current guideline and Clinical Coordination advice.
             </p>
           </>
         )}
@@ -975,7 +979,7 @@ export default function WitnessedAdultArrestPage() {
           <>
             <ReferenceTab />
             <p className="text-[0.65rem] text-slate-600 pb-2">
-              CPG 2.1 · HMCAS v2.6 2026. Quick reference only.
+              CPG 2.1 · HMCAS {EDITION.short}. Quick reference only.
             </p>
           </>
         )}

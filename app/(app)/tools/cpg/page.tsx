@@ -6,8 +6,9 @@ import type { PDFDocumentProxy } from "pdfjs-dist";
 import { ArrowLeft, Bot, ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { CPG } from "@/lib/cpgEdition";
 
-const CPG_PATH = "/reference/cpg/cpg-v2.6-2026.pdf";
+const CPG_PATH = CPG.pdfPath;
 
 export default function CpgPage() {
   const router = useRouter();
@@ -169,7 +170,7 @@ export default function CpgPage() {
           </button>
           <div className="flex-1 min-w-0">
             <p className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-emerald-400">
-              Reference · CPG v2.6 (2026)
+              Reference · {CPG.label}
             </p>
             <h1 className="text-base font-bold leading-tight text-slate-100 truncate">
               Clinical Practice Guidelines

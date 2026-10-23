@@ -22,11 +22,15 @@ import {
   Zap,
   Activity,
 } from "lucide-react";
+import { cpgEdition } from "@/lib/cpgEdition";
+
+// Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
+const EDITION = cpgEdition("2.6");
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
 
 const summaryText =
-  "Post-ROSC care — CPG 2.6 HMCAS v2.6 2026. " +
+  "Post-ROSC care — CPG 2.6 HMCAS " + EDITION.short + ". " +
   "DO NOT move patient rapidly for ≥10 min post-ROSC (re-arrest risk). " +
   "Airway: SpO2 94–98% (avoid prolonged 100%), advanced airway, HME/filter, EtCO2 waveform, do NOT hyperventilate — elevated EtCO2 expected, do not correct prehospitally. " +
   "Adults: SBP >90 mmHg, MAP ≥65 mmHg (isolated TBI: MAP 70–80). Fluids 250 mL boluses max 1–2L (max 1L major haemorrhage). BGL: correct if <4.0 mmol/L → 50 mL D10W; avoid >6.7 mmol/L. " +
@@ -704,7 +708,7 @@ export default function RoscPage() {
 
           <div className="flex-1 min-w-0">
             <p className="text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-emerald-400">
-              CPG 2.6 · v2.6 2026
+              CPG 2.6 · {EDITION.short}
             </p>
             <h1 className="text-sm font-semibold leading-tight text-slate-50">
               Post-Cardiac Arrest (ROSC) Care
@@ -796,7 +800,7 @@ export default function RoscPage() {
         )}
 
         <p className="text-[0.65rem] text-slate-600 pb-2 pt-1">
-          CPG 2.6 · HMCAS v2.6 2026. Quick reference only — integrate with
+          CPG 2.6 · HMCAS {EDITION.short}. Quick reference only — integrate with
           underlying cause and relevant CPGs. Follow Clinical Coordination advice.
         </p>
       </main>

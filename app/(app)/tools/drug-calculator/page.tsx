@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { ArrowLeft, FlaskConical, Calculator, ChevronRight } from "lucide-react";
+import { cpgEdition } from "@/lib/cpgEdition";
+
+// Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
+const EDITION = cpgEdition("2.6");
 
 /* ════════════════════════════════════════════════════════════
    TYPES
@@ -487,7 +491,7 @@ const DRUGS: Drug[] = [
         concLabel: "10 mg/mL (1 g in 100 mL)",
         mixInstructions: "1 g (10 mL of 100 mg/mL TXA) + 90 mL NaCl 0.9% → 100 mL @ 10 mg/mL",
         infusionMinutes: 10,
-        note: "Post-partum major haemorrhage <3 h — the only obstetric TXA indication in CPG v2.6",
+        note: "Post-partum major haemorrhage <3 h — the only obstetric TXA indication in CPG " + EDITION.tag,
       },
       {
         id: "epistaxis-topical",

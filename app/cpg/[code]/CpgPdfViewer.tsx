@@ -5,9 +5,10 @@ import type { PDFDocumentProxy } from "pdfjs-dist";
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import type { CpgEntry } from "@/lib/cpgIndex";
+import { CPG } from "@/lib/cpgEdition";
 
 // Path to the bundled PDF in /public. Adjust if the filename or location changes.
-const PDF_PATH = "/reference/cpg/cpg-v2.6-2026.pdf";
+const PDF_PATH = CPG.pdfPath;
 // If the PDF's actual page numbering differs from the printed page numbers in the CPG index,
 // set this to (viewerPage - printedPage). Example: if printed page 58 shows as 61 in the viewer, set to 3.
 const PDF_PAGE_OFFSET = 0;

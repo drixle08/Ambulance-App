@@ -15,6 +15,10 @@ import {
   Clock,
   Timer,
 } from "lucide-react";
+import { cpgEdition } from "@/lib/cpgEdition";
+
+// Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
+const EDITION = cpgEdition("2.6");
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -47,7 +51,7 @@ const TS = [
 ];
 
 const summaryText =
-  "Adult unwitnessed medical cardiac arrest — CPG 2.1 (HMCAS v2.6 2026). Confirmed arrest, commenced CPR (100–120/min, 5–6 cm depth), attached defibrillator. For VF/VT: single shocks (LP15: 200→300→360 J / Zoll: 150→200→200 J) with 2-min CPR cycles; SGA airway with HME/filter, continuous compressions, waveform capnography (EtCO₂); IV/IO access; adrenaline 1 mg IV/IO after the 3rd shock then every 4 min; amiodarone 300 mg IV/IO after the 3rd shock and 150 mg after the 5th shock; vector change to A-P pads after 3 consecutive shocks; LUCAS applied at 6-min mark. For asystole/PEA: no shock; 2-min CPR cycles; SGA; IV/IO; adrenaline 1 mg ASAP then every 4 min; systematic H's & T's review (6H's: hypoxia, hypovolaemia, H⁺ acidosis, hypoglycaemia, K⁺ imbalance, hypothermia; 5T's: tension pneumo, tamponade, toxins, thrombosis-coronary, thrombosis-PE); LUCAS at 6-min mark. ROSC → CPG 2.6. Termination considered after 20 min with no response per CPG 2.7.";
+  "Adult unwitnessed medical cardiac arrest — CPG 2.1 (HMCAS " + EDITION.short + "). Confirmed arrest, commenced CPR (100–120/min, 5–6 cm depth), attached defibrillator. For VF/VT: single shocks (LP15: 200→300→360 J / Zoll: 150→200→200 J) with 2-min CPR cycles; SGA airway with HME/filter, continuous compressions, waveform capnography (EtCO₂); IV/IO access; adrenaline 1 mg IV/IO after the 3rd shock then every 4 min; amiodarone 300 mg IV/IO after the 3rd shock and 150 mg after the 5th shock; vector change to A-P pads after 3 consecutive shocks; LUCAS applied at 6-min mark. For asystole/PEA: no shock; 2-min CPR cycles; SGA; IV/IO; adrenaline 1 mg ASAP then every 4 min; systematic H's & T's review (6H's: hypoxia, hypovolaemia, H⁺ acidosis, hypoglycaemia, K⁺ imbalance, hypothermia; 5T's: tension pneumo, tamponade, toxins, thrombosis-coronary, thrombosis-PE); LUCAS at 6-min mark. ROSC → CPG 2.6. Termination considered after 20 min with no response per CPG 2.7.";
 
 // ─── Primitive components ─────────────────────────────────────────────────────
 
@@ -616,7 +620,7 @@ export default function AdultArrestPage() {
           </Link>
           <div className="flex-1 min-w-0">
             <p className="text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-red-400">
-              Resuscitation · CPG 2.1 · v2.6 2026
+              Resuscitation · CPG 2.1 · {EDITION.short}
             </p>
             <h1 className="text-sm font-semibold leading-tight text-slate-50">
               Adult Medical Cardiac Arrest
@@ -843,7 +847,7 @@ export default function AdultArrestPage() {
             </section>
 
             <p className="text-[0.65rem] text-slate-600 pb-2">
-              CPG 2.1 · HMCAS v2.6 2026. Quick reference only — always follow the full current guideline and Clinical Coordination advice.
+              CPG 2.1 · HMCAS {EDITION.short}. Quick reference only — always follow the full current guideline and Clinical Coordination advice.
             </p>
           </>
         )}
@@ -853,7 +857,7 @@ export default function AdultArrestPage() {
           <>
             <ReferenceTab />
             <p className="text-[0.65rem] text-slate-600 pb-2">
-              CPG 2.1 · HMCAS v2.6 2026. Quick reference only.
+              CPG 2.1 · HMCAS {EDITION.short}. Quick reference only.
             </p>
           </>
         )}

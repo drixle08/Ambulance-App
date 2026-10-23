@@ -1,3 +1,12 @@
+import { cpgEdition } from "./cpgEdition";
+
+/**
+ * Edition every printed page number in this file belongs to (CPG_ENTRIES and
+ * MEDICATION_ENTRIES). A new CPG release moves pages, so these must be re-mapped
+ * when the shipped edition changes — the provenance check lists this until then.
+ */
+export const CPG_INDEX_EDITION = cpgEdition("2.6");
+
 export type CpgEntry = {
   code: string;
   title: string;
@@ -767,7 +776,7 @@ export type MedicationEntry = {
   class?: string;      // drug class hint for display
 };
 
-/** Exact formulary page numbers sourced from CPG v2.6 (2026) formulary. */
+/** Exact printed page numbers in the CPG formulary (edition: CPG_INDEX_EDITION). */
 export const MEDICATION_ENTRIES: MedicationEntry[] = [
   { name: "Adenosine", aliases: ["adenocard", "svt", "18 mg", "third dose"], formularyPage: 296, class: "Antiarrhythmic" },
   { name: "Adrenaline", aliases: ["epinephrine", "epi", "adrenalin"], formularyPage: 299, class: "Sympathomimetic" },

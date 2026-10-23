@@ -27,11 +27,15 @@ import {
   AlertTriangle,
   Brain,
 } from "lucide-react";
+import { cpgEdition } from "@/lib/cpgEdition";
+
+// Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
+const EDITION = cpgEdition("2.6");
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type BEFASTState = "normal" | "abnormal" | "unknown";
-// CPG 3.1 (v2.6) Stroke Transport Destination Decision Tree onset bands.
+// CPG 3.1 Stroke Transport Destination Decision Tree onset bands (edition: EDITION).
 type OnsetBand = "le8" | "8to24" | "ge24" | "unknown";
 
 const ONSET_OPTIONS = [
@@ -440,7 +444,7 @@ export default function StrokeBefastPage() {
         )}
 
         <p className="text-[10px] text-slate-600 pb-2">
-          CPG 3.1 Stroke (v2.6) — destination follows the Stroke Transport Destination Decision Tree.
+          CPG 3.1 Stroke ({EDITION.tag}) — destination follows the Stroke Transport Destination Decision Tree.
           RACE is used only for BEFAST-positive patients with onset / last known well &gt; 8 h and &lt; 24 h.
           Do not delay on scene waiting for a CCP; do not reduce BP with nitrates.
         </p>

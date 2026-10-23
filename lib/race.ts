@@ -1,7 +1,12 @@
 /**
- * RACE scale (Rapid Arterial oCclusion Evaluation) — CPG 3.1 Stroke (v2.6).
+ * RACE scale (Rapid Arterial oCclusion Evaluation) — CPG 3.1 Stroke (edition: RACE_EDITION).
  * Used with BEFAST to identify strokes associated with large vessel occlusion.
  */
+
+import { cpgEdition } from "./cpgEdition";
+
+/** Edition the RACE items and threshold were last checked against. */
+export const RACE_EDITION = cpgEdition("2.6");
 
 export type Hemiparesis = "right" | "left";
 export type RaceKey = "face" | "arm" | "leg" | "gaze" | "cortical";

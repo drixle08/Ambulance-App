@@ -12,8 +12,9 @@ import {
 import { searchSopEntries, type SopEntry } from "@/lib/sopIndex";
 import { searchCpmEntries, type CpmEntry } from "@/lib/cpmIndex";
 import { useDevice } from "@/app/_components/DeviceProvider";
+import { CPG } from "@/lib/cpgEdition";
 
-const PDF_PATH = "/reference/cpg/cpg-v2.6-2026.pdf";
+const PDF_PATH = CPG.pdfPath;
 const PDF_PAGE_OFFSET = 0;
 
 export function ProtocolFinder() {

@@ -6,6 +6,7 @@ import { ArrowLeft, RotateCcw, Brain, AlertTriangle, PlayCircle } from "lucide-r
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 import {
   EMPTY_RACE,
+  RACE_EDITION,
   RACE_LVO_THRESHOLD,
   RACE_MAX_SCORE,
   RACE_VIDEO_URL,
@@ -171,7 +172,7 @@ export default function RacePage() {
         ))}
 
         <p className="text-[10px] text-slate-600 pb-2">
-          CPG 3.1 Stroke (v2.6). RACE ≥ {RACE_LVO_THRESHOLD} = possible large vessel occlusion.
+          CPG 3.1 Stroke ({RACE_EDITION.tag}). RACE ≥ {RACE_LVO_THRESHOLD} = possible large vessel occlusion.
           Include the RACE score in the hospital prenotification. Do not delay on scene to complete it.
         </p>
       </main>

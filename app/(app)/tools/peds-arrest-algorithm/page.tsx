@@ -15,6 +15,10 @@ import {
   Calculator,
   ChevronRight,
 } from "lucide-react";
+import { cpgEdition } from "@/lib/cpgEdition";
+
+// Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
+const EDITION = cpgEdition("2.6");
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -41,7 +45,7 @@ const TS = [
 ];
 
 const summaryText =
-  "Paediatric medical cardiac arrest — CPG 2.3 (HMCAS v2.6 2026). Confirmed arrest, commenced CPR (100–120/min, >1/3 AP chest diameter), 5 BVM rescue breaths, attached pads. For VF/VT: single shocks at 4 J/kg with 2-min CPR cycles; A-P pads primary <25 kg; SGA with HME/filter, continuous compressions, EtCO₂, ventilation rate by age (<1y 25, 1–8y 20, 8–12y 15, >12y 10/min); IV/IO; adrenaline 0.01 mg/kg (max 1 mg; 0.1 mL/kg 1:10,000) after 4 min of CPR then every 4 min; amiodarone 5 mg/kg (max 300 mg) after the 3rd shock and 5 mg/kg (max 150 mg) after the 5th; CCP may escalate joules in 2 J increments after 5 shocks to max 8 J/kg or adult dose. For asystole/PEA: CPR, SGA, IV/IO, adrenaline 0.01 mg/kg ASAP then every 4 min, H's & T's review. Do NOT terminate paediatric resuscitation in the field — transport with CPR in progress per CPG 2.7. ROSC → CPG 2.6.";
+  "Paediatric medical cardiac arrest — CPG 2.3 (HMCAS " + EDITION.short + "). Confirmed arrest, commenced CPR (100–120/min, >1/3 AP chest diameter), 5 BVM rescue breaths, attached pads. For VF/VT: single shocks at 4 J/kg with 2-min CPR cycles; A-P pads primary <25 kg; SGA with HME/filter, continuous compressions, EtCO₂, ventilation rate by age (<1y 25, 1–8y 20, 8–12y 15, >12y 10/min); IV/IO; adrenaline 0.01 mg/kg (max 1 mg; 0.1 mL/kg 1:10,000) after 4 min of CPR then every 4 min; amiodarone 5 mg/kg (max 300 mg) after the 3rd shock and 5 mg/kg (max 150 mg) after the 5th; CCP may escalate joules in 2 J increments after 5 shocks to max 8 J/kg or adult dose. For asystole/PEA: CPR, SGA, IV/IO, adrenaline 0.01 mg/kg ASAP then every 4 min, H's & T's review. Do NOT terminate paediatric resuscitation in the field — transport with CPR in progress per CPG 2.7. ROSC → CPG 2.6.";
 
 // ─── Primitives (same language as adult arrest pages) ─────────────────────────
 
@@ -585,7 +589,7 @@ export default function PedsArrestAlgorithmPage() {
           </Link>
           <div className="flex-1 min-w-0">
             <p className="text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-emerald-400">
-              Paediatric Resuscitation · CPG 2.3 · v2.6 2026
+              Paediatric Resuscitation · CPG 2.3 · {EDITION.short}
             </p>
             <h1 className="text-sm font-semibold leading-tight text-slate-50">
               Paediatric Medical Cardiac Arrest
@@ -812,7 +816,7 @@ export default function PedsArrestAlgorithmPage() {
             </section>
 
             <p className="text-[0.65rem] text-slate-600 pb-2">
-              CPG 2.3 · HMCAS v2.6 2026. Quick reference only — always follow the full current guideline and Clinical Coordination advice.
+              CPG 2.3 · HMCAS {EDITION.short}. Quick reference only — always follow the full current guideline and Clinical Coordination advice.
             </p>
           </>
         )}
@@ -822,7 +826,7 @@ export default function PedsArrestAlgorithmPage() {
           <>
             <ReferenceTab />
             <p className="text-[0.65rem] text-slate-600 pb-2">
-              CPG 2.3 · HMCAS v2.6 2026. Quick reference only.
+              CPG 2.3 · HMCAS {EDITION.short}. Quick reference only.
             </p>
           </>
         )}

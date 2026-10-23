@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getPages, searchPages, type DocType, type PageDoc } from "@/lib/chat/search";
 import { parseChatRequest, type HistoryMessage } from "@/lib/chatGuard";
+import { CPG } from "@/lib/cpgEdition";
+import { cpgRef } from "@/lib/cpgProvenance";
 
 export const runtime = "nodejs";
 
@@ -19,13 +21,16 @@ const DEFAULT_MODEL = "claude-opus-5-5";
 const MAX_TOOL_ROUNDS = 3;
 const INITIAL_PAGES = 8;
 
-const DOC_LABEL: Record<DocType, string> = { cpg: "CPG v2.6", cpm: "CPM v4.0", sop: "SOP v4.4" };
+const DOC_LABEL: Record<DocType, string> = { cpg: `CPG ${CPG.tag}`, cpm: "CPM v4.0", sop: "SOP v4.4" };
+
+// Formulary page range quoted to the model; page numbers belong to that edition.
+const FORMULARY_PAGES = { start: cpgRef("2.6", 295, "FORMULARY Click on the drug name"), end: 400 };
 
 // ─── System prompt ────────────────────────────────────────────────────────────
 const SYSTEM_PROMPT = `You are the Clinical Assistant — a senior HMCAS paramedic with deep CPG knowledge, built into the HMCAS Ambulance Paramedic Toolkit. You talk like a knowledgeable colleague on scene: clear, direct, and practical. Not a textbook. Not a robot.
 
 You have access to:
-- CPG (Clinical Practice Guidelines v2.6, 2026) — current HMCAS clinical protocols, with a drug formulary (p.295–400) holding general adult and paediatric dosing tables
+- CPG (Clinical Practice Guidelines ${CPG.tag}, ${CPG.year}) — current HMCAS clinical protocols, with a drug formulary (p.${FORMULARY_PAGES.start.page}–${FORMULARY_PAGES.end}) holding general adult and paediatric dosing tables
 - SOP (Standard Operating Procedures v4.4, 2024) — operational and HR procedures
 - CPM (Clinical Procedure Manual v4.0, 2024) — clinical procedure and privileging reference
 
@@ -49,7 +54,7 @@ CLINICAL RULES — non-negotiable:
 - Every dose, threshold, and criterion must come verbatim from the pages you were given. Never invent or paraphrase a number.
 - Never calculate a patient-specific dose, volume or energy (e.g. mg/kg × weight). Give the per-kg dose as written and point to the toolkit's Drug Calculator. Weight-estimation formulas may be shown, but don't work them through into doses.
 - If, after searching, the pages still don't cover it, say: "That's not in the guideline pages I could find — open the PDF and check directly."
-- CPG v2.6 (2026), SOP v4.4 (2024) and CPM v4.0 (2024) are the current versions. Do not reference older versions.
+- ${CPG.label}, SOP v4.4 (2024) and CPM v4.0 (2024) are the current versions. Do not reference older versions.
 - If the question is outside CPG/SOP/CPM scope entirely, say so clearly and don't speculate.
 
 RESPONSE FORMAT:

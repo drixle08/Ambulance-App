@@ -17,11 +17,16 @@ import {
   Zap,
   CheckCircle2,
 } from "lucide-react";
+import { cpgEdition } from "@/lib/cpgEdition";
+import { cpgRef, type CpgProvenance } from "@/lib/cpgProvenance";
+
+// Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
+const EDITION = cpgEdition("2.6");
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
 
 const summaryText =
-  "RSI Medications — CPG 11.1 HMCAS v2.6 2026 (CCP scope). " +
+  "RSI Medications — CPG 11.1 HMCAS " + EDITION.short + " (CCP scope). " +
   "PREPARE: 100% O₂ ×3–5 min, SpO₂ >95%, sniffing/ramped position, 3 ETT sizes + bougie + suction, IV/IO access, drugs drawn, failed airway plan ready. " +
   "PRE-TREAT (T−3 min): Fentanyl 1–3 mcg/kg IV slow push — OMIT if haemodynamic compromise, opioid/BZD/alcohol toxidrome, suspected raised ICP without haemodynamic reserve. " +
   "Paeds atropine 0.02 mg/kg IV (min 0.1 mg, max 0.5 mg). " +
@@ -331,6 +336,8 @@ function RsiDrugCard({
   omit?: string;
   omitSub?: string;
   alt?: string;
+  /** Where the CPG states this dose — provenance only, not rendered. */
+  refs?: CpgProvenance[];
 }) {
   return (
     <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 overflow-hidden">
@@ -448,6 +455,10 @@ function InduceContent() {
       <RsiDrugCard
         name="Ketamine"
         dose="1–2 mg/kg IV"
+        refs={[
+          cpgRef("2.6", 353, "1 - 2mg/kg for induction Adjust dose based on haemodynamic stability"),
+          cpgRef("2.6", 207, "Ketamine – 1 - 2mg/kg based on haemodynamic status"),
+        ]}
         route="IV"
         onset="30–60 sec"
         note="First-line prehospital induction agent. Dissociative — maintains airway reflexes and haemodynamic stability. Bronchodilator effect is advantageous in bronchospasm."
@@ -544,8 +555,16 @@ function ConfirmContent() {
         {[
           { label: "Adult male", value: "8.0–9.0 mm ID · Depth at lips 23 cm" },
           { label: "Adult female", value: "7.0–8.0 mm ID · Depth at lips 21 cm" },
-          { label: "Paeds uncuffed", value: "(Age ÷ 4) + 4 mm · Depth (Age ÷ 2) + 12 cm" },
-          { label: "Paeds cuffed", value: "(Age ÷ 4) + 3.5 mm · Cuff ≤20 cmH₂O" },
+          {
+            label: "Paeds uncuffed",
+            value: "(Age ÷ 4) + 4 mm · Depth (Age ÷ 2) + 12 cm",
+            refs: [cpgRef("2.6", 43, "uncuffed (age÷4) + 4"), cpgRef("2.6", 43, "Depth: (age ÷ 2) + 12")],
+          },
+          {
+            label: "Paeds cuffed",
+            value: "(Age ÷ 4) + 3.5 mm · Cuff ≤20 cmH₂O",
+            refs: [cpgRef("2.6", 43, "cuffed (age÷4) + 3.5")],
+          },
         ].map(({ label, value }) => (
           <div key={label} className="flex items-baseline gap-2 mb-1">
             <span className="text-[0.62rem] text-slate-500 shrink-0 w-28">{label}</span>
@@ -868,7 +887,7 @@ export default function RsiMedsPage() {
           </Link>
           <div className="flex-1 min-w-0">
             <p className="text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-violet-400">
-              CPG 11.1 · v2.6 2026 · CCP
+              CPG 11.1 · {EDITION.short} · CCP
             </p>
             <h1 className="text-sm font-semibold leading-tight text-slate-50">
               RSI Medications — Pre &amp; Post Dosing
@@ -923,7 +942,7 @@ export default function RsiMedsPage() {
         ))}
 
         <p className="text-[0.65rem] text-slate-600 pb-2 pt-1">
-          CPG 11.1 · HMCAS v2.6 2026 · CCP scope. Quick reference only — integrate
+          CPG 11.1 · HMCAS {EDITION.short} · CCP scope. Quick reference only — integrate
           with patient presentation, authorised drugs list, and Clinical Coordination advice.
         </p>
       </main>

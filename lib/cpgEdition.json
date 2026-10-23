@@ -1,0 +1,8 @@
+{
+  "current": "2.6",
+  "editions": {
+    "2.4": { "year": 2025, "pdfFile": "cpg-v2.4-2025.pdf" },
+    "2.5": { "year": 2026, "pdfFile": "cpg-v2.5-2026.pdf" },
+    "2.6": { "year": 2026, "pdfFile": "cpg-v2.6-2026.pdf", "approved": "2026-09-07" }
+  }
+}

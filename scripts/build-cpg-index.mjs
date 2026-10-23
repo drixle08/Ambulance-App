@@ -2,13 +2,12 @@ import fs from "fs/promises";
 import path from "path";
 import { getDocument } from "pdfjs-dist";
 
-const PDF_PATH = path.join(
-  process.cwd(),
-  "public",
-  "reference",
-  "cpg",
-  "cpg-v2.6-2026.pdf"
+// Shipped edition comes from the single source of truth, lib/cpgEdition.json.
+const CPG_EDITIONS = JSON.parse(
+  await fs.readFile(path.join(process.cwd(), "lib", "cpgEdition.json"), "utf8")
 );
+const PDF_FILE = CPG_EDITIONS.editions[CPG_EDITIONS.current].pdfFile;
+const PDF_PATH = path.join(process.cwd(), "public", "reference", "cpg", PDF_FILE);
 const OUTPUT_PATH = path.join(process.cwd(), "public", "cpg-index.json");
 
 const TARGET_CHARS = 1200;
@@ -82,7 +81,7 @@ async function main() {
   const chunks = await extractChunks();
   const payload = {
     createdAt: new Date().toISOString(),
-    source: "cpg-v2.6-2026.pdf",
+    source: PDF_FILE,
     chunkCharLength: TARGET_CHARS,
     chunkOverlap: OVERLAP_CHARS,
     chunkCount: chunks.length,

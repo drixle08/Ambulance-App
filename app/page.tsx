@@ -18,6 +18,7 @@ import {
   Stethoscope,
   MonitorSmartphone,
 } from "lucide-react";
+import { APP_ALIGNED_EDITION } from "@/lib/cpgEdition";
 
 function classNames(...classes: Array<string | boolean | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -61,7 +62,7 @@ const KPI_CHIPS = [
   { label: "Tools available", value: "5" },
   { label: "Time-critical tools", value: "3" },
   { label: "Offline-capable PWA", value: "" },
-  { label: "Aligned with CPG v2.6 (2026)", value: "" },
+  { label: `Aligned with ${APP_ALIGNED_EDITION.label}`, value: "" },
 ];
 
 function QuickActions() {
@@ -130,7 +131,7 @@ function AboutCard({ compact = false }: { compact?: boolean }) {
         </div>
         <p className="mb-1">
           This toolkit is a teaching and decision-support aid for HMCAS-style
-          ambulance practice. It mirrors wording and thresholds from CPG v2.6
+          ambulance practice. It mirrors wording and thresholds from CPG {APP_ALIGNED_EDITION.tag}
           where possible.
         </p>
         <p>
@@ -183,7 +184,7 @@ const DesktopHome: React.FC = () => {
                     Decision-support tools for ambulance crews.
                   </h1>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Built around HMCAS Clinical Practice Guideline v2.6 (2026)
+                    Built around HMCAS Clinical Practice Guideline {APP_ALIGNED_EDITION.tag} ({APP_ALIGNED_EDITION.year})
                     to support time-critical decisions in the back of the
                     truck. Automatically serves a desktop or mobile layout based
                     on your device.

@@ -19,6 +19,10 @@ import {
   GitBranch,
   ChevronRight,
 } from "lucide-react";
+import { CPG, cpgEdition } from "@/lib/cpgEdition";
+
+// Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
+const EDITION = cpgEdition("2.6");
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -183,7 +187,7 @@ export default function PedsArrestPage() {
           </Link>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
-              CPG 2.3 · v2.6 2026
+              CPG 2.3 · {EDITION.short}
             </p>
             <h1 className="text-base font-bold text-white leading-tight">
               Paediatric Arrest — WAAFELSS
@@ -319,7 +323,7 @@ export default function PedsArrestPage() {
             />
           </div>
           <p className="text-[10px] text-slate-600">
-            CPG v2.6 formulas — 0–12m: (months×0.5)+4 · 1–5y: (age×2)+8 ·
+            CPG {EDITION.tag} formulas — 0–12m: (months×0.5)+4 · 1–5y: (age×2)+8 ·
             6–14y: (age×3)+7
           </p>
         </section>
@@ -529,7 +533,7 @@ export default function PedsArrestPage() {
         <div className="flex items-start gap-2 rounded-xl border border-slate-800 bg-slate-900/40 p-3">
           <Heart className="w-4 h-4 text-rose-500 mt-0.5 flex-shrink-0" />
           <p className="text-[11px] text-slate-500 leading-relaxed">
-            Cross-check all doses against your HMCAS CPG v2.6, resuscitation
+            Cross-check all doses against your HMCAS CPG {CPG.tag}, resuscitation
             chart, and clinical judgement. Termination of paediatric resuscitation
             is not routine — only in special circumstances (CPG 2.7).
           </p>

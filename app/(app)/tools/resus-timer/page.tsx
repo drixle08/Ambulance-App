@@ -18,12 +18,15 @@ import {
   advance,
   clearResusCase,
   cycleAt,
+  isStaleCase,
   pause,
+  startNewResusCase,
   startOrResume,
   updateResusCase,
   useResusCase,
   withLog,
   type Cue,
+  type LogEntry,
   type ResusCase,
 } from "./resusStore";
 
@@ -63,6 +66,29 @@ function hasPhrase(transcript: string, phrases: string[]): boolean {
   return phrases.some((phrase) => words.includes(` ${phrase} `));
 }
 
+function formatIdle(ms: number): string {
+  const totalMin = Math.max(1, Math.round(ms / 60000));
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return h ? `${h} h${m ? ` ${m} min` : ""}` : `${m} min`;
+}
+
+// Gap entries summarise time the screen was away. They are drawn (and copied)
+// differently so nobody documents them as recorded cycles or interventions.
+function GapLogRow({ log }: { log: LogEntry }) {
+  return (
+    <li className="my-1 list-none space-y-1 rounded-lg border border-dashed border-slate-500 px-2 py-1.5 text-[0.75rem]">
+      <div className="flex items-center justify-between gap-2">
+        <span className="rounded bg-slate-700 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-slate-50">
+          Gap · not recorded
+        </span>
+        <span className="text-[0.65rem] text-slate-400">noted {log.absoluteTime}</span>
+      </div>
+      <p className="italic text-slate-300">{log.message}</p>
+    </li>
+  );
+}
+
 function vibrate(pattern: VibratePattern = 35) {
   if (typeof navigator === "undefined" || !("vibrate" in navigator)) return;
   navigator.vibrate(pattern);
@@ -81,7 +107,12 @@ export default function ResuscitationTimerPage() {
   const [otherDialogOpen, setOtherDialogOpen] = useState(false);
   const [otherText, setOtherText] = useState("");
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
-  const [undoSnapshot, setUndoSnapshot] = useState<ResusCase | null>(null);
+  const [undoSnapshot, setUndoSnapshot] = useState<{ previous: ResusCase; kind: "reset" | "newCase" } | null>(null);
+  // Time of the last stale-case check (set after mount, on return to the
+  // screen, and every minute) — null until the client has read the store.
+  const [staleCheckAt, setStaleCheckAt] = useState<number | null>(null);
+  const showNewCasePrompt = staleCheckAt !== null && isStaleCase(resus, staleCheckAt);
+  const newCasePromptRef = useRef(false);
   const voiceSupported = useMemo(() => {
     if (typeof window === "undefined") return false;
     const SpeechRec: SpeechRecognitionConstructor | undefined =
@@ -114,6 +145,25 @@ export default function ResuscitationTimerPage() {
   useEffect(() => {
     isRunningRef.current = isRunning;
   }, [isRunning]);
+
+  useEffect(() => {
+    newCasePromptRef.current = showNewCasePrompt;
+  }, [showNewCasePrompt]);
+
+  // Re-check whether the open case has gone stale whenever the screen is shown.
+  useEffect(() => {
+    const check = () => {
+      if (document.visibilityState === "visible") setStaleCheckAt(Date.now());
+    };
+    const first = window.setTimeout(check, 0);
+    const id = window.setInterval(check, 60_000);
+    document.addEventListener("visibilitychange", check);
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", check);
+    };
+  }, []);
 
   // Persist voice preference
   useEffect(() => {
@@ -255,7 +305,25 @@ export default function ResuscitationTimerPage() {
     const snapshot = clearResusCase();
     if (typeof window !== "undefined") window.speechSynthesis?.cancel();
     setResetConfirmOpen(false);
-    setUndoSnapshot(snapshot);
+    setUndoSnapshot({ previous: snapshot, kind: "reset" });
+  };
+
+  // Stale-case prompt: the default is a fresh case, because a new arrest
+  // merged into an old patient's log is worse than losing the old log.
+  const startNewCase = () => {
+    vibrate(25);
+    const previous = startNewResusCase();
+    if (typeof window !== "undefined") window.speechSynthesis?.cancel();
+    setResetConfirmOpen(false);
+    setUndoSnapshot({ previous, kind: "newCase" });
+  };
+
+  const keepPreviousCase = () => {
+    vibrate(25);
+    const idleMs = (staleCheckAt ?? resus.lastActionAt) - resus.lastActionAt;
+    updateResusCase((c, now) =>
+      withLog(c, now, `No activity for ${formatIdle(idleMs)} — case reopened`, "gap")
+    );
   };
 
   const undoReset = useCallback(() => {
@@ -264,9 +332,18 @@ export default function ResuscitationTimerPage() {
     vibrate(35);
     // Restore the case as it was; a running clock kept running in real time,
     // so catch it up (logging any cycles that passed) before noting the undo.
-    updateResusCase((_c, now) => withLog(advance(snapshot, now).next, now, "Reset undone"));
+    updateResusCase((_c, now) => {
+      const restored = advance(snapshot.previous, now).next;
+      return snapshot.kind === "reset"
+        ? withLog(restored, now, "Reset undone")
+        : withLog(restored, now, "New case undone — previous case restored", "gap");
+    });
     setUndoSnapshot(null);
   }, [undoSnapshot]);
+
+  // Undoing a new case is only offered until the new case records an event;
+  // after that, restoring the old case would mix two patients.
+  const showUndo = undoSnapshot !== null && (undoSnapshot.kind === "reset" || logs.length <= 1);
 
   const dismissUndo = useCallback(() => setUndoSnapshot(null), []);
 
@@ -328,16 +405,19 @@ export default function ResuscitationTimerPage() {
     const headerLines = [
       "Resuscitation summary",
       `Start time: ${startTimeString}`,
-      `Total cycles: ${resus.startedAt !== null ? cycleNumber : 0}`,
+      `Total cycles: ${resus.startedAt !== null ? cycleNumber : 0}${
+        logs.some((l) => l.kind === "gap") ? " (by clock — includes time the screen was away; see gap notes)" : ""
+      }`,
       "",
     ];
 
     const eventLines =
       logs.length === 0
         ? ["No events recorded."]
-        : logs.map(
-            (log) =>
-              `${log.timeSinceStart}  ${log.message} (${log.absoluteTime})`
+        : logs.map((log) =>
+            log.kind === "gap"
+              ? `—— NOT A RECORDED EVENT: ${log.message} (noted ${log.absoluteTime}) ——`
+              : `${log.timeSinceStart}  ${log.message} (${log.absoluteTime})`
           );
 
     return [...headerLines, ...eventLines].join("\n");
@@ -387,6 +467,9 @@ export default function ResuscitationTimerPage() {
       const recentCommand =
         now - lastVoiceCommandAtRef.current < 1200; // debounce rapid re-triggers
       if (recentCommand) return;
+
+      // While the new-case prompt is open, voice must not resume the old case.
+      if (newCasePromptRef.current) return;
 
       if (hasPhrase(transcript, RESET_PHRASES)) {
         // Never clears by voice: show the confirmation and let a tap decide.
@@ -547,7 +630,9 @@ export default function ResuscitationTimerPage() {
             </p>
           ) : (
             <ul className="space-y-1">
-              {lastEvents.map((log) => (
+              {lastEvents.map((log) => log.kind === "gap" ? (
+                <GapLogRow key={log.id} log={log} />
+              ) : (
                 <li
                   key={log.id}
                   className="flex items-baseline justify-between gap-2 text-[0.75rem]"
@@ -716,14 +801,16 @@ export default function ResuscitationTimerPage() {
             </div>
             <CopySummaryButton summaryText={summaryText} />
           </div>
-          <div className="max-h-40 space-y-1 overflow-y-auto rounded-lg bg-slate-950/40 p-2 text-[0.75rem]">
+          <ul className="max-h-40 space-y-1 overflow-y-auto rounded-lg bg-slate-950/40 p-2 text-[0.75rem]">
             {logs.length === 0 ? (
-              <p className="text-slate-500">No events recorded yet.</p>
+              <li className="list-none text-slate-500">No events recorded yet.</li>
             ) : (
-              logs.map((log) => (
-                <div
+              logs.map((log) => log.kind === "gap" ? (
+                <GapLogRow key={log.id} log={log} />
+              ) : (
+                <li
                   key={log.id}
-                  className="flex items-baseline gap-2 border-b border-slate-800/60 pb-1 last:border-b-0"
+                  className="flex list-none items-baseline gap-2 border-b border-slate-800/60 pb-1 last:border-b-0"
                 >
                   <span className="font-mono text-emerald-300">
                     {log.timeSinceStart}
@@ -732,10 +819,10 @@ export default function ResuscitationTimerPage() {
                   <span className="text-[0.65rem] text-slate-500">
                     {log.absoluteTime}
                   </span>
-                </div>
+                </li>
               ))
             )}
-          </div>
+          </ul>
         </section>
 
         {/* Other dialog */}
@@ -778,8 +865,53 @@ export default function ResuscitationTimerPage() {
         )}
       </main>
 
-      {undoSnapshot && (
-        <UndoToast message="Timer and log cleared" onUndo={undoReset} onExpire={dismissUndo} />
+      {/* Stale case: one tap starts a fresh case; keeping the old one is the deliberate choice */}
+      {showNewCasePrompt && (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="new-case-title"
+          aria-describedby="new-case-desc"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 px-4 pb-6 sm:items-center"
+        >
+          <div className="w-full max-w-md space-y-4 rounded-3xl border border-slate-600 bg-slate-950 p-5 shadow-2xl">
+            <div className="space-y-1">
+              <h2 id="new-case-title" className="text-xl font-black text-slate-50">
+                Start a new case?
+              </h2>
+              <p id="new-case-desc" className="text-base text-slate-300">
+                A previous case is still open — started {startTimeString}, no activity for{" "}
+                {formatIdle(staleCheckAt! - resus.lastActionAt)},{" "}
+                {logs.filter((l) => !l.kind).length} events logged.
+              </p>
+            </div>
+            <button
+              type="button"
+              autoFocus
+              onClick={startNewCase}
+              className="flex min-h-20 w-full flex-col items-center justify-center gap-0.5 rounded-3xl bg-emerald-500 px-4 py-3 text-slate-950 shadow-lg active:translate-y-[1px]"
+            >
+              <span className="text-xl font-black">Start new case</span>
+              <span className="text-sm font-semibold">Clears the previous log and starts the timer</span>
+            </button>
+            <button
+              type="button"
+              onClick={keepPreviousCase}
+              className="flex min-h-14 w-full flex-col items-center justify-center gap-0.5 rounded-2xl border border-slate-500 px-4 py-2 text-slate-100"
+            >
+              <span className="text-base font-bold">Keep previous case</span>
+              <span className="text-sm text-slate-300">Continue it, or copy its log for the PCR</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showUndo && undoSnapshot && (
+        <UndoToast
+          message={undoSnapshot.kind === "reset" ? "Timer and log cleared" : "New case started — previous log cleared"}
+          onUndo={undoReset}
+          onExpire={dismissUndo}
+        />
       )}
     </div>
   );

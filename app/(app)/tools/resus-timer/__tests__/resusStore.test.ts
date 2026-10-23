@@ -3,9 +3,11 @@ import {
   ADRENALINE_INTERVAL,
   DETAILED_CATCH_UP_SECONDS,
   EMPTY_CASE,
+  STALE_CASE_MS,
   advance,
   cycleAt,
   isLiveCue,
+  isStaleCase,
   parseCase,
   pause,
   startOrResume,
@@ -102,10 +104,36 @@ describe("advance", () => {
     expect(3 * 3600 - next.lastAdrenalineAt!).toBeLessThan(ADRENALINE_INTERVAL);
   });
 
+  it("tags the long-gap summary as a gap, not a recorded event", () => {
+    const { next } = advance(started(), sec(3600));
+    expect(next.logs.at(-1)?.kind).toBe("gap");
+    expect(next.logs.filter((l) => l.kind !== "gap").map((l) => l.message)).toEqual([
+      "Timer started (Cycle 1, CPR)",
+    ]);
+  });
+
   it("still logs each cycle for a gap up to the detailed catch-up limit", () => {
     const { next } = advance(started(), sec(DETAILED_CATCH_UP_SECONDS));
     // 600 s: cycles 1–4 complete (120, 245, 370, 495) and 2–5 start (125, 250, 375, 500)
     expect(next.logs.filter((l) => l.message.startsWith("Cycle")).length).toBe(8);
+  });
+});
+
+describe("stale case", () => {
+  it("measures idle time from user actions, not clock ticks", () => {
+    let c = started();
+    expect(c.lastActionAt).toBe(T0);
+    c = advance(c, sec(5400)).next; // clock ran 90 min, nobody touched it
+    expect(c.lastActionAt).toBe(T0);
+    expect(isStaleCase(c, sec(5400))).toBe(true);
+    c = withLog(c, sec(5400), "Shock delivered");
+    expect(isStaleCase(c, sec(5401))).toBe(false);
+  });
+
+  it("is never stale before a case has started, or within the hour", () => {
+    expect(isStaleCase(EMPTY_CASE, sec(10 * 3600))).toBe(false);
+    expect(isStaleCase(started(), T0 + STALE_CASE_MS)).toBe(false);
+    expect(isStaleCase(started(), T0 + STALE_CASE_MS + 1)).toBe(true);
   });
 });
 
@@ -116,6 +144,13 @@ describe("parseCase", () => {
     const parsed = parseCase(raw);
     expect(parsed.logs).toEqual(c.logs);
     expect(parsed.runningSince).toBe(T0);
+  });
+
+  it("loads cases stored before lastActionAt existed, using their last update", () => {
+    const c = advance(started(), sec(30)).next;
+    const legacy = JSON.parse(JSON.stringify(c));
+    delete legacy.lastActionAt;
+    expect(parseCase(legacy).lastActionAt).toBe(c.updatedAt);
   });
 
   it("never discards a stored case on its own, however old", () => {
@@ -174,6 +209,21 @@ describe("resusStore persistence", () => {
     expect(c.processedElapsed).toBe(200);
     expect(c.logs.map((l) => l.message)).toContain("Shock delivered");
     expect(c.logs.map((l) => l.message)).toContain("Cycle 2 started (CPR)");
+  });
+
+  it("starts a new case in one step and returns the old case for Undo", async () => {
+    const store = await loadStore(memoryStorage());
+    store.updateResusCase(store.startOrResume);
+    vi.setSystemTime(sec(20));
+    store.updateResusCase((c, now) => store.withLog(c, now, "Shock delivered"));
+
+    vi.setSystemTime(sec(2 * 3600));
+    const previous = store.startNewResusCase();
+    expect(previous.logs.map((l) => l.message)).toContain("Shock delivered");
+    const fresh = store.resusStore.get();
+    expect(fresh.startedAt).toBe(sec(2 * 3600));
+    expect(fresh.runningSince).toBe(sec(2 * 3600));
+    expect(fresh.logs.map((l) => l.message)).toEqual(["Timer started (Cycle 1, CPR)"]);
   });
 
   it("clears on reset and can be restored from the returned snapshot", async () => {

@@ -27,6 +27,8 @@ export type LogEntry = {
   timeSinceStart: string; // "T+06:32"
   absoluteTime: string; // "14:22:05"
   message: string; // "Shock delivered", etc.
+  /** "gap": a summary of time the screen was away — not a recorded event. */
+  kind?: "gap";
 };
 
 export type ResusCase = {
@@ -42,6 +44,8 @@ export type ResusCase = {
   lastAdrenalineAt: number | null;
   amiodaroneDose: 0 | 1 | 2;
   logs: LogEntry[];
+  /** Wall-clock ms of the last user action (not clock ticks); drives the stale-case prompt. */
+  lastActionAt: number;
   updatedAt: number;
 };
 
@@ -59,6 +63,12 @@ export const LIVE_CUE_SECONDS = 2;
  * entry, so a forgotten running clock doesn't bury the real events.
  */
 export const DETAILED_CATCH_UP_SECONDS = 10 * 60;
+/**
+ * A case with no user action for this long is treated as a previous patient:
+ * opening the timer asks first, with "Start new case" as the default, so a new
+ * arrest is never merged into an old log by tapping Start.
+ */
+export const STALE_CASE_MS = 60 * 60 * 1000;
 
 const PERIOD = CYCLE_SECONDS + PAUSE_SECONDS;
 const KEY = "resus-timer-case";
@@ -71,6 +81,7 @@ export const EMPTY_CASE: ResusCase = {
   lastAdrenalineAt: null,
   amiodaroneDose: 0,
   logs: [],
+  lastActionAt: 0,
   updatedAt: 0,
 };
 
@@ -89,7 +100,7 @@ export function cycleAt(elapsed: number): { cycleNumber: number; phase: Phase; s
     : { cycleNumber, phase: "Pause", secondsRemaining: PERIOD - within };
 }
 
-function makeEntry(c: ResusCase, wallMs: number, message: string): LogEntry {
+function makeEntry(c: ResusCase, wallMs: number, message: string, kind?: LogEntry["kind"]): LogEntry {
   const offsetSeconds = c.startedAt !== null
     ? Math.floor((wallMs - c.startedAt) / 1000)
     : elapsedSecondsAt(c, wallMs);
@@ -98,6 +109,7 @@ function makeEntry(c: ResusCase, wallMs: number, message: string): LogEntry {
     timeSinceStart: formatTPlus(offsetSeconds),
     absoluteTime: new Date(wallMs).toLocaleTimeString(),
     message,
+    ...(kind ? { kind } : {}),
   };
 }
 
@@ -128,7 +140,8 @@ export function advance(c: ResusCase, now: number): { next: ResusCase; cues: Cue
     const summary = makeEntry(
       c,
       now,
-      `Timer ran ${Math.round(gap / 60)} min with the screen away — cycles ${fromCycle}–${toCycle} not logged individually`
+      `Timer ran ${Math.round(gap / 60)} min with the screen away — cycles ${fromCycle}–${toCycle} not logged individually`,
+      "gap"
     );
     return {
       next: { ...c, processedElapsed: elapsed, lastAdrenalineAt: lastAdr, logs: [...c.logs, summary], updatedAt: now },
@@ -182,8 +195,13 @@ export function isLiveCue(cue: Cue, processedElapsed: number): boolean {
 }
 
 /** Add a user-initiated event to the log (after catching the clock up). */
-export function withLog(c: ResusCase, now: number, message: string): ResusCase {
-  return { ...c, logs: [...c.logs, makeEntry(c, now, message)], updatedAt: now };
+export function withLog(c: ResusCase, now: number, message: string, kind?: LogEntry["kind"]): ResusCase {
+  return { ...c, logs: [...c.logs, makeEntry(c, now, message, kind)], lastActionAt: now, updatedAt: now };
+}
+
+/** True when an open case has had no user action for longer than STALE_CASE_MS. */
+export function isStaleCase(c: ResusCase, now: number): boolean {
+  return c.startedAt !== null && now - c.lastActionAt > STALE_CASE_MS;
 }
 
 export function startOrResume(c: ResusCase, now: number): ResusCase {
@@ -212,7 +230,8 @@ function isLogEntry(e: unknown): e is LogEntry {
   if (!e || typeof e !== "object") return false;
   const x = e as Record<string, unknown>;
   return typeof x.id === "string" && typeof x.timeSinceStart === "string" &&
-    typeof x.absoluteTime === "string" && typeof x.message === "string";
+    typeof x.absoluteTime === "string" && typeof x.message === "string" &&
+    (x.kind === undefined || x.kind === "gap");
 }
 
 const numOrNull = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
@@ -230,6 +249,8 @@ export function parseCase(raw: unknown): ResusCase {
     lastAdrenalineAt: numOrNull(x.lastAdrenalineAt),
     amiodaroneDose: amio === 1 || amio === 2 ? amio : 0,
     logs: Array.isArray(x.logs) ? x.logs.filter(isLogEntry) : [],
+    // Cases stored before lastActionAt existed fall back to their last update.
+    lastActionAt: numOrNull(x.lastActionAt) ?? updatedAt,
     updatedAt,
   };
 }
@@ -245,6 +266,17 @@ export function clearResusCase(): ResusCase {
   const now = Date.now();
   const previous = advance(resusStore.get(), now).next;
   resusStore.set(resetCase(now));
+  return previous;
+}
+
+/**
+ * Replace the open case with a new one and start its clock. Returns the old
+ * case (caught up to now) so a mistaken tap can be undone.
+ */
+export function startNewResusCase(): ResusCase {
+  const now = Date.now();
+  const previous = advance(resusStore.get(), now).next;
+  resusStore.set(startOrResume({ ...EMPTY_CASE, updatedAt: now }, now));
   return previous;
 }
 

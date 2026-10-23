@@ -42,3 +42,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# UI audit screenshots (regenerable, ~46 MB)
+/docs/ui-audit/screenshots/

@@ -64,10 +64,10 @@ const COLOR: Record<BundleColor, ColorDef> = {
 
 const ADRENALINE_OPTIONS: DoseOption[] = [
   {
-    // CPG p.285/110: 500mcg (0.5mg) IM, repeat q5min confirmed. Injection site
+    // CPG v2.6 p.301/116: 500mcg (0.5mg) IM, repeat q5min confirmed. Injection site
     // is extended scope (CPG only says rotate sites, doesn't specify thigh).
     // "Max 3 doses" corrected -- CPG frames the 3rd dose as an escalation
-    // trigger to IV push-dose adrenaline, not a hard stop (CPG p.108).
+    // trigger to IV push-dose adrenaline, not a hard stop (CPG v2.6 p.113).
     id: "adr-im",
     label: "Adrenaline IM",
     dose: "500 mcg (0.5 mg)",
@@ -76,7 +76,7 @@ const ADRENALINE_OPTIONS: DoseOption[] = [
     caution: "Confirm 1:1,000 concentration for IM. Do NOT use 1:10,000 IM.",
   },
   {
-    // CPG p.284-285/110: push-dose range corrected from 50-100mcg to
+    // CPG v2.6 p.301/116: push-dose range corrected from 50-100mcg to
     // 20-50mcg (formulary max single dose is 1mcg/kg, max 50mcg). Dilution
     // corrected from 0.1mg/mL to the CPG's stated 10mcg/mL prep -- the
     // previous instructions were 10x more concentrated than CPG specifies.
@@ -91,7 +91,7 @@ const ADRENALINE_OPTIONS: DoseOption[] = [
 
 const ANALGESIA_OPTIONS: DoseOption[] = [
   {
-    // CPG p.347-348: onset corrected from "6-10 breaths" to CPG's "1-3
+    // CPG v2.6 p.362-363: onset corrected from "6-10 breaths" to CPG's "1-3
     // minutes"; repeat corrected from "if required" to CPG's "may repeat
     // once after 25 minutes". FLAGGED — could not confirm from CPG source:
     // the "15 mL/week" cap has no CPG basis (CPG states only a 6mL/24h
@@ -117,7 +117,7 @@ const ANALGESIA_OPTIONS: DoseOption[] = [
     caution: "Monitor RR. Naloxone ready. Avoid in hypovolaemia without concurrent fluid resuscitation.",
   },
   {
-    // CPG p.316-317: IV corrected from a flat 25-50mcg to the CPG's weight-
+    // CPG v2.6 p.331-332: IV corrected from a flat 25-50mcg to the CPG's weight-
     // based "1mcg/kg at 20mcg aliquots, repeat PRN every 1-2 min, max 200mcg
     // total". IN dose (1-2mcg/kg, max 200mcg) already matched, unchanged.
     id: "analg-fent",
@@ -128,7 +128,7 @@ const ANALGESIA_OPTIONS: DoseOption[] = [
     caution: "Rapid respiratory depression possible. Continuous monitoring required.",
   },
   {
-    // CPG p.336-337: dose corrected from 0.1-0.3mg/kg to CPG's "IV/IO
+    // CPG v2.6 p.352: dose corrected from 0.1-0.3mg/kg to CPG's "IV/IO
     // 0.25-0.5mg/kg", and "repeat once" corrected to CPG's "Repeat PRN".
     id: "analg-ket",
     label: "Ketamine (sub-anaesthetic)",
@@ -141,7 +141,7 @@ const ANALGESIA_OPTIONS: DoseOption[] = [
 
 const VASOPRESSOR_OPTIONS: DoseOption[] = [
   {
-    // CPG p.357 (formulary), corroborated p.168/170/173/52-53: 0.01-0.3
+    // CPG v2.6 p.373 (formulary), corroborated p.173/175/179/55-56: 0.01-0.3
     // mcg/kg/min confirmed (corrected from 0.01-0.5 in a prior pass).
     id: "vaso-nora",
     label: "Noradrenaline",
@@ -154,7 +154,7 @@ const VASOPRESSOR_OPTIONS: DoseOption[] = [
     // Extended scope — Metaraminol does not appear anywhere in CPG v2.6 (full-
     // text search of the entire document returns zero matches). CPG's actual
     // vasopressor escalation for trauma/haemorrhage is Noradrenaline ->
-    // Phenylephrine -> Adrenaline infusion (p.167-170), neither of which
+    // Phenylephrine -> Adrenaline infusion (v2.6 p.172-175), neither of which
     // Metaraminol nor Phenylephrine currently appear as an option here.
     // Kept as departmental extended scope per policy; dosing not CPG-verified.
     id: "vaso-meta",
@@ -175,7 +175,7 @@ const BUNDLES: Bundle[] = [
     color: "sky",
     items: [
       {
-        // CPG p.76 (4.5 APO): PEEP 5→15 cmH2O confirmed. Extended scope, not CPG-stated:
+        // CPG v2.6 p.81-82 (4.5 APO): PEEP 5→15 cmH2O confirmed. Extended scope, not CPG-stated:
         // 2.5 cmH2O titration step, SpO2 94-98% range (CPG gives only a >94% floor, no
         // ceiling), continuous ETCO2 mention, and the contraindication list (CPG's only
         // related statement is permissive of CPAP with reduced LOC, not a GCS<10 cutoff).
@@ -200,7 +200,7 @@ const BUNDLES: Bundle[] = [
         caution: "Hold if: SBP <100 · HR <50 or >100 · inferior/RV STEMI · PDE-5 inhibitor within 24–48 h (sildenafil / tadalafil)",
       },
       {
-        // CPG p.76 (4.5 APO): "12-lead ECG" is a listed algorithm step. Transmission
+        // CPG v2.6 p.82 (4.5 APO): "12-lead ECG" is a listed algorithm step. Transmission
         // instruction is extended scope (general practice, not APO-specific in CPG).
         id: "apo-12ecg",
         label: "12-lead ECG",
@@ -215,7 +215,7 @@ const BUNDLES: Bundle[] = [
     color: "red",
     items: [
       {
-        // CPG p.19 (general monitoring standard): "every 5 minutes for unstable/
+        // CPG v2.6 p.19 (general monitoring standard): "every 5 minutes for unstable/
         // critically ill or injured patients" -- corrected from q2min, which CPG
         // reserves specifically for patients on an Adrenaline or Phenylephrine
         // infusion, not as the general critical-patient cadence. The SBP/pulse-
@@ -226,7 +226,7 @@ const BUNDLES: Bundle[] = [
         detail: "Set NIBP to cycle q5 min (q2 min if on Adrenaline/Phenylephrine infusion). Document trend. Flags: SBP <90 (shock), SBP >180 (hypertensive emergency), pulse pressure <25 (tamponade/cardiogenic), wide pulse pressure (aortic regurgitation, sepsis).",
       },
       {
-        // CPG p.19: "Consider placing defib pads in the A/P position" for
+        // CPG v2.6 p.19: "Consider placing defib pads in the A/P position" for
         // critically ill/confirmed AMI patients.
         id: "crit-defib",
         label: "Defib pads on",
@@ -234,7 +234,7 @@ const BUNDLES: Bundle[] = [
         detail: "Apply anterior-lateral (or anterior-posterior) defibrillation pads. Select monitor mode. Enable continuous rhythm display. Ready for immediate cardioversion or defibrillation.",
       },
       {
-        // CPG p.19/37-47: continuous/mandatory-if-intubated ETCO2 confirmed.
+        // CPG v2.6 p.19/23 (arrest CPGs p.34-49): continuous/mandatory-if-intubated ETCO2 confirmed.
         // Extended scope: the 35-45 mmHg numeric target -- no target range
         // appears anywhere in CPG v2.6.
         id: "crit-etco2",
@@ -251,15 +251,16 @@ const BUNDLES: Bundle[] = [
         detail: "Enable QRS beep on maximum audible volume. Set HR high alarm 130 bpm, low alarm 40 bpm. Audible monitoring frees attention for other tasks while maintaining rhythm awareness.",
       },
       {
-        // COPD figure corrected to CPG p.87 (5.2 COPD) in a prior pass. Extended
-        // scope: the general 94-98% target -- CPG states only a >94% floor.
+        // COPD figure corrected to CPG v2.6 p.92 (5.2 COPD) in a prior pass. The
+        // 94-98% range is CPG-stated for post-ROSC patients (v2.6 p.54); for other
+        // critical patients CPG states only a ≥94% floor (e.g. p.82, p.177).
         id: "crit-spo2",
         label: "SpO₂ — opposite arm to BP",
         sublabel: "Contralateral limb to NIBP cuff",
         detail: "SpO₂ probe on opposite arm/finger to BP cuff — prevents artefact during NIBP cycles. Target SpO₂ 94–98% (88–92% in COPD/chronic hypercapnia).",
       },
       {
-        // CPG p.17/19: "HR (4-lead ECG/Pads)"; "12-lead ECG (when appropriate)".
+        // CPG v2.6 p.17/19: "HR (4-lead ECG/Pads)"; "12-lead ECG (when appropriate)".
         id: "crit-ecg",
         label: "4 / 12-lead ECG",
         sublabel: "Baseline + repeat PRN",
@@ -274,15 +275,15 @@ const BUNDLES: Bundle[] = [
     tip: "Fulfilling the All Critical bundle automatically fulfils this bundle — treat all sedated patients as critical.",
     items: [
       {
-        // CPG p.200-202 (11.3 Procedural Sedation): 5-min monitoring interval
-        // confirmed. TBI MAP split corrected to CPG p.169/51 in a prior pass.
+        // CPG v2.6 p.210-212 (11.3 Procedural Sedation): 5-min monitoring interval
+        // confirmed. TBI MAP split corrected to CPG v2.6 p.174/54 in a prior pass.
         id: "sed-bp",
         label: "BP every 5 minutes",
         sublabel: "Automated NIBP — q5 min minimum",
         detail: "q5 min minimum; increase frequency if haemodynamically unstable. Target MAP >65 mmHg (isolated TBI: 70–80 mmHg · TBI + polytrauma: ≥65 mmHg). Document MAP trend.",
       },
       {
-        // CPG p.197/37-47: mandatory-if-intubated and tube-placement confirmation
+        // CPG v2.6 p.207 (arrest CPGs p.34-49): mandatory-if-intubated and tube-placement confirmation
         // both confirmed. Extended scope: 35-45 mmHg target and 30-35 mmHg raised-
         // ICP target -- CPG's TBI guidance on CO2 is qualitative only, no numbers.
         id: "sed-etco2",
@@ -292,15 +293,16 @@ const BUNDLES: Bundle[] = [
         caution: "Loss of ETCO₂ waveform = assume tube displacement until proven otherwise. Stop and reassess.",
       },
       {
-        // Extended scope — CPG states only a >94% floor; the 98% hyperoxia
-        // ceiling and "avoid hyperoxia" caution do not appear anywhere in CPG.
+        // CPG v2.6 p.54 (post-ROSC): SpO2 94-98% and "Avoid hyperoxaemia (SpO2 at
+        // 100% for prolonged periods)". For other sedated patients CPG states only
+        // a ≥94% floor; the >98% cut-off and outcome rationale are extended scope.
         id: "sed-spo2",
         label: "SpO₂ — opposite arm to BP",
         sublabel: "Contralateral limb to NIBP cuff",
         detail: "Post-intubation target SpO₂ 94–98%. Avoid hyperoxia (>98%) — associated with worse neurological outcomes post-arrest/TBI. Titrate FiO₂ down once stable.",
       },
       {
-        // CPG p.201-202: 4-lead ECG is mandatory sedation monitoring. Arrhythmia
+        // CPG v2.6 p.211-212: 4-lead ECG is mandatory sedation monitoring. Arrhythmia
         // rationale text is supplementary teaching, not itself a CPG quote.
         id: "sed-4ecg",
         label: "4-lead ECG",
@@ -321,14 +323,14 @@ const BUNDLES: Bundle[] = [
     color: "orange",
     items: [
       {
-        // IV range corrected alongside ADRENALINE_OPTIONS above (CPG p.284-285/110).
+        // IV range corrected alongside ADRENALINE_OPTIONS above (CPG v2.6 p.301/116).
         id: "ana-adr",
         label: "Adrenaline",
         sublabel: "500 mcg IM  |  20–50 mcg IV",
         options: ADRENALINE_OPTIONS,
       },
       {
-        // CPG p.309-310/109-110: "IM/IV/IO 50mg — Single dose" -- corrected from
+        // CPG v2.6 p.326/115-116: "IM/IV/IO 50mg — Single dose" -- corrected from
         // a 25-50mg range to the CPG's fixed 50mg dose.
         id: "ana-diph",
         label: "Diphenhydramine IV",
@@ -337,7 +339,7 @@ const BUNDLES: Bundle[] = [
         caution: "Does NOT treat hypotension or bronchospasm. Adrenaline remains primary treatment.",
       },
       {
-        // CPG p.110: "IV Fluids 500-1000ml repeat as required" -- corrected
+        // CPG v2.6 p.116: "IV Fluids 500-1000ml repeat as required" -- corrected
         // from a fixed 1,000 mL to the CPG's repeatable 500-1000 mL bolus.
         id: "ana-fluids",
         label: "Fluids IV",
@@ -345,7 +347,7 @@ const BUNDLES: Bundle[] = [
         detail: "500 mL–1 L bolus NaCl 0.9% IV (pressure bag if required). Repeat PRN. Distributive shock — large volumes may be needed. Reassess BP and HR after each bolus.",
       },
       {
-        // CPG p.327/109-110: "IM/IV/IO 200mg — Single dose" confirmed.
+        // CPG v2.6 p.342/115-116: "IM/IV/IO 200mg — Single dose" confirmed.
         id: "ana-hydro",
         label: "Hydrocortisone IV",
         sublabel: "200 mg IV",
@@ -360,14 +362,14 @@ const BUNDLES: Bundle[] = [
     color: "amber",
     items: [
       {
-        // IV range corrected alongside ADRENALINE_OPTIONS (CPG p.284-285/85).
+        // IV range corrected alongside ADRENALINE_OPTIONS (CPG v2.6 p.301/91).
         id: "asth-adr",
         label: "Adrenaline",
         sublabel: "500 mcg IM  |  20–50 mcg IV",
         options: ADRENALINE_OPTIONS,
       },
       {
-        // CPG p.85/84: "Fluid bolus - 250-500ml repeat as required"; overall
+        // CPG v2.6 p.91/90: "Fluid bolus - 250-500ml repeat as required"; overall
         // adult cap 1L. Corrected from a fixed 500-1,000mL bolus.
         id: "asth-fluids",
         label: "Fluids IV",
@@ -375,14 +377,14 @@ const BUNDLES: Bundle[] = [
         detail: "250–500 mL NaCl 0.9% IV bolus, repeat as required (max 1 L total). Patients are often dehydrated from increased work of breathing. IV fluid supports preload during elevated intrathoracic pressures.",
       },
       {
-        // CPG p.85/327: "Hydrocortisone 200mg IV" confirmed.
+        // CPG v2.6 p.91/342: "Hydrocortisone 200mg IV" confirmed.
         id: "asth-hydro",
         label: "Hydrocortisone IV",
         sublabel: "200 mg IV",
         detail: "200 mg IV slow. Reduces bronchial inflammation. Onset 4–6 hours — adjunct to bronchodilators for acute phase.",
       },
       {
-        // CPG p.85/84/333: dose and 20-min interval confirmed; "max 3 doses"
+        // CPG v2.6 p.91/90/348: dose and 20-min interval confirmed; "max 3 doses"
         // corrected to CPG's "may be repeated once after 20 minutes" = max 2.
         id: "asth-ipra",
         label: "Ipratropium Bromide NEB",
@@ -398,7 +400,7 @@ const BUNDLES: Bundle[] = [
         caution: "Rapid infusion → flushing, hypotension, arrhythmia. Monitor BP throughout infusion.",
       },
       {
-        // CPG p.85/372: 5mg dose confirmed ("5mg repeat as required"). Extended
+        // CPG v2.6 p.91/387: 5mg dose confirmed ("5mg repeat as required"). Extended
         // scope: "back-to-back continuously" -- CPG only says "repeat as
         // required", doesn't specify pacing for the life-threatening tier.
         id: "asth-salb",
@@ -414,7 +416,7 @@ const BUNDLES: Bundle[] = [
     color: "teal",
     items: [
       {
-        // CPG p.301-302/277: 6mg single dose confirmed; oral route added
+        // CPG v2.6 p.318/293: 6mg single dose confirmed; oral route added
         // (CPG: "IM or oral route may be used if IV access not available",
         // previously omitted). Trigger broadened to match CPG's actual
         // criterion -- not purely an SpO2<93% cutoff, but any patient on CPAP
@@ -427,7 +429,7 @@ const BUNDLES: Bundle[] = [
         caution: "Administer if on CPAP, or requires supplemental O₂ to maintain SpO₂ >93%. Immunosuppressive — document administration.",
       },
       {
-        // CPG p.277 (17.1): "PEEP at 10cmH2O, increase up to 12-15 cmH2O" --
+        // CPG v2.6 p.293 (17.1): "PEEP at 10cmH2O, increase up to 12-15 cmH2O" --
         // corrected from 5->10; both the start and ceiling were too low. Trigger
         // corrected from "RR > 30" to "RR >= 30" to match CPG's stated cutoff.
         // Contraindication list is extended scope -- no such list in CPG.
@@ -452,7 +454,7 @@ const BUNDLES: Bundle[] = [
         options: ANALGESIA_OPTIONS,
       },
       {
-        // CPG p.167: "maintain MAP just above 65mmHg" -- corrected trigger
+        // CPG v2.6 p.172: "maintain MAP just above 65mmHg" -- corrected trigger
         // from "MAP < 50" (no "50" figure appears anywhere in CPG) to <65.
         id: "trauma-vaso",
         label: "Vasopressor",
@@ -461,7 +463,7 @@ const BUNDLES: Bundle[] = [
         options: VASOPRESSOR_OPTIONS,
       },
       {
-        // CPG p.167 (also 169-170): "Aim to maintain a MAP 65mmHg for adults...
+        // CPG v2.6 p.172-173 (also 174-175): "Aim to maintain a MAP 65mmHg for adults...
         // IV fluid 250ml boluses (Max 1L)" -- target parameter corrected from
         // SBP 80-90 (permissive hypotension) to CPG's MAP 65 target, and cap
         // corrected from >2L to the CPG's 1L. FLAGGED: the "penetrating torso
@@ -478,8 +480,8 @@ const BUNDLES: Bundle[] = [
         caution: "Exception — TBI: target MAP 70–80 mmHg if isolated, ≥65 mmHg if polytrauma. Penetrating torso: target SBP ~80 until surgical haemostasis (extended scope, not in CPG).",
       },
       {
-        // Extended scope — CPG states only a >94% floor for trauma oxygen
-        // target; the 98% hyperoxia ceiling doesn't appear anywhere in CPG.
+        // Extended scope — for trauma CPG states only a ≥94% floor (v2.6 p.177);
+        // its 94-98% range applies to post-ROSC patients only (p.54).
         id: "trauma-o2",
         label: "Oxygen",
         sublabel: "Target SpO₂ 94–98%",
@@ -487,7 +489,7 @@ const BUNDLES: Bundle[] = [
         caution: "Maintain SpO₂ 94–98%. Do not chase 100%.",
       },
       {
-        // CPG p.377-378: dose, dilution, duration, <3h window, and TBI GCS<=12
+        // CPG v2.6 p.392-393: dose, dilution, duration, <3h window, and TBI GCS<=12
         // trigger all confirmed.
         id: "trauma-txa",
         label: "TXA IV",
@@ -503,7 +505,7 @@ const BUNDLES: Bundle[] = [
     color: "emerald",
     items: [
       {
-        // NOTE: CPG p.68's ACS algorithm lists only Penthrox and Fentanyl for
+        // NOTE: CPG v2.6 p.73's ACS algorithm lists only Penthrox and Fentanyl for
         // STEMI/ACS analgesia -- Ketamine isn't listed, and its own formulary
         // entry flags suspected ACS as a precaution requiring reduced dosing.
         // ANALGESIA_OPTIONS is shared with Major Trauma, where Ketamine is
@@ -515,7 +517,7 @@ const BUNDLES: Bundle[] = [
         options: ANALGESIA_OPTIONS,
       },
       {
-        // CPG p.67-68: "Aspirin - 300mg" confirmed for both STEMI and ACS-Other
+        // CPG v2.6 p.73: "Aspirin - 300mg" confirmed for both STEMI and ACS-Other
         // pathways. Extended scope: "chewed" administration detail (CPG doesn't
         // specify; chewing-speeds-absorption is standard pharmacology, not
         // contradicted by anything in CPG).
@@ -526,7 +528,7 @@ const BUNDLES: Bundle[] = [
         caution: "Hold if: aspirin allergy · active GI haemorrhage · severe thrombocytopaenia",
       },
       {
-        // CPG p.66-68: "Clopidogrel - 600mg (AP only to administer following
+        // CPG v2.6 p.72-73: "Clopidogrel - 600mg (AP only to administer following
         // Clinical Desk advice)"; withhold-if-non-diagnostic rule confirmed.
         id: "stemi-clop",
         label: "Clopidogrel",
@@ -535,7 +537,7 @@ const BUNDLES: Bundle[] = [
         caution: "Withhold for suspected STEMI when the initial ECG does not meet STEMI criteria, and hold if active major bleeding or true contraindication.",
       },
       {
-        // CPG p.66: "Consider the A/P position as the primary placement" for
+        // CPG v2.6 p.72: "Consider the A/P position as the primary placement" for
         // STEMI -- corrected from "anterior-lateral" as the stated method.
         id: "stemi-defib",
         label: "Defib pads on",
@@ -550,7 +552,7 @@ const BUNDLES: Bundle[] = [
         caution: "Hold if: SBP <100 · HR <50 or >100 · inferior STEMI (RV infarct) · PDE-5 inhibitor within 24–48 h",
       },
       {
-        // CPG p.65-67 checked directly: the CPG does NOT itself quantify STE
+        // CPG v2.6 p.70-72 checked directly: the CPG does NOT itself quantify STE
         // mm/lead-count thresholds for STEMI (treated as a known clinical
         // skill) -- that numeric criterion here is extended scope, not CPG-
         // stated. What IS CPG-confirmed: ST depression in V1-V3 = posterior
@@ -595,7 +597,7 @@ const BUNDLES: Bundle[] = [
         caution: "Wake-up / unknown-onset stroke is treated as acute stroke (P1 HGH). Do not delay on scene waiting for a CCP — meet en route.",
       },
       {
-        // CPG p.111/305-306: <4.0 mmol/L threshold confirmed. Dose corrected
+        // CPG v2.6 p.119/320-321: <4.0 mmol/L threshold confirmed. Dose corrected
         // from 100 mL to CPG's "15-20g D10W (150-200ml)". Recheck instruction
         // corrected from a fixed 5-min timer to CPG's actual rule: "repeat if
         // patient remains hypoglycaemic" -- CPG doesn't specify a time interval.
@@ -606,7 +608,7 @@ const BUNDLES: Bundle[] = [
         caution: "Do NOT treat hyperglycaemia in the field — worsens outcome in ischaemic stroke",
       },
       {
-        // Extended scope, kept per policy — CPG's stroke BP guidance (p.58-60)
+        // Extended scope, kept per policy — CPG's stroke BP guidance (v2.6 p.62-65; nitrates line p.63)
         // is monitor-only and qualitative ("do not attempt to reduce BP using
         // nitrates if hypertensive"); no active-treatment thresholds, target
         // reduction percentage, or "avoid SBP<140" figure appear anywhere in
@@ -633,7 +635,7 @@ function VentilationCalculator({ color }: { color: BundleColor }) {
   const c = COLOR[color];
 
   const h = parseFloat(heightCm);
-  // CPG p.207: "Calculate ideal body weight (IBW) in kg = height (cm) - 100" --
+  // CPG v2.6 p.217: "Calculate ideal body weight (IBW) in kg = height (cm) - 100" --
   // a single flat formula, no sex split. Corrected from the Devine formula
   // (previously sex-differentiated, based on height - 152.4), which is why the
   // sex toggle that used to sit above the height input has been removed -- it
@@ -669,7 +671,7 @@ function VentilationCalculator({ color }: { color: BundleColor }) {
             {[
               { label: "IBW", value: `${ibw.toFixed(1)} kg` },
               { label: "Tidal Volume", value: `${tvLow}–${tvHigh} mL` },
-              // CPG p.204 gives condition-specific rates (Normal Lungs 12-14 ·
+              // CPG v2.6 p.215 gives condition-specific rates (Normal Lungs 12-14 ·
               // Asthma/COPD 5-10 · APO/ARDS 12-16), not one flat figure. This
               // calculator has no lung-condition selector, so it defaults to
               // the Normal Lungs rate -- the other two bands aren't covered.

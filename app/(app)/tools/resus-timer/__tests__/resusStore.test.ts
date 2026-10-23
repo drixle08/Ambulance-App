@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  CASE_TTL_MS,
+  ADRENALINE_INTERVAL,
+  DETAILED_CATCH_UP_SECONDS,
   EMPTY_CASE,
   advance,
   cycleAt,
@@ -84,20 +85,48 @@ describe("advance", () => {
     ]);
     expect(next.lastAdrenalineAt).toBe(510);
   });
+
+  it("summarises a long absence in one entry instead of logging every missed cycle", () => {
+    let c = advance(started(), sec(30)).next;
+    c = withLog({ ...c, lastAdrenalineAt: 30 }, sec(30), "Adrenaline 1mg IV given");
+    // Clock left running, app reopened 3 h later to write the PCR.
+    const { next, cues } = advance(c, sec(3 * 3600));
+    expect(next.processedElapsed).toBe(3 * 3600);
+    expect(next.logs).toHaveLength(c.logs.length + 1);
+    expect(next.logs.at(-1)?.message).toBe(
+      "Timer ran 180 min with the screen away — cycles 1–87 not logged individually"
+    );
+    expect(cues).toEqual([]);
+    // Adrenaline schedule stays on its 4-minute grid from the dose at 30 s.
+    expect((next.lastAdrenalineAt! - 30) % ADRENALINE_INTERVAL).toBe(0);
+    expect(3 * 3600 - next.lastAdrenalineAt!).toBeLessThan(ADRENALINE_INTERVAL);
+  });
+
+  it("still logs each cycle for a gap up to the detailed catch-up limit", () => {
+    const { next } = advance(started(), sec(DETAILED_CATCH_UP_SECONDS));
+    // 600 s: cycles 1–4 complete (120, 245, 370, 495) and 2–5 start (125, 250, 375, 500)
+    expect(next.logs.filter((l) => l.message.startsWith("Cycle")).length).toBe(8);
+  });
 });
 
 describe("parseCase", () => {
   it("restores a stored case and drops malformed log entries", () => {
     const c = advance(started(), sec(130)).next;
     const raw = JSON.parse(JSON.stringify({ ...c, logs: [...c.logs, { bogus: true }] }));
-    const parsed = parseCase(raw, sec(131));
+    const parsed = parseCase(raw);
     expect(parsed.logs).toEqual(c.logs);
     expect(parsed.runningSince).toBe(T0);
   });
 
-  it("discards a case left untouched for longer than the TTL", () => {
-    const c = advance(started(), sec(10)).next;
-    expect(parseCase(c, c.updatedAt + CASE_TTL_MS + 1)).toEqual(EMPTY_CASE);
+  it("never discards a stored case on its own, however old", () => {
+    const c = pause(advance(started(), sec(600)).next, sec(600));
+    vi.useFakeTimers();
+    vi.setSystemTime(T0 + 30 * 24 * 3600 * 1000);
+    try {
+      expect(parseCase(JSON.parse(JSON.stringify(c)))).toEqual(c);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

@@ -107,8 +107,9 @@ export default function ResuscitationTimerPage() {
   const shouldRestartRecognition = useRef(false);
   const lastVoiceCommandAtRef = useRef(0);
 
-  // Keep the screen on while the clock runs.
-  useWakeLock(isRunning);
+  // Keep the screen on for the whole case — paused included: a rhythm or pulse
+  // check is exactly when nobody is touching the phone.
+  useWakeLock(resus.startedAt !== null);
 
   useEffect(() => {
     isRunningRef.current = isRunning;

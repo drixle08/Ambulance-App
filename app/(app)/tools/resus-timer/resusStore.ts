@@ -11,11 +11,13 @@ import { formatTPlus } from "./timeUtils";
  * so a case survives navigating to another tool, a reload, the app being
  * backgrounded (timers throttled) or killed. Cycle boundaries and drug
  * reminders that fell due while the screen was away are caught up and logged
- * at the time they actually happened.
+ * at the time they actually happened; after a long absence (a clock left
+ * running) they are summarised in one entry instead of flooding the log.
  *
  * Stored in localStorage (not sessionStorage) so an installed PWA that the OS
- * kills mid-arrest still has the case. The log holds events only, no patient
- * identifiers, and a case untouched for CASE_TTL_MS is discarded on load.
+ * kills mid-arrest still has the case. A case is never discarded
+ * automatically — crews may reopen the app hours later to write the PCR —
+ * only by Reset (confirmed, with Undo).
  */
 
 export type Phase = "CPR" | "Pause";
@@ -49,9 +51,14 @@ export type Cue = { kind: "cprEndingSoon" | "cycleEnd" | "cycleStart" | "adrenal
 export const CYCLE_SECONDS = 120; // 2-minute CPR cycles
 export const PAUSE_SECONDS = 5; // rhythm-check gap between cycles
 export const ADRENALINE_INTERVAL = 240; // every 4 minutes per CPG
-export const CASE_TTL_MS = 6 * 60 * 60 * 1000;
 /** Cues older than this (e.g. caught up after the screen was away) are not played. */
 export const LIVE_CUE_SECONDS = 2;
+/**
+ * Missed cycle boundaries are logged one by one only for gaps up to this long
+ * (e.g. a few minutes in a drug calculator). Longer gaps get a single summary
+ * entry, so a forgotten running clock doesn't bury the real events.
+ */
+export const DETAILED_CATCH_UP_SECONDS = 10 * 60;
 
 const PERIOD = CYCLE_SECONDS + PAUSE_SECONDS;
 const KEY = "resus-timer-case";
@@ -107,6 +114,27 @@ function wallAtElapsed(c: ResusCase, elapsed: number): number {
 export function advance(c: ResusCase, now: number): { next: ResusCase; cues: Cue[] } {
   const elapsed = elapsedSecondsAt(c, now);
   if (c.runningSince === null || elapsed <= c.processedElapsed) return { next: c, cues: [] };
+
+  const gap = elapsed - c.processedElapsed;
+  if (gap > DETAILED_CATCH_UP_SECONDS) {
+    // Long absence: keep the clock and adrenaline schedule exact, but record
+    // one summary line instead of a pair of entries per missed cycle.
+    let lastAdr = c.lastAdrenalineAt;
+    if (lastAdr !== null && elapsed - lastAdr >= ADRENALINE_INTERVAL) {
+      lastAdr += Math.floor((elapsed - lastAdr) / ADRENALINE_INTERVAL) * ADRENALINE_INTERVAL;
+    }
+    const fromCycle = cycleAt(c.processedElapsed + 1).cycleNumber;
+    const toCycle = cycleAt(elapsed).cycleNumber;
+    const summary = makeEntry(
+      c,
+      now,
+      `Timer ran ${Math.round(gap / 60)} min with the screen away — cycles ${fromCycle}–${toCycle} not logged individually`
+    );
+    return {
+      next: { ...c, processedElapsed: elapsed, lastAdrenalineAt: lastAdr, logs: [...c.logs, summary], updatedAt: now },
+      cues: [],
+    };
+  }
 
   const cues: Cue[] = [];
   const newLogs: LogEntry[] = [];
@@ -189,11 +217,10 @@ function isLogEntry(e: unknown): e is LogEntry {
 
 const numOrNull = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
-export function parseCase(raw: unknown, now = Date.now()): ResusCase {
+export function parseCase(raw: unknown): ResusCase {
   if (!raw || typeof raw !== "object") return EMPTY_CASE;
   const x = raw as Record<string, unknown>;
   const updatedAt = numOrNull(x.updatedAt) ?? 0;
-  if (now - updatedAt > CASE_TTL_MS) return EMPTY_CASE;
   const amio = x.amiodaroneDose;
   return {
     startedAt: numOrNull(x.startedAt),
@@ -207,7 +234,7 @@ export function parseCase(raw: unknown, now = Date.now()): ResusCase {
   };
 }
 
-export const resusStore = createStore(() => window.localStorage, KEY, EMPTY_CASE, (raw) => parseCase(raw));
+export const resusStore = createStore(() => window.localStorage, KEY, EMPTY_CASE, parseCase);
 
 export function useResusCase(): ResusCase {
   return useSyncExternalStore(resusStore.subscribe, resusStore.get, () => EMPTY_CASE);

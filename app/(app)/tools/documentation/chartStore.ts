@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { createStore } from "@/lib/persistentStore";
 
 /**
  * Persistence for the CHART documentation tool.
@@ -27,54 +28,6 @@ export const SAVED_CHART_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_SAVED_CHARTS = 20;
 const DRAFT_KEY = "chart-documentation-draft";
 const SAVED_KEY = "chart-documentation-saved";
-
-type Store<T> = {
-  get: () => T;
-  set: (value: T) => void;
-  subscribe: (listener: () => void) => () => void;
-};
-
-function createStore<T>(
-  storage: () => Storage,
-  key: string,
-  fallback: T,
-  parse: (raw: unknown) => T
-): Store<T> {
-  const listeners = new Set<() => void>();
-  let value = fallback;
-  let loaded = false;
-
-  function get(): T {
-    if (!loaded && typeof window !== "undefined") {
-      loaded = true;
-      try {
-        const raw = storage().getItem(key);
-        if (raw) value = parse(JSON.parse(raw));
-      } catch {
-        /* storage unavailable or corrupt — keep fallback */
-      }
-    }
-    return value;
-  }
-
-  function set(next: T) {
-    value = next;
-    loaded = true;
-    try {
-      storage().setItem(key, JSON.stringify(next));
-    } catch {
-      /* storage unavailable — memory copy still works for this session */
-    }
-    listeners.forEach((listener) => listener());
-  }
-
-  function subscribe(listener: () => void) {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-  }
-
-  return { get, set, subscribe };
-}
 
 function parseDraft(raw: unknown): DraftMap {
   if (!raw || typeof raw !== "object") return {};

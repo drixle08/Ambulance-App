@@ -1,14 +1,24 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Plus, ChevronDown, ChevronUp, Pencil, Trash2, X } from "lucide-react";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import { UndoToast } from "@/app/_components/UndoToast";
+import { useWakeLock } from "@/lib/useWakeLock";
+import {
+  clearTreatmentCase,
+  restoreTreatmentCase,
+  updateTreatmentCase,
+  useTreatmentCase,
+  type CheckedMap,
+  type MedEntry,
+  type PatientType,
+  type TreatmentCase,
+} from "./treatmentStore";
 
 /* ════════════════════════════════════════════════════════════
    TYPES
 ════════════════════════════════════════════════════════════ */
-type PatientType = "medical" | "trauma" | "paeds" | "obstetric" | "newborn";
-
 type SpecialType = "avpu" | "painScore" | "noteRequired" | "apgar";
 
 interface ItemDef {
@@ -29,16 +39,6 @@ interface StageDef {
   isMeds?: true;
   onlyFor?: PatientType[];
 }
-
-interface MedEntry {
-  id: string;
-  drug: string;
-  dose: string;
-  route: string;
-  time: string;
-}
-
-type CheckedMap = Record<string, { time: string; note: string }>;
 
 /* ════════════════════════════════════════════════════════════
    COLOUR TOKENS
@@ -635,15 +635,21 @@ function buildHandover(pt: PatientType, startTime: Date | null, checked: Checked
    MAIN PAGE
 ════════════════════════════════════════════════════════════ */
 export default function TreatmentLogPage() {
-  const [pt, setPt]           = useState<PatientType>("medical");
-  const [startTime, setStart] = useState<Date | null>(null);
+  // The job itself (patient type, interventions, meds, start time) is persisted
+  // so it survives navigating to another tool or a reload; the rest is view state.
+  const job = useTreatmentCase();
+  const { pt, checked, meds } = job;
+  const startTime = useMemo(() => (job.startedAt !== null ? new Date(job.startedAt) : null), [job.startedAt]);
+  const setPt = (type: PatientType) => updateTreatmentCase((c) => ({ ...c, pt: type }));
+  const setChecked = (fn: (prev: CheckedMap) => CheckedMap) =>
+    updateTreatmentCase((c) => ({ ...c, checked: fn(c.checked) }));
+  const setMeds = (fn: (prev: MedEntry[]) => MedEntry[]) =>
+    updateTreatmentCase((c) => ({ ...c, meds: fn(c.meds) }));
+
   const [elapsed, setElapsed] = useState(0);
   const [view, setView]       = useState<"log" | "handover">("log");
   const [resetConfirm, setRC] = useState(false);
-  const startRef              = useRef<Date | null>(null);
-
-  const [checked, setChecked] = useState<CheckedMap>({});
-  const [meds, setMeds]       = useState<MedEntry[]>([]);
+  const [undoSnapshot, setUndoSnapshot] = useState<TreatmentCase | null>(null);
 
   const [openStage, setOpen]      = useState<string | null>("scene");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -660,24 +666,21 @@ export default function TreatmentLogPage() {
   const [medDose, setMedDose]     = useState("");
   const [medRoute, setMedRoute]   = useState("IV");
   const [medTime, setMedTime]     = useState("");
-  const medIdSeq = useRef(0);
+
+  // Keep the screen on while a job is in progress.
+  useWakeLock(startTime !== null);
 
   /* ─── Timer ─── */
   useEffect(() => {
     if (!startTime) return;
-    startRef.current = startTime;
     const id = setInterval(() => {
-      if (startRef.current) setElapsed(Math.floor((Date.now() - startRef.current.getTime()) / 1000));
+      setElapsed(Math.floor((Date.now() - startTime.getTime()) / 1000));
     }, 1000);
     return () => clearInterval(id);
   }, [startTime]);
 
   function ensureStarted() {
-    if (!startRef.current) {
-      const now = new Date();
-      startRef.current = now;
-      setStart(now);
-    }
+    updateTreatmentCase((c) => (c.startedAt !== null ? c : { ...c, startedAt: Date.now() }));
   }
 
   /* ─── Item handlers ─── */
@@ -765,20 +768,30 @@ export default function TreatmentLogPage() {
   function saveMed() {
     const drug = medDrug === "Other" ? medCustom.trim() : medDrug;
     if (!drug || !medDose.trim()) return;
-    medIdSeq.current += 1;
-    const entry: MedEntry = { id: editingMedId ?? `med-${medIdSeq.current}`, drug, dose: medDose.trim(), route: medRoute, time: medTime || nowHHMM() };
-    if (editingMedId) setMeds((p) => p.map((m) => m.id === editingMedId ? entry : m));
-    else { ensureStarted(); setMeds((p) => [...p, entry]); }
+    const fields = { drug, dose: medDose.trim(), route: medRoute, time: medTime || nowHHMM() };
+    if (editingMedId) setMeds((p) => p.map((m) => m.id === editingMedId ? { id: editingMedId, ...fields } : m));
+    else {
+      ensureStarted();
+      updateTreatmentCase((c) => ({ ...c, medSeq: c.medSeq + 1, meds: [...c.meds, { id: `med-${c.medSeq + 1}`, ...fields }] }));
+    }
     setMedFO(false); setEditMed(null);
   }
 
   function resetAll() {
-    setChecked({}); setMeds([]); setStart(null); setElapsed(0);
-    setPt("medical"); setView("log"); setOpen("scene");
+    setUndoSnapshot(clearTreatmentCase());
+    setElapsed(0);
+    setView("log"); setOpen("scene");
     setEditingId(null); setMedFO(false); setEditMed(null);
     setRC(false); setPainOpen(null);
-    startRef.current = null;
   }
+
+  function undoReset() {
+    if (!undoSnapshot) return;
+    restoreTreatmentCase(undoSnapshot);
+    setUndoSnapshot(null);
+  }
+
+  const dismissUndo = useCallback(() => setUndoSnapshot(null), []);
 
   const hasStarted = Object.keys(checked).length > 0 || meds.length > 0;
   const handoverText = useMemo(() => buildHandover(pt, startTime, checked, meds), [pt, startTime, checked, meds]);
@@ -1203,6 +1216,10 @@ export default function TreatmentLogPage() {
           )}
         </div>
       </div>
+
+      {undoSnapshot && (
+        <UndoToast message="Patient log cleared" onUndo={undoReset} onExpire={dismissUndo} />
+      )}
     </div>
   );
 }

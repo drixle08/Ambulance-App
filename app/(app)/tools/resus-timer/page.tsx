@@ -2,6 +2,8 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import { UndoToast } from "@/app/_components/UndoToast";
+import { useWakeLock } from "@/lib/useWakeLock";
 import {
   HeartPulse,
   ActivitySquare,
@@ -10,16 +12,20 @@ import {
   Mic,
   MicOff,
 } from "lucide-react";
-import { formatSeconds, formatTPlus } from "./timeUtils";
-
-type Phase = "CPR" | "Pause";
-
-type LogEntry = {
-  id: string;
-  timeSinceStart: string; // "T+06:32"
-  absoluteTime: string; // "14:22:05"
-  message: string; // "Shock delivered", etc.
-};
+import { formatSeconds } from "./timeUtils";
+import {
+  ADRENALINE_INTERVAL,
+  advance,
+  clearResusCase,
+  cycleAt,
+  pause,
+  startOrResume,
+  updateResusCase,
+  useResusCase,
+  withLog,
+  type Cue,
+  type ResusCase,
+} from "./resusStore";
 
 // Minimal SpeechRecognition typings to avoid TS errors when not available.
 type SpeechRecognitionEventLike = {
@@ -40,10 +46,22 @@ type SpeechRecognitionInstance = {
 };
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 
-const CYCLE_SECONDS = 120; // 2-minute CPR cycles
-const PAUSE_SECONDS = 5;   // rhythm-check gap between cycles
 const DEFAULT_BPM = 110;
-const ADRENALINE_INTERVAL = 240; // every 4 minutes per CPG
+const RESET_CONFIRM_MS = 8000; // confirm prompt closes itself if not acted on
+
+// Voice phrases are matched as whole words, so "start" no longer fires on
+// "restart" and "go" no longer fires on "ago". Reset needs the explicit
+// phrase "reset timer" and then only opens the on-screen confirmation —
+// clearing the log always takes a tap. (Bare "reset", "restart" and "again"
+// used to clear the whole log immediately.)
+const START_PHRASES = ["start timer", "start", "timer", "go", "begin", "two minute", "2 minute"];
+const STOP_PHRASES = ["stop timer", "stop", "pause timer", "pause", "hold", "halt"];
+const RESET_PHRASES = ["reset timer"];
+
+function hasPhrase(transcript: string, phrases: string[]): boolean {
+  const words = ` ${transcript.replace(/[^a-z0-9]+/g, " ").trim()} `;
+  return phrases.some((phrase) => words.includes(` ${phrase} `));
+}
 
 function vibrate(pattern: VibratePattern = 35) {
   if (typeof navigator === "undefined" || !("vibrate" in navigator)) return;
@@ -51,18 +69,19 @@ function vibrate(pattern: VibratePattern = 35) {
 }
 
 export default function ResuscitationTimerPage() {
-  const [isRunning, setIsRunning] = useState(false);
-  const [phase, setPhase] = useState<Phase>("CPR");
-  const [cycleNumber, setCycleNumber] = useState(1);
-  const [secondsRemaining, setSecondsRemaining] = useState(CYCLE_SECONDS);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const resus = useResusCase();
+  const isRunning = resus.runningSince !== null;
+  const elapsedSeconds = resus.processedElapsed;
+  const { cycleNumber, phase, secondsRemaining } = cycleAt(elapsedSeconds);
+  const lastAdrenalineAt = resus.lastAdrenalineAt;
+  const amiodaroneDose = resus.amiodaroneDose;
+  const logs = resus.logs;
+
   const [metronomeOn, setMetronomeOn] = useState(true);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [otherDialogOpen, setOtherDialogOpen] = useState(false);
   const [otherText, setOtherText] = useState("");
-  // Drug tracking
-  const [lastAdrenalineAt, setLastAdrenalineAt] = useState<number | null>(null);
-  const [amiodaroneDose, setAmiodaroneDose] = useState<0 | 1 | 2>(0);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [undoSnapshot, setUndoSnapshot] = useState<ResusCase | null>(null);
   const voiceSupported = useMemo(() => {
     if (typeof window === "undefined") return false;
     const SpeechRec: SpeechRecognitionConstructor | undefined =
@@ -82,37 +101,18 @@ export default function ResuscitationTimerPage() {
   });
   const [voiceListening, setVoiceListening] = useState(false);
 
-  // start time stored both in a ref (for logic) and state (safe for render)
-  const [startTime, setStartTime] = useState<Date | null>(null);
-
-  const startTimeRef = useRef<Date | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const elapsedRef = useRef(0);
   const isRunningRef = useRef(false);
-  const phaseRef = useRef<Phase>("CPR");
-  const cycleRef = useRef(1);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const shouldRestartRecognition = useRef(false);
   const lastVoiceCommandAtRef = useRef(0);
-  // Drug refs (avoid stale closures in setInterval)
-  const lastAdrenalineAtRef = useRef<number | null>(null);
-  const amiodaroneDoseRef = useRef<0 | 1 | 2>(0);
 
-  useEffect(() => {
-    elapsedRef.current = elapsedSeconds;
-  }, [elapsedSeconds]);
+  // Keep the screen on while the clock runs.
+  useWakeLock(isRunning);
 
   useEffect(() => {
     isRunningRef.current = isRunning;
   }, [isRunning]);
-
-  useEffect(() => {
-    phaseRef.current = phase;
-  }, [phase]);
-
-  useEffect(() => {
-    cycleRef.current = cycleNumber;
-  }, [cycleNumber]);
 
   // Persist voice preference
   useEffect(() => {
@@ -123,6 +123,13 @@ export default function ResuscitationTimerPage() {
       // ignore storage errors
     }
   }, [voiceEnabled]);
+
+  // The reset confirmation closes itself so a stray tap later can't clear the log.
+  useEffect(() => {
+    if (!resetConfirmOpen) return;
+    const id = window.setTimeout(() => setResetConfirmOpen(false), RESET_CONFIRM_MS);
+    return () => window.clearTimeout(id);
+  }, [resetConfirmOpen]);
 
   const getAudioContext = useCallback((): AudioContext | null => {
     if (typeof window === "undefined") return null;
@@ -150,22 +157,42 @@ export default function ResuscitationTimerPage() {
     window.speechSynthesis.speak(utterance);
   }, []);
 
-  const addLog = useCallback((message: string) => {
-    const now = new Date();
-    const start = startTimeRef.current;
-    const offsetSeconds = start
-      ? Math.floor((now.getTime() - start.getTime()) / 1000)
-      : elapsedRef.current;
+  // Prompts raised by the clock (only live ones — not those caught up after
+  // the screen was away).
+  const playCues = useCallback(
+    (cues: Cue[]) => {
+      for (const cue of cues) {
+        switch (cue.kind) {
+          case "cprEndingSoon":
+            vibrate([60, 40, 60]);
+            speak("5 seconds. Prepare for rhythm check.");
+            break;
+          case "cycleEnd":
+            vibrate([120, 60, 120]);
+            break;
+          case "cycleStart":
+            vibrate(90);
+            break;
+          case "adrenalineSoon":
+            vibrate([80, 50, 80]);
+            speak("Adrenaline due in 30 seconds");
+            break;
+          case "adrenalineDue":
+            vibrate([180, 80, 180, 80, 180]);
+            speak("Adrenaline due now");
+            break;
+        }
+      }
+    },
+    [speak]
+  );
 
-    const entry: LogEntry = {
-      id: `${now.getTime()}-${Math.random().toString(16).slice(2)}`,
-      timeSinceStart: formatTPlus(offsetSeconds),
-      absoluteTime: now.toLocaleTimeString(),
-      message,
-    };
-
-    setLogs((prev) => [...prev, entry]);
-  }, []);
+  const addLog = useCallback(
+    (message: string) => {
+      playCues(updateResusCase((c, now) => withLog(c, now, message)));
+    },
+    [playCues]
+  );
 
   const playClick = useCallback(() => {
     const ctx = getAudioContext();
@@ -189,68 +216,16 @@ export default function ResuscitationTimerPage() {
     osc.stop(now + 0.1);
   }, [getAudioContext]);
 
-  // Main CPR timer
+  // Main CPR clock. Time is derived from timestamps in the store, so this only
+  // needs to wake often enough to show each second; on return from another
+  // screen the first tick catches up and logs any cycles that elapsed meanwhile.
   useEffect(() => {
     if (!isRunning) return;
-
-    const id = window.setInterval(() => {
-      // Advance elapsed ref directly so drug checks read the current value
-      const nowElapsed = elapsedRef.current + 1;
-      elapsedRef.current = nowElapsed;
-
-      setSecondsRemaining((prev) => {
-        if (prev > 1) {
-          // 5-second heads-up before CPR cycle ends
-          if (phaseRef.current === "CPR" && prev - 1 === 5) {
-            vibrate([60, 40, 60]);
-            speak("5 seconds. Prepare for rhythm check.");
-          }
-          return prev - 1;
-        }
-
-        if (phaseRef.current === "CPR") {
-          vibrate([120, 60, 120]);
-          setPhase("Pause");
-          phaseRef.current = "Pause";
-          if (startTimeRef.current) {
-            addLog(`Cycle ${cycleRef.current} complete — rhythm check`);
-          }
-          return PAUSE_SECONDS;
-        } else {
-          vibrate(90);
-          const next = cycleRef.current + 1;
-          setPhase("CPR");
-          phaseRef.current = "CPR";
-          setCycleNumber(next);
-          cycleRef.current = next;
-          if (startTimeRef.current) {
-            addLog(`Cycle ${next} started (CPR)`);
-          }
-          return CYCLE_SECONDS;
-        }
-      });
-
-      setElapsedSeconds(nowElapsed);
-
-      // ── Adrenaline due check ───────────────────────────────────────────────
-      const lastAdren = lastAdrenalineAtRef.current;
-      if (lastAdren !== null) {
-        const since = nowElapsed - lastAdren;
-        if (since === ADRENALINE_INTERVAL - 30) {
-          vibrate([80, 50, 80]);
-          speak("Adrenaline due in 30 seconds");
-        } else if (since === ADRENALINE_INTERVAL) {
-          vibrate([180, 80, 180, 80, 180]);
-          speak("Adrenaline due now");
-          // Reset timer for the next repeating reminder
-          lastAdrenalineAtRef.current = nowElapsed;
-          setLastAdrenalineAt(nowElapsed);
-        }
-      }
-    }, 1000);
-
+    const tick = () => playCues(updateResusCase());
+    tick();
+    const id = window.setInterval(tick, 250);
     return () => window.clearInterval(id);
-  }, [isRunning, addLog, speak]);
+  }, [isRunning, playCues]);
 
   // Metronome (100-120 bpm, fixed at DEFAULT_BPM) — silent during rhythm-check pause
   useEffect(() => {
@@ -267,48 +242,32 @@ export default function ResuscitationTimerPage() {
 
   const handleStartPause = useCallback(() => {
     vibrate(25);
-    if (isRunning) {
-      setIsRunning(false);
-      addLog("Timer paused");
-      return;
-    }
+    playCues(
+      updateResusCase((c, now) =>
+        c.runningSince !== null ? pause(c, now) : startOrResume(c, now)
+      )
+    );
+  }, [playCues]);
 
-    if (!startTimeRef.current) {
-      const now = new Date();
-      startTimeRef.current = now;
-      setStartTime(now);
-      setCycleNumber(1);
-      setSecondsRemaining(CYCLE_SECONDS);
-      setElapsedSeconds(0);
-      addLog("Timer started (Cycle 1, CPR)");
-    } else {
-      addLog("Timer resumed");
-    }
-
-    setIsRunning(true);
-  }, [addLog, isRunning]);
-
-  const handleReset = useCallback(() => {
+  const confirmReset = () => {
     vibrate([35, 35, 35]);
-    setIsRunning(false);
-    setPhase("CPR");
-    phaseRef.current = "CPR";
-    setCycleNumber(1);
-    cycleRef.current = 1;
-    setSecondsRemaining(CYCLE_SECONDS);
-    setElapsedSeconds(0);
-    elapsedRef.current = 0;
-    startTimeRef.current = null;
-    setStartTime(null);
-    setLogs([]);
-    // Clear drug state
-    lastAdrenalineAtRef.current = null;
-    setLastAdrenalineAt(null);
-    amiodaroneDoseRef.current = 0;
-    setAmiodaroneDose(0);
+    const snapshot = clearResusCase();
     if (typeof window !== "undefined") window.speechSynthesis?.cancel();
-    addLog("Timer reset");
-  }, [addLog]);
+    setResetConfirmOpen(false);
+    setUndoSnapshot(snapshot);
+  };
+
+  const undoReset = useCallback(() => {
+    const snapshot = undoSnapshot;
+    if (!snapshot) return;
+    vibrate(35);
+    // Restore the case as it was; a running clock kept running in real time,
+    // so catch it up (logging any cycles that passed) before noting the undo.
+    updateResusCase((_c, now) => withLog(advance(snapshot, now).next, now, "Reset undone"));
+    setUndoSnapshot(null);
+  }, [undoSnapshot]);
+
+  const dismissUndo = useCallback(() => setUndoSnapshot(null), []);
 
   const handleShock = () => {
     vibrate([90, 45, 90]);
@@ -316,33 +275,34 @@ export default function ResuscitationTimerPage() {
   };
 
   const handleAdrenaline = useCallback(() => {
-    const now = elapsedRef.current;
     vibrate([80, 40, 80]);
-    lastAdrenalineAtRef.current = now;
-    setLastAdrenalineAt(now);
-    addLog("Adrenaline 1mg IV given");
+    playCues(
+      updateResusCase((c, now) =>
+        withLog({ ...c, lastAdrenalineAt: c.processedElapsed }, now, "Adrenaline 1mg IV given")
+      )
+    );
     speak("Adrenaline given. Next dose in 4 minutes.");
-  }, [addLog, speak]);
+  }, [playCues, speak]);
 
   const handleAmiodarone = useCallback(() => {
-    const current = amiodaroneDoseRef.current;
     vibrate(60);
-    if (current >= 2) {
-      addLog("Amiodarone — max doses already given");
-      speak("Maximum amiodarone doses already given.");
-      return;
-    }
-    const next = (current + 1) as 1 | 2;
-    amiodaroneDoseRef.current = next;
-    setAmiodaroneDose(next);
-    if (next === 1) {
-      addLog("Amiodarone 300mg IV given (1st dose — after 3rd shock)");
-      speak("Amiodarone 300 milligrams given. Next dose: 150 milligrams after the fifth shock.");
-    } else {
-      addLog("Amiodarone 150mg IV given (2nd dose — after 5th shock)");
-      speak("Amiodarone 150 milligrams given. Maximum doses reached.");
-    }
-  }, [addLog, speak]);
+    let spoken = "";
+    const cues = updateResusCase((c, now) => {
+      if (c.amiodaroneDose >= 2) {
+        spoken = "Maximum amiodarone doses already given.";
+        return withLog(c, now, "Amiodarone — max doses already given");
+      }
+      const next = (c.amiodaroneDose + 1) as 1 | 2;
+      if (next === 1) {
+        spoken = "Amiodarone 300 milligrams given. Next dose: 150 milligrams after the fifth shock.";
+        return withLog({ ...c, amiodaroneDose: next }, now, "Amiodarone 300mg IV given (1st dose — after 3rd shock)");
+      }
+      spoken = "Amiodarone 150 milligrams given. Maximum doses reached.";
+      return withLog({ ...c, amiodaroneDose: next }, now, "Amiodarone 150mg IV given (2nd dose — after 5th shock)");
+    });
+    playCues(cues);
+    speak(spoken);
+  }, [playCues, speak]);
 
   const handleOtherConfirm = () => {
     const trimmed = otherText.trim();
@@ -359,15 +319,15 @@ export default function ResuscitationTimerPage() {
 
   const lastEvents = useMemo(() => logs.slice(-3).reverse(), [logs]);
 
-  const startTimeString = startTime
-    ? startTime.toLocaleTimeString()
+  const startTimeString = resus.startedAt !== null
+    ? new Date(resus.startedAt).toLocaleTimeString()
     : "Not started";
 
   const summaryText = useMemo(() => {
     const headerLines = [
       "Resuscitation summary",
       `Start time: ${startTimeString}`,
-      `Total cycles: ${startTime ? cycleNumber : 0}`,
+      `Total cycles: ${resus.startedAt !== null ? cycleNumber : 0}`,
       "",
     ];
 
@@ -380,7 +340,7 @@ export default function ResuscitationTimerPage() {
           );
 
     return [...headerLines, ...eventLines].join("\n");
-  }, [cycleNumber, logs, startTime, startTimeString]);
+  }, [cycleNumber, logs, resus.startedAt, startTimeString]);
 
   // Voice control
   useEffect(() => {
@@ -422,49 +382,33 @@ export default function ResuscitationTimerPage() {
 
       if (!transcript) return;
 
-      const START_WORDS = [
-        "start timer",
-        "start",
-        "timer",
-        "go",
-        "begin",
-        "two minute",
-        "2 minute",
-      ];
-      const STOP_WORDS = [
-        "stop timer",
-        "stop",
-        "pause timer",
-        "pause",
-        "hold",
-        "halt",
-      ];
-      const RESET_WORDS = ["reset timer", "reset", "restart", "again"];
-
-      const hasStart = START_WORDS.some((word) => transcript.includes(word));
-      const hasStop = STOP_WORDS.some((word) => transcript.includes(word));
-      const hasReset = RESET_WORDS.some((word) => transcript.includes(word));
-
       const now = Date.now();
       const recentCommand =
         now - lastVoiceCommandAtRef.current < 1200; // debounce rapid re-triggers
       if (recentCommand) return;
 
-      if (hasReset) {
-        handleReset();
+      if (hasPhrase(transcript, RESET_PHRASES)) {
+        // Never clears by voice: show the confirmation and let a tap decide.
+        // (The spoken prompt must not contain a command word, or the mic could
+        // hear the device itself.)
+        setResetConfirmOpen(true);
+        vibrate([35, 35, 35]);
+        speak("Reset requested. Tap on screen to confirm.");
         lastVoiceCommandAtRef.current = now;
         return;
       }
 
-      if (hasStart && !isRunningRef.current) {
-        handleStartPause();
-        lastVoiceCommandAtRef.current = now;
+      // Stop phrases are checked first so "stop timer" can't start a paused clock.
+      if (hasPhrase(transcript, STOP_PHRASES)) {
+        if (isRunningRef.current) {
+          handleStartPause(); // pauses
+          lastVoiceCommandAtRef.current = now;
+        }
         return;
       }
-      if (hasStop && isRunningRef.current) {
-        handleStartPause(); // pauses
+      if (hasPhrase(transcript, START_PHRASES) && !isRunningRef.current) {
+        handleStartPause();
         lastVoiceCommandAtRef.current = now;
-        return;
       }
     };
 
@@ -496,7 +440,7 @@ export default function ResuscitationTimerPage() {
       recognitionRef.current = null;
       setVoiceListening(false);
     };
-  }, [handleReset, handleStartPause, voiceEnabled, voiceSupported]);
+  }, [handleStartPause, speak, voiceEnabled, voiceSupported]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
@@ -555,7 +499,7 @@ export default function ResuscitationTimerPage() {
         {voiceEnabled && (
           <div className="rounded-xl border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-[0.75rem] text-emerald-100">
             {voiceListening
-              ? "Listening for: start / pause / reset"
+              ? "Listening for: start / pause / “reset timer” (then tap to confirm)"
               : "Mic enabled; starting..."}
           </div>
         )}
@@ -719,12 +663,44 @@ export default function ResuscitationTimerPage() {
           </button>
           <button
             type="button"
-            onClick={handleReset}
+            onClick={() => setResetConfirmOpen((open) => !open)}
+            aria-expanded={resetConfirmOpen}
+            aria-controls="reset-confirm"
             className="h-16 min-w-28 rounded-3xl border border-slate-700 bg-slate-900 text-base font-black text-slate-100 shadow-md active:translate-y-[1px]"
           >
-            Reset
+            {resetConfirmOpen ? "Cancel" : "Reset"}
           </button>
         </section>
+
+        {/* Reset needs a second, deliberate tap; Undo is offered afterwards */}
+        {resetConfirmOpen && (
+          <section
+            id="reset-confirm"
+            role="alertdialog"
+            aria-labelledby="reset-confirm-title"
+            className="-mt-2 space-y-3 rounded-3xl border border-red-500/60 bg-red-500/10 p-4"
+          >
+            <p id="reset-confirm-title" className="text-base font-bold text-slate-50">
+              Clear the timer and the full event log?
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setResetConfirmOpen(false)}
+                className="h-14 flex-1 rounded-2xl border border-slate-600 bg-slate-900 text-base font-black text-slate-100"
+              >
+                Keep
+              </button>
+              <button
+                type="button"
+                onClick={confirmReset}
+                className="h-14 flex-1 rounded-2xl bg-red-600 text-base font-black text-white"
+              >
+                Clear timer &amp; log
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* Full log + summary */}
         <section className="mt-2 rounded-2xl border border-slate-800 bg-slate-900/80 p-3">
@@ -800,6 +776,10 @@ export default function ResuscitationTimerPage() {
           </div>
         )}
       </main>
+
+      {undoSnapshot && (
+        <UndoToast message="Timer and log cleared" onUndo={undoReset} onExpire={dismissUndo} />
+      )}
     </div>
   );
 }

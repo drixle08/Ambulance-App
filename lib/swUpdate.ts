@@ -27,6 +27,21 @@ export function getWaitingWorker(): ServiceWorker | null {
   return waitingWorker;
 }
 
+// Why offline support is NOT working on this device, if it isn't: /sw.js
+// missing or broken, or the first install's precache failed. Surfaced on the
+// dashboard so a broken deploy can't silently ship an app with no offline mode.
+let installFailure: string | null = null;
+
+export function setInstallFailure(reason: string | null) {
+  if (installFailure === reason) return;
+  installFailure = reason;
+  emit();
+}
+
+export function getInstallFailure(): string | null {
+  return installFailure;
+}
+
 export function subscribe(listener: Listener): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);

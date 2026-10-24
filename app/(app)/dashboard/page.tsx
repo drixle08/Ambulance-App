@@ -3,6 +3,7 @@ import { ProtocolFinder } from "./ProtocolFinder";
 import { DashboardGrid } from "./DashboardGrid";
 import { CpgChatBubble } from "@/app/_components/CpgChatBubble";
 import { UpdateBanner } from "@/app/_components/UpdateBanner";
+import { OfflineSupportWarning } from "@/app/_components/OfflineSupportWarning";
 
 export default function DashboardPage() {
   return (
@@ -21,6 +22,7 @@ export default function DashboardPage() {
       <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 pt-4 pb-4">
 
         <UpdateBanner />
+        <OfflineSupportWarning />
 
         {/* Protocol Finder row — desktop only; mobile uses BottomNav Search tab */}
         <div className="hidden md:flex flex-wrap items-center gap-2">

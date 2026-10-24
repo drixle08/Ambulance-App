@@ -16,9 +16,11 @@ import {
   Send,
   Share2,
   User,
+  WifiOff,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { CPG } from "@/lib/cpgEdition";
+import { useOnline } from "@/lib/useOnline";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -230,6 +232,7 @@ export default function CpgChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const online = useOnline();
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [canShare, setCanShare] = useState(false);
@@ -301,6 +304,11 @@ export default function CpgChatPage() {
   const sendMessage = async (question: string) => {
     const trimmed = question.trim();
     if (!trimmed || isSending) return;
+    // Suggestion buttons call this directly, so guard here as well as on Send.
+    if (!navigator.onLine) {
+      setError("You're offline — the Clinical Assistant needs a connection.");
+      return;
+    }
     setError(null);
     setInput("");
 
@@ -533,6 +541,14 @@ export default function CpgChatPage() {
       {/* Sticky input bar */}
       <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-30 border-t border-slate-800 bg-slate-950/98 backdrop-blur-sm">
         <div className="max-w-2xl mx-auto px-4 py-3">
+          {!online && (
+            <p role="status" className="mb-2 flex items-start gap-2 rounded-xl border border-slate-600 bg-slate-700 px-3 py-2 text-sm text-slate-50">
+              <WifiOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>
+                You&apos;re offline. The Clinical Assistant needs a connection — every clinical tool still works offline.
+              </span>
+            </p>
+          )}
           {error && (
             <p className="text-xs text-red-400 mb-2">{error}</p>
           )}
@@ -550,7 +566,7 @@ export default function CpgChatPage() {
             />
             <button
               type="submit"
-              disabled={isSending || !input.trim()}
+              disabled={isSending || !input.trim() || !online}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-slate-950 shadow-md hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               aria-label="Send"
             >

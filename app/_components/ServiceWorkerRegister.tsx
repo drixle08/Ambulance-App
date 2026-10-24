@@ -23,9 +23,17 @@ export function ServiceWorkerRegister() {
       try {
         const registration = await navigator.serviceWorker.register("/sw.js", {
           scope: "/",
+          updateViaCache: "none",
         });
         console.info("[SW] Registered:", registration.scope);
         setRegistration(registration);
+
+        // Once a worker is active, ask it to save the CPG PDF for offline use
+        // in the background (kept out of install so a 12 MB download can never
+        // hold up precaching the app's code). No-op if already saved.
+        navigator.serviceWorker.ready
+          .then((ready) => ready.active?.postMessage({ type: "CACHE_REFERENCE" }))
+          .catch(() => {});
 
         // A worker already sitting in "waiting" when we attach (e.g. this
         // tab loaded while an update from another tab was pending).

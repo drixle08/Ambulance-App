@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { ThemeToggle } from "@/app/_components/ThemeToggle";
-import { Info } from "lucide-react";
+import { Info, WifiOff } from "lucide-react";
+import { useOnline } from "@/lib/useOnline";
 
 export function AppHeader() {
+  const online = useOnline();
+
   return (
     <header className="app-topbar hidden md:flex items-center justify-between gap-2 border-b px-4 py-2.5 text-slate-900 backdrop-blur-sm dark:text-slate-50">
       <Link href="/dashboard" className="flex items-center gap-2">
@@ -22,6 +25,15 @@ export function AppHeader() {
       </Link>
 
       <div className="flex items-center gap-2">
+        {!online && (
+          <span
+            role="status"
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-500 bg-slate-700 px-3 py-1 text-sm font-semibold text-slate-50"
+          >
+            <WifiOff className="h-4 w-4" aria-hidden="true" />
+            Offline — tools still work
+          </span>
+        )}
         <Link
           href="/about"
           className="inline-flex items-center gap-1 rounded-full border border-slate-300 px-3 py-1 text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-slate-800 hover:border-emerald-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-50 dark:hover:border-emerald-400 dark:hover:bg-slate-900"

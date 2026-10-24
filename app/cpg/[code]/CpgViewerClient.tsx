@@ -2,7 +2,9 @@
 
 import dynamic from "next/dynamic";
 import { useParams, useSearchParams } from "next/navigation";
+import { WifiOff } from "lucide-react";
 import { CPG_ENTRIES, findCpgEntryBySlug, normalizeCpgSlug, type CpgEntry } from "@/lib/cpgIndex";
+import { useOnline } from "@/lib/useOnline";
 
 const CpgPdfViewer = dynamic(
   () => import("./CpgPdfViewer").then((mod) => mod.CpgPdfViewer),
@@ -33,6 +35,7 @@ function resolveEntry(slug: string, code: string): CpgEntry | null {
 export function CpgViewerClient() {
   const params = useParams<{ code?: string }>();
   const search = useSearchParams();
+  const online = useOnline();
   const slug = typeof params?.code === "string" ? params.code : "";
   const code = search.get("code") ?? "";
 
@@ -60,6 +63,15 @@ export function CpgViewerClient() {
         <p className="text-xs text-slate-500 dark:text-slate-400">
           Section: {entry.section} · Starting at printed page {printedPage}
         </p>
+        {!online && (
+          <p
+            role="status"
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-500 bg-slate-700 px-3 py-1 text-sm font-semibold text-slate-50"
+          >
+            <WifiOff className="h-4 w-4" aria-hidden="true" />
+            Offline — showing the saved CPG
+          </p>
+        )}
       </div>
       <CpgPdfViewer entry={entry} printedPage={printedPage} pdfPage={pdfPage} />
     </>

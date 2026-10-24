@@ -6,6 +6,16 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react"],
   },
+  async headers() {
+    return [
+      {
+        // The service worker must never be served from the HTTP cache, or
+        // browsers can miss an update (public/sw.js is regenerated per build).
+        source: "/sw.js",
+        headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
+      },
+    ];
+  },
   async redirects() {
     return [
       {

@@ -45,3 +45,6 @@ next-env.d.ts
 
 # UI audit screenshots (regenerable, ~46 MB)
 /docs/ui-audit/screenshots/
+
+# Generated service worker (npm run build -> scripts/build-sw.mjs)
+/public/sw.js

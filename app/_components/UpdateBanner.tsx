@@ -3,15 +3,18 @@
 import { useSyncExternalStore } from "react";
 import { RefreshCw } from "lucide-react";
 import { applyUpdate, getWaitingWorker, subscribe } from "@/lib/swUpdate";
+import { useOnline } from "@/lib/useOnline";
 
 // Dashboard-only, non-blocking notice that a new app version has finished
 // downloading and is ready to apply. Deliberately never rendered inside a
 // tool screen — a crew mid-protocol shouldn't have their attention pulled
-// by anything other than the tool itself.
+// by anything other than the tool itself. Hidden while offline: an update
+// is only applied with a connection.
 export function UpdateBanner() {
   const waitingWorker = useSyncExternalStore(subscribe, getWaitingWorker, () => null);
+  const online = useOnline();
 
-  if (!waitingWorker) return null;
+  if (!waitingWorker || !online) return null;
 
   return (
     <button

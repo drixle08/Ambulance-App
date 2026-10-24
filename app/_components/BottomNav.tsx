@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useDevice } from "@/app/_components/DeviceProvider";
-import { ClipboardCheck, FileText, Home, LayoutGrid, MessageCircle, Pill, Search, Timer, X } from "lucide-react";
+import { ClipboardCheck, FileText, Home, LayoutGrid, MessageCircle, Pill, Search, Timer, WifiOff, X } from "lucide-react";
+import { useOnline } from "@/lib/useOnline";
 import {
   CPG_ENTRIES,
   cpgViewerHref,
@@ -268,6 +269,7 @@ function SearchResults({
 export function BottomNav() {
   const pathname = usePathname();
   const { isMobile } = useDevice();
+  const online = useOnline();
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -341,14 +343,26 @@ export function BottomNav() {
           <span className="text-[0.65rem] font-black tracking-wide">Search</span>
         </button>
 
-        {/* CPG Chat */}
-        <Link
-          href="/tools/cpg-chat"
-          className={`${tabBase} ${isChat ? active : inactive}`}
-        >
-          <MessageCircle className="h-6 w-6" />
-          <span className="text-[0.65rem] font-black tracking-wide">CPG Chat</span>
-        </Link>
+        {/* CPG Chat — doubles as the offline indicator: the Assistant is the
+            only part of the app that needs a connection. */}
+        {online ? (
+          <Link
+            href="/tools/cpg-chat"
+            className={`${tabBase} ${isChat ? active : inactive}`}
+          >
+            <MessageCircle className="h-6 w-6" />
+            <span className="text-[0.65rem] font-black tracking-wide">CPG Chat</span>
+          </Link>
+        ) : (
+          <Link
+            href="/tools/cpg-chat"
+            aria-label="Offline — tools work offline; the Clinical Assistant needs a connection"
+            className={`${tabBase} text-slate-50`}
+          >
+            <WifiOff className="h-6 w-6" aria-hidden="true" />
+            <span className="text-[0.65rem] font-black tracking-wide">Offline</span>
+          </Link>
+        )}
 
         {/* Resus Timer */}
         <Link

@@ -46,6 +46,10 @@ export function applyUpdate() {
   if (!worker || typeof navigator === "undefined" || !navigator.serviceWorker) {
     return;
   }
+  // Never swap versions while offline: the reload would need the network to
+  // recover from anything unexpected. (The new worker's cache is complete by
+  // the time it is waiting, so this is belt and braces.)
+  if (!navigator.onLine) return;
 
   navigator.serviceWorker.addEventListener(
     "controllerchange",

@@ -19,7 +19,7 @@
 
 const CONFIG = /*__CONFIG__*/ null;
 
-const CACHE = `apt-${CONFIG.buildId}`;
+const CACHE = `apt-${CONFIG.version}`;
 const REFERENCE_CACHE = "apt-reference";
 const PAGE_TIMEOUT_MS = 3000;
 const INSTALL_CONCURRENCY = 6;
@@ -101,8 +101,15 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(servePage(request, url));
     return;
   }
-  event.respondWith(serveAsset(request));
+  event.respondWith(serveAsset(request, url));
 });
+
+// Build files are content-hashed, so a query never changes what they are. On
+// Vercel every /_next/static URL carries ?dpl=<deployment id> (skew protection)
+// while the precache holds them by path, so look them up — and store them — by path.
+function assetKey(request, url) {
+  return url.pathname.startsWith("/_next/static/") ? url.pathname : request;
+}
 
 async function precachedPage(url) {
   const cache = await caches.open(CACHE);
@@ -139,14 +146,15 @@ async function servePage(request, url) {
 }
 
 // Code and assets: cache first; fill the cache from the network when online.
-async function serveAsset(request) {
+async function serveAsset(request, url) {
   const cache = await caches.open(CACHE);
-  const cached = await cache.match(request, { ignoreVary: true });
+  const key = assetKey(request, url);
+  const cached = await cache.match(key, { ignoreVary: true });
   if (cached) return cached;
   try {
     const response = await fetch(request);
     if (response.status === 200 && response.type === "basic") {
-      cache.put(request, response.clone()).catch(() => {});
+      cache.put(key, response.clone()).catch(() => {});
     }
     return response;
   } catch {

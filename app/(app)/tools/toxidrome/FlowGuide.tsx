@@ -11,7 +11,7 @@ import {
   RefreshCcw,
   X,
 } from "lucide-react";
-import { CPG_ENTRIES, normalizeCpgSlug } from "@/lib/cpgIndex";
+import { CPG_ENTRIES, cpgViewerHref } from "@/lib/cpgIndex";
 import {
   FLOW_MIXED_RESULT,
   FLOW_QUESTIONS,
@@ -122,8 +122,7 @@ function resolveCpgLinks(codes: string[]): CpgLinkEntry[] {
   return codes.flatMap((code) => {
     const entry = CPG_ENTRIES.find((e) => e.code === code);
     if (!entry) return [];
-    const slug = normalizeCpgSlug(code);
-    const href = `/cpg/${encodeURIComponent(slug)}?code=${encodeURIComponent(code)}&page=${entry.printedPage}&pdfPage=${entry.printedPage}`;
+    const href = cpgViewerHref({ code, page: entry.printedPage });
     return [{ code, title: entry.title, href }];
   });
 }

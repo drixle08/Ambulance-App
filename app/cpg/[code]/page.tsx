@@ -1,54 +1,12 @@
-export const dynamic = "force-dynamic";
-
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { CpgViewerClient } from "./CpgViewerClient";
-import {
-  CPG_ENTRIES,
-  findCpgEntryBySlug,
-  normalizeCpgSlug,
-} from "@/lib/cpgIndex";
 
-type CpgPageProps = {
-  params?: { code?: string };
-  searchParams?: { page?: string; code?: string; pdfPage?: string };
-};
-
-export default function CpgPage({
-  params = { code: "" },
-  searchParams = {},
-}: CpgPageProps) {
-  const slug = typeof params?.code === "string" ? params.code : "";
-  const fallbackCode = searchParams.code || "";
-
-  const normalizedSlug = normalizeCpgSlug(slug);
-  const normalizedFallback = normalizeCpgSlug(fallbackCode);
-
-  const resolvedEntry =
-    findCpgEntryBySlug(slug) ||
-    (fallbackCode && findCpgEntryBySlug(fallbackCode)) ||
-    CPG_ENTRIES.find((item) => {
-      const normalizedCode = normalizeCpgSlug(item.code);
-      return (
-        normalizedCode === normalizedSlug || normalizedCode === normalizedFallback
-      );
-    }) ||
-    null;
-
-  const printedPage =
-    Number(searchParams.page) || Number(resolvedEntry?.printedPage) || 1;
-  const pdfPage = Number(searchParams.pdfPage) || undefined;
-
-  const entry =
-    resolvedEntry ||
-    ({
-      code: fallbackCode || slug,
-      title: fallbackCode || slug,
-      section: "CPG PDF",
-      printedPage,
-      keywords: [],
-    } as const);
-
+// The protocol and page come from the URL and are resolved in the browser
+// (see CpgViewerClient), so this server shell is the same for every lookup —
+// which is what lets the service worker serve /cpg/view offline.
+export default function CpgPage() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pb-12 pt-6">
       <div className="flex flex-wrap items-start gap-3">
@@ -59,26 +17,11 @@ export default function CpgPage({
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to dashboard
         </Link>
-        <div className="space-y-1">
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-emerald-500">
-            CPG viewer
-          </p>
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-            {entry.code} – {entry.title}
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Section: {entry.section} · Starting at printed page {printedPage}
-          </p>
-        </div>
       </div>
 
-      <CpgViewerClient entry={entry} printedPage={printedPage} pdfPage={pdfPage} />
+      <Suspense fallback={null}>
+        <CpgViewerClient />
+      </Suspense>
     </div>
   );
-}
-
-export function generateStaticParams() {
-  return CPG_ENTRIES.map((entry) => ({
-    code: normalizeCpgSlug(entry.code),
-  }));
 }

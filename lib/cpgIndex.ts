@@ -849,6 +849,18 @@ export function normalizeCpgSlug(input: string): string {
  * Find a CPG entry by a URL slug (e.g., "cpg-1-1" or "clinical-approach-and-assessment-of-the-adult-patient").
  * Matches against normalized code and title.
  */
+/**
+ * Link to the in-app CPG viewer. Everything the viewer needs is in the query,
+ * on one fixed path, so a single cached page can serve every lookup offline.
+ */
+export function cpgViewerHref({ code, page, pdfPage }: { code?: string; page: number; pdfPage?: number }): string {
+  const params = new URLSearchParams();
+  if (code) params.set("code", code);
+  params.set("page", String(page));
+  params.set("pdfPage", String(pdfPage ?? page));
+  return `/cpg/view?${params.toString()}`;
+}
+
 export function findCpgEntryBySlug(slug: string): CpgEntry | undefined {
   const normalized = normalizeCpgSlug(slug);
   return CPG_ENTRIES.find((entry) => {

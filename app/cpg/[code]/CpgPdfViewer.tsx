@@ -25,6 +25,9 @@ export function CpgPdfViewer({ entry, printedPage, pdfPage }: Props) {
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [error, setError] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  // The in-flight render, cancelled before the next one starts — otherwise a
+  // slower earlier render (e.g. page 1) can finish last and overwrite the canvas.
+  const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
   const [overridePdfPage] = useState<number | null>(() => {
     if (typeof window === "undefined") return null;
     const params = new URLSearchParams(window.location.search);
@@ -93,6 +96,9 @@ export function CpgPdfViewer({ entry, printedPage, pdfPage }: Props) {
 
   // Render the current page to canvas
   useEffect(() => {
+    // Set by the cleanup when a newer page replaces this render.
+    let superseded = false;
+
     const render = async () => {
       if (!pdf || !canvasRef.current) return;
       const clampedPage = Math.min(
@@ -106,6 +112,7 @@ export function CpgPdfViewer({ entry, printedPage, pdfPage }: Props) {
       }
 
       const page = await pdf.getPage(clampedPage);
+      if (superseded || !canvasRef.current) return;
       const canvas = canvasRef.current;
       const context = canvas.getContext("2d");
       if (!context) return;
@@ -122,15 +129,17 @@ export function CpgPdfViewer({ entry, printedPage, pdfPage }: Props) {
       context.setTransform(1, 0, 0, 1, 0, 0);
       context.clearRect(0, 0, canvas.width, canvas.height);
 
-      await page
-        .render({
-          canvasContext: context,
-          viewport,
-        })
-        .promise;
+      const task = page.render({
+        canvasContext: context,
+        viewport,
+      });
+      renderTaskRef.current = task;
+      await task.promise;
     };
 
     render().catch((err) => {
+      // A render superseded by a newer page is expected, not an error.
+      if (err && (err as { name?: string }).name === "RenderingCancelledException") return;
       console.error(err);
       setError("Unable to render CPG page");
       // Try a gentle retry on the next tick for transient render issues
@@ -139,6 +148,12 @@ export function CpgPdfViewer({ entry, printedPage, pdfPage }: Props) {
         setPageNumber((prev) => prev);
       }, 100);
     });
+
+    return () => {
+      superseded = true;
+      renderTaskRef.current?.cancel();
+      renderTaskRef.current = null;
+    };
   }, [pdf, pageNumber]);
 
   const goPrev = () => {

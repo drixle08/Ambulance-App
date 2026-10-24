@@ -20,7 +20,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
-import { normalizeCpgSlug } from "@/lib/cpgIndex";
+import { cpgViewerHref } from "@/lib/cpgIndex";
 import {
   TOXICOLOGY_GROUP_ORDER,
   TOXICOLOGY_PROFILES,
@@ -116,8 +116,7 @@ const CLINICAL_GROUPS = TOXICOLOGY_GROUP_ORDER.filter((g) => g !== "scene");
 // ─── CPG link builder ─────────────────────────────────────────────────────────
 
 function buildCpgHref(match: ToxicologyMatch) {
-  const slug = normalizeCpgSlug(match.entry.code);
-  return `/cpg/${encodeURIComponent(slug)}?code=${encodeURIComponent(match.entry.code)}&page=${match.entry.printedPage}&pdfPage=${match.entry.printedPage}`;
+  return cpgViewerHref({ code: match.entry.code, page: match.entry.printedPage });
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────

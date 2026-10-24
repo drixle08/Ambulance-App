@@ -7,7 +7,7 @@ import { useDevice } from "@/app/_components/DeviceProvider";
 import { ClipboardCheck, FileText, Home, LayoutGrid, MessageCircle, Pill, Search, Timer, X } from "lucide-react";
 import {
   CPG_ENTRIES,
-  normalizeCpgSlug,
+  cpgViewerHref,
   searchMedications,
   type CpgEntry,
   type MedicationEntry,
@@ -62,7 +62,7 @@ function SearchResults({
   // On desktop: open the PDF directly in a new tab.
   const openPage = (printedPage: number) => {
     if (isMobile) {
-      window.location.assign(`/cpg/page?page=${printedPage}&pdfPage=${printedPage}`);
+      window.location.assign(cpgViewerHref({ page: printedPage }));
     } else {
       window.open(`${PDF_PATH}#page=${printedPage}`, "_blank", "noopener,noreferrer");
     }
@@ -71,10 +71,7 @@ function SearchResults({
 
   const openEntry = (entry: CpgEntry) => {
     if (isMobile) {
-      const slug = normalizeCpgSlug(entry.code);
-      window.location.assign(
-        `/cpg/${encodeURIComponent(slug)}?code=${encodeURIComponent(entry.code)}&page=${entry.printedPage}&pdfPage=${entry.printedPage}`
-      );
+      window.location.assign(cpgViewerHref({ code: entry.code, page: entry.printedPage }));
     } else {
       window.open(`${PDF_PATH}#page=${entry.printedPage}`, "_blank", "noopener,noreferrer");
     }
@@ -93,10 +90,7 @@ function SearchResults({
 
   const openMed = (med: MedicationEntry) => {
     if (isMobile) {
-      const slug = `formulary-${med.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")}`;
-      window.location.assign(
-        `/cpg/${encodeURIComponent(slug)}?code=Formulary&page=${med.formularyPage}&pdfPage=${med.formularyPage}`
-      );
+      window.location.assign(cpgViewerHref({ code: "Formulary", page: med.formularyPage }));
     } else {
       window.open(`${PDF_PATH}#page=${med.formularyPage}`, "_blank", "noopener,noreferrer");
     }

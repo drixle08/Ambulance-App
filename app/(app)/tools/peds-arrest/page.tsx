@@ -20,6 +20,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { CPG, cpgEdition } from "@/lib/cpgEdition";
+import { cpgRef, type CpgProvenance } from "@/lib/cpgProvenance";
 
 // Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
 const EDITION = cpgEdition("2.6");
@@ -123,9 +124,11 @@ export default function PedsArrestPage() {
   // Amiodarone: 150 mg/3 mL = 50 mg/mL (undiluted)
   const amioMl = amioMg != null ? amioMg / 50 : null;
   const fluid10 = weight ? 10 * weight : null;
+  // CPG 2.3 (refs on the Energy card): 4 J/kg for first and subsequent shocks;
+  // CCPs may escalate after 5 shocks in 2 J increments per shock, to a maximum
+  // of 8 J/kg or adult dose. There is no fixed 6 J/kg step.
   const defib4 = weight ? 4 * weight : null;
-  const defib6 = weight ? 6 * weight : null;
-  const defib8 = weight ? 8 * weight : null;
+  const defib8Max = weight ? 8 * weight : null;
   const dex10Vol = weight ? 2 * weight : null;
   const sbp = hasAge && ageYears > 0 ? 70 + 2 * ageYears : 70;
 
@@ -169,7 +172,8 @@ export default function PedsArrestPage() {
         `Adrenaline 0.01 mg/kg ≈ ${fmt(adrMg, 3)} mg (${fmt(adrMl, 1)} mL of 1:10,000). ` +
         `Amiodarone 5 mg/kg ≈ ${fmt(amioMg, 1)} mg${amioCapped ? " (capped 300 mg)" : ""} (${fmt(amioMl, 1)} mL undiluted). ` +
         `Fluids 10 mL/kg: bolus ${fmt(fluid10, 0)} mL (× 3). ` +
-        `First shock 4 J/kg ≈ ${fmt(defib4, 0)} J (CCP max 8 J/kg). Dextrose 10% 2 mL/kg ≈ ${fmt(dex10Vol, 0)} mL. ` +
+        `Shocks 4 J/kg ≈ ${fmt(defib4, 0)} J (first and subsequent); CCP may escalate after 5 shocks in 2 J increments to max 8 J/kg ≈ ${fmt(defib8Max, 0)} J or adult dose. ` +
+        `Dextrose 10% 2 mL/kg ≈ ${fmt(dex10Vol, 0)} mL. ` +
         (sgaText ? `${sgaText}. ` : "") +
         (ettText ? `${ettText}. ` : "") +
         `Target SBP ≥ ${sbp} mmHg.`;
@@ -371,14 +375,18 @@ export default function PedsArrestPage() {
           <DoseCard
             letter="E"
             title="Energy"
-            formula="4 J/kg · CCP +2 J to max 8 J/kg"
+            formula="4 J/kg every shock · CCP: after 5 shocks, +2 J per shock to max 8 J/kg or adult dose"
             color="amber"
             icon={<Zap className="w-5 h-5" />}
+            refs={[
+              cpgRef("2.6", 42, "Defibrillate at a dose of 4J/kg or adult dose depending on patient weight"),
+              cpgRef("2.6", 42, "CCPs may escalate the joules if required after 5 shocks in increments of 2J for every subsequent shock to a maximum of 8 J/kg or adult dosing"),
+              cpgRef("2.6", 43, "Energy: 4J/kg & CCPs can escalate in increments of 2J to max 8J/kg"),
+            ]}
           >
             <div className="grid grid-cols-2 gap-1">
-              <ShockRow label="4 J/kg" value={fmt(defib4, 0)} />
-              <ShockRow label="6 J/kg" value={fmt(defib6, 0)} />
-              <ShockRow label="8 J/kg max" value={fmt(defib8, 0)} />
+              <ShockRow label="4 J/kg — every shock" value={fmt(defib4, 0)} />
+              <ShockRow label="CCP max 8 J/kg (or adult dose)" value={fmt(defib8Max, 0)} />
             </div>
           </DoseCard>
         </div>
@@ -590,6 +598,8 @@ type DoseCardProps = {
   color: ColorKey;
   icon: React.ReactNode;
   children: React.ReactNode;
+  /** Where the CPG states these values — provenance only, not rendered. */
+  refs?: CpgProvenance[];
 };
 
 function DoseCard({

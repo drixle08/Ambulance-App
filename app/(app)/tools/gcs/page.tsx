@@ -13,6 +13,7 @@ import {
   Baby,
   Brain,
 } from "lucide-react";
+import { cpgRef, type CpgProvenance } from "@/lib/cpgProvenance";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -50,43 +51,55 @@ const SCORE_COLOR: Record<number, { badge: string; selected: string }> = {
   },
 };
 
-// ─── Severity band ────────────────────────────────────────────────────────────
+// ─── Interpretation ───────────────────────────────────────────────────────────
+// Only thresholds the CPG itself states. The CPG has no mild/moderate/severe
+// GCS bands (the 13–15 "Mild impairment" band shown before labelled a normal
+// GCS of 15 as impaired); 15 is normal.
 
-type Band = "severe" | "moderate" | "mild";
+type Status = "normal" | "altered" | "txa";
 
-function getBand(total: number): Band {
-  if (total <= 8) return "severe";
-  if (total <= 12) return "moderate";
-  return "mild";
+function getStatus(total: number): Status {
+  if (total >= 15) return "normal";
+  if (total <= 12) return "txa";
+  return "altered";
 }
 
-const BAND_STYLES: Record<
-  Band,
-  { label: string; range: string; text: string; border: string; bg: string; bar: string }
+const STATUS: Record<
+  Status,
+  { label: string; detail: string; summary: string; text: string; border: string; bg: string; bar: string; refs: CpgProvenance[] }
 > = {
-  severe: {
-    label: "Severe",
-    range: "3–8",
-    text: "text-rose-300",
-    border: "border-rose-700",
-    bg: "bg-rose-950/70",
-    bar: "bg-rose-500",
+  normal: {
+    label: "No deficit",
+    detail: "GCS 15",
+    summary: "no deficit",
+    text: "text-slate-50",
+    border: "border-slate-600",
+    bg: "bg-slate-800/70",
+    bar: "bg-slate-300",
+    refs: [],
   },
-  moderate: {
-    label: "Moderate",
-    range: "9–12",
+  altered: {
+    label: "Altered mental status",
+    detail: "GCS < 15",
+    summary: "altered mental status (GCS < 15)",
     text: "text-amber-300",
     border: "border-amber-700",
     bg: "bg-amber-950/70",
     bar: "bg-amber-500",
+    refs: [cpgRef("2.6", 125, "Altered mental status (GCS< 15)")],
   },
-  mild: {
-    label: "Mild",
-    range: "13–15",
-    text: "text-emerald-300",
-    border: "border-emerald-700",
-    bg: "bg-emerald-950/70",
-    bar: "bg-emerald-500",
+  txa: {
+    label: "Altered mental status",
+    detail: "GCS ≤ 12 — TXA criterion if head injury (< 3 h)",
+    summary: "altered mental status; GCS ≤ 12 meets the TXA criterion in head injury (within 3 h of injury)",
+    text: "text-rose-300",
+    border: "border-rose-700",
+    bg: "bg-rose-950/70",
+    bar: "bg-rose-500",
+    refs: [
+      cpgRef("2.6", 125, "Altered mental status (GCS< 15)"),
+      cpgRef("2.6", 174, "Consider TXA within first 3 hours of injury GCS ≤ 12"),
+    ],
   },
 };
 
@@ -99,8 +112,7 @@ export default function GcsPage() {
   const [motor, setMotor] = useState<MotorScore>(6);
 
   const total = eye + verbal + motor;
-  const band = getBand(total);
-  const bs = BAND_STYLES[band];
+  const bs = STATUS[getStatus(total)];
   const barWidth = `${((total - 3) / 12) * 100}%`;
 
   const adultVerbal: { score: VerbalScore; label: string }[] = [
@@ -134,7 +146,7 @@ export default function GcsPage() {
     setMotor(6);
   }
 
-  const summaryText = `GCS ${total} (E${eye} V${verbal} M${motor}) — ${bs.label} impairment (${bs.range}). E: ${eyeLabel}. V: ${verbalOptions.find((o) => o.score === verbal)?.label}. M: ${motorLabel}. CPG 1.4 Glasgow Coma Scale.`;
+  const summaryText = `GCS ${total} (E${eye} V${verbal} M${motor}) — ${bs.summary}. E: ${eyeLabel}. V: ${verbalOptions.find((o) => o.score === verbal)?.label}. M: ${motorLabel}. CPG 1.4 Glasgow Coma Scale.`;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-40">
@@ -229,8 +241,8 @@ export default function GcsPage() {
               </div>
             </div>
             <div className="text-right">
-              <p className={`text-sm font-bold ${bs.text}`}>{bs.label} impairment</p>
-              <p className="text-[10px] text-slate-500">Range {bs.range}</p>
+              <p className={`text-sm font-bold ${bs.text}`}>{bs.label}</p>
+              <p className="text-[10px] text-slate-400">{bs.detail}</p>
             </div>
           </div>
           {/* Progress bar 3–15 */}
@@ -241,9 +253,7 @@ export default function GcsPage() {
             />
           </div>
           <div className="flex justify-between text-[9px] text-slate-600">
-            <span>3 — Severe</span>
-            <span>9 — Moderate</span>
-            <span>13 — Mild</span>
+            <span>3</span>
             <span>15</span>
           </div>
         </div>
@@ -355,10 +365,10 @@ export default function GcsPage() {
                 ))}
               </div>
               <div className="w-px h-10 bg-slate-700 flex-shrink-0" />
-              {/* Severity label */}
-              <div className="text-right flex-shrink-0">
+              {/* CPG interpretation */}
+              <div className="text-right flex-shrink min-w-0">
                 <p className={`text-sm font-bold ${bs.text}`}>{bs.label}</p>
-                <p className="text-[10px] text-slate-500">{bs.range}</p>
+                <p className="text-[10px] text-slate-400">{bs.detail}</p>
               </div>
             </div>
           </div>

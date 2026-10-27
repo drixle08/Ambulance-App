@@ -183,9 +183,21 @@ async function askClaude(
   history: HistoryMessage[],
   shown: Map<string, PageDoc>
 ): Promise<string | null> {
-  if (!process.env.ANTHROPIC_API_KEY) return null;
-  client ??= new Anthropic();
   const model = process.env.ANTHROPIC_MODEL || DEFAULT_MODEL;
+  // One log line per request: which model(s) actually answered and whether a
+  // refusal fallback served it, since answer quality differs between models.
+  const served = new Set<string>();
+  let fallback = false;
+  let outcome = "error";
+  const logModel = () =>
+    console.info("[cpg-chat] model", JSON.stringify({ requested: model, served: [...served], fallback, outcome }));
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    outcome = "no_api_key";
+    logModel();
+    return null;
+  }
+  client ??= new Anthropic();
 
   const messages: Anthropic.Beta.BetaMessageParam[] = [
     ...history.map((m) => ({ role: m.role, content: m.content })),
@@ -211,8 +223,12 @@ async function askClaude(
         messages,
       });
 
+      served.add(response.model);
+      if (response.usage.iterations?.some((entry) => entry.type === "fallback_message")) fallback = true;
+
       if (response.stop_reason === "refusal") {
         console.warn("[cpg-chat] Claude refusal", response.stop_details?.category);
+        outcome = "refusal";
         return null;
       }
 
@@ -225,6 +241,7 @@ async function askClaude(
           .map((b) => b.text)
           .join("")
           .trim();
+        outcome = text ? "answered" : "empty";
         return text || null;
       }
 
@@ -246,6 +263,8 @@ async function askClaude(
       console.error("[cpg-chat] Claude request failed", error);
     }
     return null;
+  } finally {
+    logModel();
   }
 }
 

@@ -19,6 +19,7 @@ import {
   MonitorSmartphone,
 } from "lucide-react";
 import { APP_ALIGNED_EDITION } from "@/lib/cpgEdition";
+import { TOOL_GROUPS } from "@/app/(app)/dashboard/data";
 
 function classNames(...classes: Array<string | boolean | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -58,9 +59,15 @@ const QUICK_ACTIONS: QuickAction[] = [
   },
 ];
 
+// Counts are derived from the dashboard data so a tool is never quietly missing
+// from the status ("Tools available") or misgraded ("Time-critical").
+const ALL_TOOLS = TOOL_GROUPS.flatMap((group) => group.tools);
+const TOOLS_AVAILABLE = ALL_TOOLS.length;
+const TIME_CRITICAL_TOOLS = ALL_TOOLS.filter((tool) => /time-critical/i.test(tool.meta ?? "")).length;
+
 const KPI_CHIPS = [
-  { label: "Tools available", value: "5" },
-  { label: "Time-critical tools", value: "3" },
+  { label: "Tools available", value: String(TOOLS_AVAILABLE) },
+  { label: "Time-critical tools", value: String(TIME_CRITICAL_TOOLS) },
   { label: "Offline-capable PWA", value: "" },
   { label: `Aligned with ${APP_ALIGNED_EDITION.label}`, value: "" },
 ];

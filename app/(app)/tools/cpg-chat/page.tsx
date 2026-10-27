@@ -4,6 +4,7 @@ import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
+  AlertTriangle,
   BookOpen,
   Check,
   ClipboardCheck,
@@ -415,6 +416,19 @@ export default function CpgChatPage() {
         </div>
       </header>
 
+      {/* Clinical Assistant verify warning — always visible so no dose is used uncritically */}
+      <div
+        role="alert"
+        className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-xs text-amber-200"
+      >
+        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-500/30 text-amber-300">
+          <AlertTriangle className="h-3.5 w-3.5" />
+        </span>
+        <span>
+          <span className="font-semibold">Verify before you act.</span> The Clinical Assistant is a beta reference aid. Its answers are generated from the CPG, SOP, and CPM and may not reflect the latest edition or every clinical detail. Always confirm doses, thresholds, and pathways against the current CPG before clinical use.
+        </span>
+      </div>
+
       {/* Messages area */}
       <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-4 space-y-4 pb-48">
 
@@ -579,7 +593,7 @@ export default function CpgChatPage() {
             </button>
           </form>
           <p className="text-[0.6rem] text-slate-700 mt-1.5 text-center">
-            Grounded in HMCAS {CPG.label}, SOP v4.4 (2024), and CPM v4.0 (2024) — always verify with the full document
+            Grounded in HMCAS {CPG.label}, SOP v4.4 (2024), and CPM v4.0 (2024). This is a beta reference aid — verify every dose and threshold against the current CPG before acting.
           </p>
         </div>
       </div>

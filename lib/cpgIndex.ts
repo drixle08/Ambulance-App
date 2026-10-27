@@ -817,6 +817,26 @@ export const MEDICATION_ENTRIES: MedicationEntry[] = [
   { name: "Vecuronium", aliases: ["norcuron", "vec"], formularyPage: 395, class: "Neuromuscular Blocker" },
 ];
 
+/**
+ * Pages that belong to no protocol or drug: front matter, the formulary contents
+ * and the appendices after the last drug. Without these, each such page took the
+ * label of the protocol or drug before it (e.g. the reference list read as
+ * "Vecuronium"). Printed pages in edition CPG_INDEX_EDITION.
+ */
+export const CPG_OTHER_SECTIONS: { code: string; title: string; printedPage: number }[] = [
+  { code: "CPG", title: "Cover and Version Control", printedPage: 1 },
+  { code: "CPG", title: "Message from the CEO", printedPage: 3 },
+  { code: "CPG", title: "Message from the Medical Director", printedPage: 5 },
+  { code: "CPG", title: "Specific Clinical Privileges (staff circular)", printedPage: 6 },
+  { code: "CPG", title: "Abbreviations", printedPage: 8 },
+  { code: "CPG", title: "Acknowledgements and Peer Review Panel", printedPage: 10 },
+  { code: "CPG", title: "Contents", printedPage: 12 },
+  { code: "CPG Formulary", title: "Formulary Contents", printedPage: 295 },
+  { code: "CPG Appendix", title: "Retrieval Services Extended Pharmacopoeia", printedPage: 398 },
+  { code: "CPG Appendix", title: "Medication Privileges", printedPage: 399 },
+  { code: "CPG", title: "References", printedPage: 401 },
+];
+
 export function searchMedications(query: string): MedicationEntry[] {
   if (!query.trim()) return [];
   const q = query.toLowerCase().trim();

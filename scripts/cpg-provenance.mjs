@@ -112,13 +112,16 @@ export function scanLiterals() {
   return hits;
 }
 
-/** Printed-page text of the shipped PDF, from the search index. */
+/**
+ * Printed-page text of the shipped PDF, from the search index: the plain
+ * reading-order text, without the table labels and markers the chat sees.
+ */
 export function loadPageText() {
   const index = JSON.parse(fs.readFileSync(path.join(ROOT, "public/cpg-index.json"), "utf8"));
   const pages = new Map();
   for (const chunk of index.chunks) {
     const page = chunk.printedPage ?? chunk.page;
-    pages.set(page, (pages.get(page) ?? "") + " " + chunk.text);
+    pages.set(page, (pages.get(page) ?? "") + " " + (chunk.plain ?? chunk.text));
   }
   return { source: index.source, pages };
 }

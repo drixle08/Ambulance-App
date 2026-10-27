@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { CPG_ENTRIES, MEDICATION_ENTRIES } from "../cpgIndex";
+import { CPG_ENTRIES, CPG_OTHER_SECTIONS, MEDICATION_ENTRIES } from "../cpgIndex";
 import { CPM_ENTRIES } from "../cpmIndex";
 import { SOP_ENTRIES } from "../sopIndex";
 
@@ -30,7 +30,8 @@ export type PageDoc = {
 
 export type SearchHit = PageDoc & { score: number };
 
-type IndexChunk = { page: number; printedPage: number; text: string };
+/** `plain` (CPG/CPM): the page's words without table labels or markers, used for scoring. */
+type IndexChunk = { page: number; printedPage: number; text: string; plain?: string };
 
 const INDEX_FILES: Record<DocType, string> = {
   cpg: "cpg-index.json",
@@ -101,12 +102,15 @@ export function normaliseTokens(text: string): string[] {
   return out;
 }
 
+/** Keeps line breaks: the CPG/CPM indexes put table rows, labelled boxes and blocks on their own lines. */
 function cleanPageText(text: string): string {
   return text
     .replace(/HMCAS CPG VERSION 2\. ?6 20\s?2\s?6 \d+/g, "")
     .replace(/▪?\s*BACK TO TABLE OF CONTENTS\s*▪?\s*(BACK TO FORMULARY)?/g, "")
     .replace(/Return to Table of Contents Version [\d.]+ – \w+ \d{4} Page \d+/g, "")
-    .replace(/\s+/g, " ")
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/ *\n */g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
@@ -124,6 +128,7 @@ function sectionMarks(type: DocType): SectionMark[] {
             code: "CPG Formulary",
             title: `${m.name} (${m.class ?? "drug"})`,
           })),
+          ...CPG_OTHER_SECTIONS,
         ]
       : type === "cpm"
         ? CPM_ENTRIES.map((e) => ({ printedPage: e.printedPage, code: `CPM ${e.code}`, title: e.title }))
@@ -151,10 +156,11 @@ function buildCorpus(type: DocType): Corpus {
   const file = path.join(process.cwd(), "public", INDEX_FILES[type]);
   const chunks: IndexChunk[] = JSON.parse(fs.readFileSync(file, "utf8")).chunks ?? [];
 
-  const pages = new Map<number, { page: number; printedPage: number; parts: string[] }>();
+  const pages = new Map<number, { page: number; printedPage: number; parts: string[]; plain: string[] }>();
   for (const chunk of chunks) {
-    const entry = pages.get(chunk.page) ?? { page: chunk.page, printedPage: chunk.printedPage, parts: [] };
+    const entry = pages.get(chunk.page) ?? { page: chunk.page, printedPage: chunk.printedPage, parts: [], plain: [] };
     entry.parts.push(chunk.text);
+    entry.plain.push(chunk.plain ?? chunk.text);
     pages.set(chunk.page, entry);
   }
 
@@ -163,7 +169,7 @@ function buildCorpus(type: DocType): Corpus {
   const df = new Map<string, number>();
   const byPrinted = new Map<number, PageDoc>();
 
-  for (const { page, printedPage, parts } of [...pages.values()].sort((a, b) => a.page - b.page)) {
+  for (const { page, printedPage, parts, plain } of [...pages.values()].sort((a, b) => a.page - b.page)) {
     const mark = sectionFor(marks, printedPage);
     const doc: PageDoc = {
       type,
@@ -174,7 +180,8 @@ function buildCorpus(type: DocType): Corpus {
       text: cleanPageText(parts.join("")),
     };
     // Section title counts twice so short/flowchart pages still match their protocol.
-    const tokens = normaliseTokens(`${doc.section} ${doc.section} ${doc.text}`);
+    // Scored on the plain text: table labels repeat header words on every row.
+    const tokens = normaliseTokens(`${doc.section} ${doc.section} ${plain.join(" ")}`);
     const tf = new Map<string, number>();
     for (const t of tokens) tf.set(t, (tf.get(t) ?? 0) + 1);
     for (const t of tf.keys()) df.set(t, (df.get(t) ?? 0) + 1);

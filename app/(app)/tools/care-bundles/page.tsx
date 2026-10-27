@@ -74,7 +74,7 @@ const ADRENALINE_OPTIONS: DoseOption[] = [
     // trigger to IV push-dose adrenaline, not a hard stop (CPG).
     id: "adr-im",
     refs: [
-      cpgRef("2.6", 301, "Anaphylaxis I IM 0.5 mg (1:1000) Repeat PRN every 5 minutes"),
+      cpgRef("2.6", 301, "Anaphylaxis IM 0.5 mg (1:1000) Repeat PRN every 5 minutes"),
       cpgRef("2.6", 116, "Repeat IM Adrenaline every 5 minutes as required"),
       cpgRef("2.6", 113, "unresponsive to 3 x IM Adrenaline"),
       cpgAbsent("2.6", "anterolateral-thigh injection site (CPG: rotate sites)"),

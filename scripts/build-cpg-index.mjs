@@ -1,6 +1,14 @@
+// Build public/cpg-index.json: the CPG text the Clinical Assistant searches.
+//
+// One entry per page, with structure kept (see scripts/lib/pdf-structure.mjs):
+// table rows with labelled cells, flowchart boxes labelled with their column
+// (ADULT, PAEDIATRIC, ...), and line breaks between blocks.
+//
+//   npm run build:cpg-index
+
 import fs from "fs/promises";
 import path from "path";
-import { getDocument } from "pdfjs-dist";
+import { openPdf, extractPage } from "./lib/pdf-structure.mjs";
 
 // Shipped edition comes from the single source of truth, lib/cpgEdition.json.
 const CPG_EDITIONS = JSON.parse(
@@ -10,89 +18,44 @@ const PDF_FILE = CPG_EDITIONS.editions[CPG_EDITIONS.current].pdfFile;
 const PDF_PATH = path.join(process.cwd(), "public", "reference", "cpg", PDF_FILE);
 const OUTPUT_PATH = path.join(process.cwd(), "public", "cpg-index.json");
 
-const TARGET_CHARS = 1200;
-const OVERLAP_CHARS = 200;
-
-const simplifyWhitespace = (text) =>
-  text.replace(/\s+/g, " ").replace(/\u00a0/g, " ").trim();
-
-function chunkText(text, pageNumber) {
-  const chunks = [];
-  let start = 0;
-  let chunkIndex = 0;
-
-  while (start < text.length) {
-    const end = Math.min(start + TARGET_CHARS, text.length);
-    const slice = text.slice(start, end).trim();
-    if (slice) {
-      chunks.push({
-        id: `page-${pageNumber}-chunk-${chunkIndex}`,
-        page: pageNumber,
-        printedPage: pageNumber,
-        text: slice,
-      });
-      chunkIndex += 1;
-    }
-    if (end === text.length) break;
-    start = Math.max(end - OVERLAP_CHARS, start + TARGET_CHARS);
-  }
-
-  return chunks;
-}
-
-async function extractChunks() {
-  const loadingTask = getDocument({
-    url: PDF_PATH,
-    verbosity: 0,
-  });
-
-  const pdf = await loadingTask.promise;
-  console.log(`Loaded PDF with ${pdf.numPages} pages.`);
-
-  const allChunks = [];
-
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-    const page = await pdf.getPage(pageNumber);
-    const textContent = await page.getTextContent();
-    const pageText = simplifyWhitespace(
-      textContent.items
-        .map((item) => ("str" in item ? item.str : ""))
-        .join(" ")
-    );
-
-    if (!pageText) {
-      continue;
-    }
-
-    const pageChunks = chunkText(pageText, pageNumber);
-    allChunks.push(...pageChunks);
-
-    if (pageNumber % 10 === 0 || pageNumber === pdf.numPages) {
-      console.log(
-        `Processed page ${pageNumber}/${pdf.numPages} (total chunks: ${allChunks.length})`
-      );
-    }
-  }
-
-  return allChunks;
+// Pages where a protocol or a formulary drug starts: a stacked ADULT/PAEDIATRIC
+// section never carries over onto these.
+async function sectionStartPages() {
+  const source = await fs.readFile(path.join(process.cwd(), "lib", "cpgIndex.ts"), "utf8");
+  return new Set([...source.matchAll(/\b(?:printedPage|formularyPage):\s*(\d+)/g)].map((m) => Number(m[1])));
 }
 
 async function main() {
-  const chunks = await extractChunks();
+  const pdf = await openPdf(PDF_PATH);
+  const starts = await sectionStartPages();
+  console.log(`Loaded PDF with ${pdf.numPages} pages.`);
+
+  const chunks = [];
+  const lowCoverage = [];
+  const ambiguous = [];
+  let state = {};
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+    if (starts.has(pageNumber)) state = {};
+    const { text, plain, coverage, stats, state: next } = await extractPage(pdf, pageNumber, state);
+    state = next;
+    if (coverage < 0.8) lowCoverage.push(`p.${pageNumber} ${(coverage * 100).toFixed(0)}%`);
+    for (const span of stats.ambiguousSpans) ambiguous.push(`p.${pageNumber}: ${span}`);
+    if (text) chunks.push({ id: `page-${pageNumber}`, page: pageNumber, printedPage: pageNumber, text, plain });
+    if (pageNumber % 50 === 0 || pageNumber === pdf.numPages) console.log(`Processed page ${pageNumber}/${pdf.numPages}`);
+  }
+
   const payload = {
     createdAt: new Date().toISOString(),
     source: PDF_FILE,
-    chunkCharLength: TARGET_CHARS,
-    chunkOverlap: OVERLAP_CHARS,
+    format: "structured-page",
     chunkCount: chunks.length,
-    pages: [...new Set(chunks.map((c) => c.page))].length,
+    pages: chunks.length,
     chunks,
   };
-
   await fs.writeFile(OUTPUT_PATH, JSON.stringify(payload, null, 2), "utf8");
-  console.log(
-    `Wrote ${chunks.length} chunks to ${OUTPUT_PATH.replace(process.cwd(), ".")}`
-  );
+  console.log(`Wrote ${chunks.length} pages to ${OUTPUT_PATH.replace(process.cwd(), ".")}`);
+  if (lowCoverage.length) console.log(`Pages where the structure tree reached < 80% of the text (rest kept by position): ${lowCoverage.join(", ")}`);
+  if (ambiguous.length) console.log(`Merged-cell carry-downs with no border evidence (${ambiguous.length}):\n  ${ambiguous.join("\n  ")}`);
 }
 
 main().catch((err) => {

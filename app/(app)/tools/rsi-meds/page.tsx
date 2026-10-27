@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import { CriticalValue } from "@/components/CriticalValue";
 import {
   ArrowLeft,
   Wind,
@@ -919,12 +920,16 @@ export default function RsiMedsPage() {
               { label: "Rocuronium (RSI)", value: "1.2 mg/kg", color: "text-rose-300" },
               { label: "Ketamine induction", value: "1–2 mg/kg", color: "text-violet-300" },
               { label: "Post-intubation ETCO₂", value: "35–45 mmHg", color: "text-emerald-300" },
-            ].map(({ label, value, color }) => (
-              <div key={label} className="flex items-baseline gap-1">
-                <span className="text-[0.6rem] text-slate-600">{label}</span>
-                <span className={`text-xs font-bold ${color}`}>{value}</span>
-              </div>
-            ))}
+            ].map(({ label, value, color }) => {
+              const tone = color.includes("rose") ? "critical"
+                : color.includes("amber") || color.includes("violet") ? "warning" : "ok";
+              return (
+                <div key={label} className="flex items-baseline gap-1">
+                  <span className="text-[0.6rem] text-slate-600">{label}</span>
+                  <CriticalValue value={value} tone={tone} />
+                </div>
+              );
+            })}
           </div>
         </div>
 

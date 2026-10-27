@@ -16,6 +16,7 @@ import {
   Timer,
 } from "lucide-react";
 import { cpgEdition } from "@/lib/cpgEdition";
+import { CriticalValue } from "@/components/CriticalValue";
 
 // Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
 const EDITION = cpgEdition("2.6");
@@ -146,7 +147,7 @@ function ShockItem({
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-black tabular-nums text-amber-300">{energy}</span>
+          <CriticalValue value={energy} tone="critical" />
           <span className="text-xs text-amber-500 font-medium">
             {defib === "lp15" ? "LP15" : "Zoll"} · biphasic
           </span>

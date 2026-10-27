@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowLeft, Heart, Wind, Activity, Droplets, Gauge } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import { CriticalValue } from "@/components/CriticalValue";
 
 type AgeBandId =
   | "neonate"
@@ -274,7 +275,7 @@ export default function VitalsByAgePage() {
           {band.hypotensionThreshold && (
             <div className="ml-auto flex items-center gap-1.5 rounded-lg bg-red-500/10 border border-red-500/30 px-3 py-1.5">
               <span className="text-[0.65rem] font-bold uppercase tracking-wider text-red-400">Hypotension</span>
-              <span className="text-xs font-mono font-semibold text-red-300">{band.hypotensionThreshold}</span>
+              <CriticalValue value={band.hypotensionThreshold} tone="warning" />
             </div>
           )}
         </section>

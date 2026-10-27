@@ -14,6 +14,7 @@ import {
   Brain,
 } from "lucide-react";
 import { cpgRef, type CpgProvenance } from "@/lib/cpgProvenance";
+import { CriticalValue } from "@/components/CriticalValue";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -234,7 +235,7 @@ export default function GcsPage() {
             <div>
               <p className="text-[10px] text-slate-500 uppercase tracking-wider">Total GCS</p>
               <div className="flex items-baseline gap-2">
-                <span className={`text-4xl font-black tabular-nums ${bs.text}`}>{total}</span>
+                <CriticalValue value={String(total)} tone={total >= 15 ? "ok" : total <= 12 ? "critical" : "warning"} />
                 <span className="text-base font-mono text-slate-500">
                   E{eye} + V{verbal} + M{motor}
                 </span>
@@ -358,9 +359,10 @@ export default function GcsPage() {
                 ].map(({ l, v, c }) => (
                   <div key={l} className="text-center">
                     <p className="text-[10px] text-slate-500">{l}</p>
-                    <span className={`text-lg font-bold tabular-nums ${c.badge.includes("emerald") ? "text-emerald-300" : c.badge.includes("sky") ? "text-sky-300" : c.badge.includes("amber") ? "text-amber-300" : c.badge.includes("orange") ? "text-orange-300" : "text-rose-300"}`}>
-                      {v}
-                    </span>
+                    <CriticalValue
+                  value={String(v)}
+                  tone={v === 1 ? "critical" : v === 2 || v === 3 ? "warning" : "ok"}
+                />
                   </div>
                 ))}
               </div>

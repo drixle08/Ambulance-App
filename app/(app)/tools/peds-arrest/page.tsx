@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { CPG, cpgEdition } from "@/lib/cpgEdition";
 import { cpgRef, type CpgProvenance } from "@/lib/cpgProvenance";
+import { CriticalValue, type CriticalValueTone } from "@/components/CriticalValue";
 
 // Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
 const EDITION = cpgEdition("2.6");
@@ -563,22 +564,16 @@ export default function PedsArrestPage() {
             <>
               <div className="text-right">
                 <p className="text-[10px] text-slate-500">Adrenaline</p>
-                <p className="text-base font-bold text-emerald-400 tabular-nums">
-                  {fmt(adrMl, 1)} mL
-                </p>
+                <CriticalValue value={fmt(adrMl, 1)} unit="mL" tone="critical" />
               </div>
               <div className="text-right">
                 <p className="text-[10px] text-slate-500">1st Shock</p>
-                <p className="text-base font-bold text-amber-400 tabular-nums">
-                  {fmt(defib4, 0)} J
-                </p>
+                <CriticalValue value={fmt(defib4, 0)} unit="J" tone="critical" />
               </div>
               {sgaSize && (
                 <div className="text-right">
                   <p className="text-[10px] text-slate-500">SGA</p>
-                  <p className="text-base font-bold text-violet-400 tabular-nums">
-                    {sgaSize}
-                  </p>
+                  <CriticalValue value={sgaSize} tone="neutral" />
                 </div>
               )}
             </>
@@ -636,36 +631,33 @@ function DoseCard({
   );
 }
 
-function BigValue({ value, unit }: { value: string; unit: string }) {
-  return (
-    <div className="flex items-baseline gap-1">
-      <span className="text-2xl font-bold text-white tabular-nums">
-        {value}
-      </span>
-      {unit && <span className="text-xs text-slate-400">{unit}</span>}
-    </div>
-  );
+function BigValue({
+  value, unit, tone = "neutral",
+}: {
+  value: string; unit?: string; tone?: CriticalValueTone;
+}) {
+  return <CriticalValue value={value} unit={unit} tone={tone} />;
 }
 
-function SmallValue({ value, unit }: { value: string; unit: string }) {
-  return (
-    <div className="flex items-baseline gap-1 mt-0.5">
-      <span className="text-sm font-semibold text-slate-300 tabular-nums">
-        {value}
-      </span>
-      <span className="text-[10px] text-slate-500">{unit}</span>
-    </div>
-  );
+function SmallValue({
+  value, unit, tone = "neutral",
+}: {
+  value: string; unit?: string; tone?: CriticalValueTone;
+}) {
+  return <CriticalValue value={value} unit={unit} tone={tone} />;
 }
 
-function ShockRow({ label, value }: { label: string; value: string }) {
+function ShockRow({
+  label, value, unit = "J", tone = "critical",
+}: {
+  label: string; value: string; unit?: string; tone?: CriticalValueTone;
+}) {
   return (
     <div className="rounded-lg bg-slate-800 px-2 py-1.5 text-center">
-      <p className="text-[9px] text-slate-500 leading-none">{label}</p>
-      <p className="text-sm font-bold text-white tabular-nums mt-0.5">
-        {value}{" "}
-        <span className="text-[10px] font-normal text-slate-400">J</span>
+      <p className="text-[0.62rem] font-semibold uppercase tracking-wider text-slate-500 leading-none">
+        {label}
       </p>
+      <CriticalValue value={value} unit={unit} tone={tone} />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import { CriticalValue } from "@/components/CriticalValue";
 import {
   ArrowLeft,
   Wind,
@@ -760,12 +761,16 @@ export default function RoscPage() {
               { label: "TBI MAP", value: "70–80 mmHg", color: "text-amber-300" },
               { label: "BGL", value: "4.0–6.7 mmol/L", color: "text-emerald-300" },
               { label: "Paeds SBP", value: "(age×2)+70", color: "text-rose-400" },
-            ].map(({ label, value, color }) => (
-              <div key={label} className="flex items-baseline gap-1">
-                <span className="text-[0.6rem] text-slate-600">{label}</span>
-                <span className={`text-xs font-bold ${color}`}>{value}</span>
-              </div>
-            ))}
+            ].map(({ label, value, color }) => {
+              const tone = color.includes("rose") ? "critical"
+                : color.includes("amber") ? "warning" : "ok";
+              return (
+                <div key={label} className="flex items-baseline gap-1">
+                  <span className="text-[0.6rem] text-slate-600">{label}</span>
+                  <CriticalValue value={value} tone={tone} />
+                </div>
+              );
+            })}
           </div>
         </div>
 

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { ArrowLeft, FlaskConical, Calculator, ChevronRight } from "lucide-react";
 import { cpgEdition } from "@/lib/cpgEdition";
+import { NumberStepper } from "@/components/NumberStepper";
+import { CriticalValue, type CriticalValueTone } from "@/components/CriticalValue";
 
 // Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
 const EDITION = cpgEdition("2.6");
@@ -654,34 +656,7 @@ function doCalc(mode: DoseMode, dose: number, weight: number, durMin: number): C
   }
 }
 
-/* ════════════════════════════════════════════════════════════
-   SHARED SLIDER
-════════════════════════════════════════════════════════════ */
-function SliderRow({
-  label, unit, value, min, max, step, onChange, accentClass,
-}: {
-  label: string; unit: string; value: number; min: number; max: number;
-  step: number; onChange: (v: number) => void; accentClass: string;
-}) {
-  const dp = step < 0.1 ? 3 : step < 1 ? 1 : 0;
-  return (
-    <div className="space-y-2">
-      <div className="flex items-baseline justify-between">
-        <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">{label}</span>
-        <span className={`text-lg font-bold tabular-nums ${accentClass}`}>
-          {fmtNum(value, dp)} <span className="text-xs font-normal text-slate-500">{unit}</span>
-        </span>
-      </div>
-      <input type="range" min={min} max={max} step={step} value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="h-6 w-full accent-current" />
-      <div className="flex justify-between text-[0.6rem] text-slate-600">
-        <span>{fmtNum(min, dp)}</span>
-        <span>{fmtNum(max, dp)}</span>
-      </div>
-    </div>
-  );
-}
+
 
 /* ════════════════════════════════════════════════════════════
    RSI PHASE DIAGRAM
@@ -939,8 +914,8 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
       <div className={`rounded-2xl border p-4 space-y-5 ${clr.card} ${clr.border}`}>
         {needsWeight && (
           <div className="space-y-3">
-            <SliderRow label="Weight" unit="kg" value={weight} min={3} max={150} step={1}
-              onChange={setWeight} accentClass={clr.label} />
+            <NumberStepper label="Weight" unit="kg" value={weight} min={3} max={150} step={1}
+              onChange={setWeight} />
             <div className="grid grid-cols-3 gap-2">
               {WEIGHT_PRESETS.map((preset) => {
                 const selected = weight === preset;
@@ -958,9 +933,9 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
         )}
 
         {!isFixed && (
-          <SliderRow label={doseLabel} unit={doseUnit} value={dose}
+          <NumberStepper label={doseLabel} unit={doseUnit} value={dose}
             min={em.doseMin} max={em.doseMax} step={em.doseStep}
-            onChange={setDose} accentClass={clr.label} />
+            onChange={setDose} />
         )}
 
         {isFixed && (
@@ -974,9 +949,8 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
         )}
 
         {em.variableDuration && (
-          <SliderRow label="Duration" unit="min" value={duration}
-            min={em.durationMin ?? 20} max={em.durationMax ?? 60} step={5}
-            onChange={setDuration} accentClass={clr.label} />
+          <NumberStepper label="Duration" unit="min" value={duration}
+            min={em.durationMin ?? 20} max={em.durationMax ?? 60} step={5} onChange={setDuration} />
         )}
       </div>
 
@@ -1010,11 +984,14 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
                 <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
                   {result.totalDoseMg !== undefined ? "Total dose" : "Volume"}
                 </span>
-                <span className="text-sm font-semibold text-slate-200 tabular-nums">
-                  {result.totalDoseMg !== undefined
-                    ? `${fmtNum(result.totalDoseMg, 0)} mg → ${fmtNum(result.volumeMl, 1)} mL`
-                    : `${fmtNum(result.volumeMl, 1)} mL`}
-                </span>
+                <CriticalValue
+                  value={
+                    result.totalDoseMg !== undefined
+                      ? `${fmtNum(result.totalDoseMg, 0)} mg → ${fmtNum(result.volumeMl, 1)} mL`
+                      : fmtNum(result.volumeMl, 1)
+                  }
+                  unit=""
+                />
               </div>
             )}
             {result.kind === "fixed" && result.durationMin !== undefined && (
@@ -1025,19 +1002,14 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
             )}
             <div className="pt-1 text-center">
               <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1">Flow Rate</p>
-              <p className={`text-7xl font-black tabular-nums ${clr.label}`}>
-                {fmtNum(result.flowRateMlH ?? 0, 1)}
-                <span className="text-2xl font-normal text-slate-300 ml-1.5">mL/h</span>
-              </p>
+              <CriticalValue value={fmtNum(result.flowRateMlH ?? 0, 1)} unit="mL/h" />
             </div>
             {result.dripsPerMin !== undefined && (
               <div className="flex items-center justify-between border-t border-slate-800/60 pt-4">
                 <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">
                   Gravity (20 gtt/mL)
                 </span>
-                <span className="text-xl font-black text-slate-100 tabular-nums">
-                  {fmtNum(result.dripsPerMin, 0)} drops/min
-                </span>
+                <CriticalValue value={fmtNum(result.dripsPerMin, 0)} unit="drops/min" />
               </div>
             )}
           </>
@@ -1098,26 +1070,38 @@ function FormulaRow({ label, value, unit }: { label: string; value: number; unit
   );
 }
 
-function FormulaField({
-  label, unit, value, onChange, min = 0, max = 9999, step = 1,
+
+
+function UnitSelector({
+  value, onChange, label,
 }: {
-  label: string; unit: string; value: number; onChange: (v: number) => void;
-  min?: number; max?: number; step?: number;
+  value: "mcg" | "mg";
+  onChange: (u: "mcg" | "mg") => void;
+  label: string;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-xs text-slate-400 shrink-0">{label}</span>
-      <div className="flex items-center gap-1.5">
-        <input type="number" value={value} min={min} max={max} step={step}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          className="w-20 rounded-lg border border-slate-700 bg-slate-800 px-2 py-1 text-right text-sm font-semibold text-slate-200 focus:border-teal-600 focus:outline-none" />
-        <span className="text-xs text-slate-500 w-12">{unit}</span>
-      </div>
+    <div className="flex gap-1.5" role="group" aria-label={`${label} unit`}>
+      <button
+        type="button"
+        onClick={() => onChange("mcg")}
+        className={`min-h-12 min-w-20 rounded-lg text-sm font-bold transition-colors ${value === "mcg" ? "bg-slate-800 text-white" : "text-slate-500 hover:text-slate-300"}`}
+      >
+        mcg
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("mg")}
+        className={`min-h-12 min-w-20 rounded-lg text-sm font-bold transition-colors ${value === "mg" ? "bg-slate-800 text-white" : "text-slate-500 hover:text-slate-300"}`}
+      >
+        mg
+      </button>
     </div>
   );
 }
 
 function GeneralFormulas({ onBack }: { onBack: () => void }) {
+  const [doseUnit, setDoseUnit] = useState<"mcg" | "mg">("mcg");
+  const [concUnit, setConcUnit] = useState<"mcg" | "mg">("mcg");
   const [drawDose, setDrawDose] = useState(100);
   const [drawStockConc, setDrawStockConc] = useState(10);
   const [infVol, setInfVol] = useState(100);
@@ -1132,11 +1116,26 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
   const [backConc, setBackConc] = useState(10);
   const [backWeight, setBackWeight] = useState(70);
 
-  const drawVolume = drawStockConc > 0 ? drawDose / drawStockConc : 0;
-  const infFlowRate = infConc > 0 ? (infVol * infDose * 60) / (infConc * 1000) : 0;
-  const drips = (dripRate * dripFactor) / 60;
-  const vtFlowRate = vtTime > 0 ? (vtVol * 60) / vtTime : 0;
-  const backDose = backWeight > 0 ? (backFr * backConc) / 60 / backWeight : 0;
+  const num = (v: number) => Number.isFinite(v);
+  const doseOk = num(drawDose) && num(drawStockConc);
+  const infOk = num(infVol) && num(infDose) && num(infWeight) && num(infConc);
+  const dripOk = num(dripRate) && num(dripFactor);
+  const vtOk = num(vtVol) && num(vtTime);
+  const backOk = num(backFr) && num(backConc) && num(backWeight);
+
+  const toMcg = (v: number, unit: "mcg" | "mg") => (unit === "mg" ? v * 1000 : v);
+
+  const drawVolume = doseOk ? toMcg(drawDose, doseUnit) / toMcg(drawStockConc, concUnit) : 0;
+  const infFlowRate = infOk ? (infVol * infDose * 60) / toMcg(infConc, concUnit) : 0;
+  const drips = dripOk ? (dripRate * dripFactor) / 60 : 0;
+  const vtFlowRate = vtOk ? (vtVol * 60) / vtTime : 0;
+  const backDose = backOk ? (backFr * toMcg(backConc, concUnit)) / 60 / backWeight : 0;
+
+  const doseError = !doseOk ? "All fields required to see the result" : undefined;
+  const infError = !infOk ? "All fields required to see the result" : undefined;
+  const dripError = !dripOk ? "All fields required to see the result" : undefined;
+  const vtError = !vtOk ? "All fields required to see the result" : undefined;
+  const backError = !backOk ? "All fields required to see the result" : undefined;
 
   return (
     <div className="flex flex-col gap-4 pb-24">
@@ -1154,8 +1153,42 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
       <FormulaSection title="1 — How many mL to draw up?">
         <p className="font-mono text-xs text-slate-500">Volume = Dose ÷ Stock concentration</p>
         <div className="space-y-2">
-          <FormulaField label="Required dose" unit="mcg (or mg)" value={drawDose} onChange={setDrawDose} min={1} max={10000} />
-          <FormulaField label="Stock concentration" unit="mcg/mL (or mg/mL)" value={drawStockConc} onChange={setDrawStockConc} min={0.1} max={10000} step={0.1} />
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold leading-none text-slate-500">Required dose</label>
+            <div className="flex items-center gap-1.5">
+              <input type="number" value={Number.isFinite(drawDose) ? drawDose : ""} min={1} max={10000} step={1}
+                onChange={(e) => {
+                  const next = e.target.value === "" ? NaN : Number(e.target.value);
+                  if (Number.isNaN(next) || next < 1 || next > 10000) {
+                    setDrawDose(NaN);
+                  } else {
+                    setDrawDose(next);
+                  }
+                }}
+                aria-invalid={!num(drawDose)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+              <UnitSelector value={doseUnit} onChange={setDoseUnit} label="Required dose" />
+            </div>
+            {doseError && <p className="text-xs font-medium text-rose-400">{doseError}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold leading-none text-slate-500">Stock concentration</label>
+            <div className="flex items-center gap-1.5">
+              <input type="number" value={Number.isFinite(drawStockConc) ? drawStockConc : ""} min={0.1} max={10000} step={0.1}
+                onChange={(e) => {
+                  const next = e.target.value === "" ? NaN : Number(e.target.value);
+                  if (Number.isNaN(next) || next < 0.1 || next > 10000) {
+                    setDrawStockConc(NaN);
+                  } else {
+                    setDrawStockConc(next);
+                  }
+                }}
+                aria-invalid={!num(drawStockConc)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+              <UnitSelector value={concUnit} onChange={setConcUnit} label="Stock concentration" />
+            </div>
+            {doseError && <p className="text-xs font-medium text-rose-400">{doseError}</p>}
+          </div>
         </div>
         <FormulaRow label="Volume to draw up" value={drawVolume} unit="mL" />
       </FormulaSection>
@@ -1163,10 +1196,78 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
       <FormulaSection title="2 — Infusion flow rate (mcg/kg/min)">
         <p className="font-mono text-xs text-slate-500">Flow = (Vol × Dose × 60) ÷ (Conc × 1000)</p>
         <div className="space-y-2">
-          <FormulaField label="Solution volume" unit="mL" value={infVol} onChange={setInfVol} min={1} max={1000} />
-          <FormulaField label="Dose rate" unit="mcg/kg/min" value={infDose} onChange={setInfDose} min={0.01} max={10} step={0.01} />
-          <FormulaField label="Patient weight" unit="kg" value={infWeight} onChange={setInfWeight} min={1} max={200} />
-          <FormulaField label="Total drug in bag" unit="mg" value={infConc} onChange={setInfConc} min={0.1} max={1000} step={0.1} />
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold leading-none text-slate-500">Solution volume</label>
+            <div className="flex items-center gap-1.5">
+              <input type="number" value={Number.isFinite(infVol) ? infVol : ""} min={1} max={1000} step={1}
+                onChange={(e) => {
+                  const next = e.target.value === "" ? NaN : Number(e.target.value);
+                  if (Number.isNaN(next) || next < 1 || next > 1000) {
+                    setInfVol(NaN);
+                  } else {
+                    setInfVol(next);
+                  }
+                }}
+                aria-invalid={!num(infVol)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+              <span className="text-xs text-slate-500 w-16">mL</span>
+            </div>
+            {infError && <p className="text-xs font-medium text-rose-400">{infError}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold leading-none text-slate-500">Dose rate</label>
+            <div className="flex items-center gap-1.5">
+              <input type="number" value={Number.isFinite(infDose) ? infDose : ""} min={0.01} max={10} step={0.01}
+                onChange={(e) => {
+                  const next = e.target.value === "" ? NaN : Number(e.target.value);
+                  if (Number.isNaN(next) || next < 0.01 || next > 10) {
+                    setInfDose(NaN);
+                  } else {
+                    setInfDose(next);
+                  }
+                }}
+                aria-invalid={!num(infDose)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+              <span className="text-xs text-slate-500 w-16">mcg/kg/min</span>
+            </div>
+            {infError && <p className="text-xs font-medium text-rose-400">{infError}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold leading-none text-slate-500">Patient weight</label>
+            <div className="flex items-center gap-1.5">
+              <input type="number" value={Number.isFinite(infWeight) ? infWeight : ""} min={1} max={200} step={1}
+                onChange={(e) => {
+                  const next = e.target.value === "" ? NaN : Number(e.target.value);
+                  if (Number.isNaN(next) || next < 1 || next > 200) {
+                    setInfWeight(NaN);
+                  } else {
+                    setInfWeight(next);
+                  }
+                }}
+                aria-invalid={!num(infWeight)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+              <span className="text-xs text-slate-500 w-12">kg</span>
+            </div>
+            {infError && <p className="text-xs font-medium text-rose-400">{infError}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold leading-none text-slate-500">Total drug in bag</label>
+            <div className="flex items-center gap-1.5">
+              <input type="number" value={Number.isFinite(infConc) ? infConc : ""} min={0.1} max={1000} step={0.1}
+                onChange={(e) => {
+                  const next = e.target.value === "" ? NaN : Number(e.target.value);
+                  if (Number.isNaN(next) || next < 0.1 || next > 1000) {
+                    setInfConc(NaN);
+                  } else {
+                    setInfConc(next);
+                  }
+                }}
+                aria-invalid={!num(infConc)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+              <UnitSelector value={concUnit} onChange={setConcUnit} label="Total drug in bag" />
+            </div>
+            {infError && <p className="text-xs font-medium text-rose-400">{infError}</p>}
+          </div>
         </div>
         <FormulaRow label="Flow rate" value={infFlowRate} unit="mL/h" />
       </FormulaSection>
@@ -1174,8 +1275,42 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
       <FormulaSection title="3 — Drip rate (gravity set)">
         <p className="font-mono text-xs text-slate-500">Drops/min = (mL/h × Drop factor) ÷ 60</p>
         <div className="space-y-2">
-          <FormulaField label="Flow rate" unit="mL/h" value={dripRate} onChange={setDripRate} min={1} max={500} />
-          <FormulaField label="Drop factor" unit="gtt/mL" value={dripFactor} onChange={setDripFactor} min={10} max={60} step={10} />
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold leading-none text-slate-500">Flow rate</label>
+            <div className="flex items-center gap-1.5">
+              <input type="number" value={Number.isFinite(dripRate) ? dripRate : ""} min={1} max={500} step={1}
+                onChange={(e) => {
+                  const next = e.target.value === "" ? NaN : Number(e.target.value);
+                  if (Number.isNaN(next) || next < 1 || next > 500) {
+                    setDripRate(NaN);
+                  } else {
+                    setDripRate(next);
+                  }
+                }}
+                aria-invalid={!num(dripRate)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+              <span className="text-xs text-slate-500 w-16">mL/h</span>
+            </div>
+            {dripError && <p className="text-xs font-medium text-rose-400">{dripError}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold leading-none text-slate-500">Drop factor</label>
+            <div className="flex items-center gap-1.5">
+              <input type="number" value={Number.isFinite(dripFactor) ? dripFactor : ""} min={10} max={60} step={10}
+                onChange={(e) => {
+                  const next = e.target.value === "" ? NaN : Number(e.target.value);
+                  if (Number.isNaN(next) || next < 10 || next > 60) {
+                    setDripFactor(NaN);
+                  } else {
+                    setDripFactor(next);
+                  }
+                }}
+                aria-invalid={!num(dripFactor)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+              <span className="text-xs text-slate-500 w-16">gtt/mL</span>
+            </div>
+            {dripError && <p className="text-xs font-medium text-rose-400">{dripError}</p>}
+          </div>
         </div>
         <FormulaRow label="Drip rate" value={drips} unit="drops/min" />
       </FormulaSection>
@@ -1183,8 +1318,42 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
       <FormulaSection title="4 — Flow rate for fixed volume/time">
         <p className="font-mono text-xs text-slate-500">Flow = (Volume × 60) ÷ Infusion time</p>
         <div className="space-y-2">
-          <FormulaField label="Volume to infuse" unit="mL" value={vtVol} onChange={setVtVol} min={1} max={1000} />
-          <FormulaField label="Infusion time" unit="min" value={vtTime} onChange={setVtTime} min={1} max={480} />
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold leading-none text-slate-500">Volume to infuse</label>
+            <div className="flex items-center gap-1.5">
+              <input type="number" value={Number.isFinite(vtVol) ? vtVol : ""} min={1} max={1000} step={1}
+                onChange={(e) => {
+                  const next = e.target.value === "" ? NaN : Number(e.target.value);
+                  if (Number.isNaN(next) || next < 1 || next > 1000) {
+                    setVtVol(NaN);
+                  } else {
+                    setVtVol(next);
+                  }
+                }}
+                aria-invalid={!num(vtVol)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+              <span className="text-xs text-slate-500 w-16">mL</span>
+            </div>
+            {vtError && <p className="text-xs font-medium text-rose-400">{vtError}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold leading-none text-slate-500">Infusion time</label>
+            <div className="flex items-center gap-1.5">
+              <input type="number" value={Number.isFinite(vtTime) ? vtTime : ""} min={1} max={480} step={1}
+                onChange={(e) => {
+                  const next = e.target.value === "" ? NaN : Number(e.target.value);
+                  if (Number.isNaN(next) || next < 1 || next > 480) {
+                    setVtTime(NaN);
+                  } else {
+                    setVtTime(next);
+                  }
+                }}
+                aria-invalid={!num(vtTime)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+              <span className="text-xs text-slate-500 w-16">min</span>
+            </div>
+            {vtError && <p className="text-xs font-medium text-rose-400">{vtError}</p>}
+          </div>
         </div>
         <FormulaRow label="Flow rate" value={vtFlowRate} unit="mL/h" />
       </FormulaSection>
@@ -1192,15 +1361,67 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
       <FormulaSection title="5 — What dose is running? (reverse calc)">
         <p className="font-mono text-xs text-slate-500">Dose = (Flow × Conc) ÷ 60 ÷ Weight</p>
         <div className="space-y-2">
-          <FormulaField label="Current flow rate" unit="mL/h" value={backFr} onChange={setBackFr} min={0.1} max={500} step={0.1} />
-          <FormulaField label="Solution concentration" unit="mcg/mL" value={backConc} onChange={setBackConc} min={0.1} max={10000} step={0.1} />
-          <FormulaField label="Patient weight" unit="kg" value={backWeight} onChange={setBackWeight} min={1} max={200} />
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold leading-none text-slate-500">Current flow rate</label>
+            <div className="flex items-center gap-1.5">
+              <input type="number" value={Number.isFinite(backFr) ? backFr : ""} min={0.1} max={500} step={0.1}
+                onChange={(e) => {
+                  const next = e.target.value === "" ? NaN : Number(e.target.value);
+                  if (Number.isNaN(next) || next < 0.1 || next > 500) {
+                    setBackFr(NaN);
+                  } else {
+                    setBackFr(next);
+                  }
+                }}
+                aria-invalid={!num(backFr)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+              <span className="text-xs text-slate-500 w-16">mL/h</span>
+            </div>
+            {backError && <p className="text-xs font-medium text-rose-400">{backError}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold leading-none text-slate-500">Solution concentration</label>
+            <div className="flex items-center gap-1.5">
+              <input type="number" value={Number.isFinite(backConc) ? backConc : ""} min={0.1} max={10000} step={0.1}
+                onChange={(e) => {
+                  const next = e.target.value === "" ? NaN : Number(e.target.value);
+                  if (Number.isNaN(next) || next < 0.1 || next > 10000) {
+                    setBackConc(NaN);
+                  } else {
+                    setBackConc(next);
+                  }
+                }}
+                aria-invalid={!num(backConc)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+              <UnitSelector value={concUnit} onChange={setConcUnit} label="Solution concentration" />
+            </div>
+            {backError && <p className="text-xs font-medium text-rose-400">{backError}</p>}
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold leading-none text-slate-500">Patient weight</label>
+            <div className="flex items-center gap-1.5">
+              <input type="number" value={Number.isFinite(backWeight) ? backWeight : ""} min={1} max={200} step={1}
+                onChange={(e) => {
+                  const next = e.target.value === "" ? NaN : Number(e.target.value);
+                  if (Number.isNaN(next) || next < 1 || next > 200) {
+                    setBackWeight(NaN);
+                  } else {
+                    setBackWeight(next);
+                  }
+                }}
+                aria-invalid={!num(backWeight)}
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+              <span className="text-xs text-slate-500 w-12">kg</span>
+            </div>
+            {backError && <p className="text-xs font-medium text-rose-400">{backError}</p>}
+          </div>
         </div>
         <FormulaRow label="Dose rate" value={backDose} unit="mcg/kg/min" />
       </FormulaSection>
     </div>
   );
 }
+
 
 /* ════════════════════════════════════════════════════════════
    MAIN PAGE

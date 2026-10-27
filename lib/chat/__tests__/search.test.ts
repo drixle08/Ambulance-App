@@ -31,6 +31,26 @@ describe("searchPages", () => {
   });
 });
 
+describe("searchPages with conversation context", () => {
+  const top = (query: string, context?: string) =>
+    searchPages(query, { types: ["cpg"], limit: 8, context }).map((h) => h.printedPage);
+
+  it("finds the paediatric amiodarone pages for a follow-up that names neither", () => {
+    expect(top("what about in kids?", "Amiodarone dose in cardiac arrest").some((p) => [43, 47, 303, 304, 305].includes(p))).toBe(true);
+    // Without the earlier turn the same question finds nothing relevant.
+    expect(top("what about in kids?").some((p) => [43, 47, 303, 304, 305].includes(p))).toBe(false);
+  });
+
+  it("finds the croup pages for a dosing follow-up", () => {
+    expect(top("how much for a 3 year old?", "Adrenaline for croup").some((p) => [95, 96, 301, 302].includes(p))).toBe(true);
+  });
+
+  it("lets a new topic outweigh the earlier one", () => {
+    const pages = top("Hypoglycaemia in a conscious adult", "Amiodarone dose in cardiac arrest");
+    expect(pages[0]).toBe(119);
+  });
+});
+
 describe("normaliseTokens", () => {
   it("unifies spelling, synonyms and plurals", () => {
     expect(normaliseTokens("Paediatric dosage")).toEqual(normaliseTokens("pediatric doses"));

@@ -203,24 +203,34 @@ function getCorpora(): Record<DocType, Corpus> {
 const K1 = 1.2;
 const B = 0.75;
 
-function bm25(corpus: Corpus, queryTokens: string[]): SearchHit[] {
+/** Term weights: the question's own terms count fully, terms only from earlier turns count half. */
+function termWeights(queryTokens: string[], contextTokens: string[] = []): Map<string, number> {
+  const weights = new Map<string, number>();
+  for (const t of contextTokens) weights.set(t, CONTEXT_WEIGHT);
+  for (const t of queryTokens) weights.set(t, 1);
+  return weights;
+}
+
+const CONTEXT_WEIGHT = 0.5;
+
+function bm25(corpus: Corpus, weights: Map<string, number>): SearchHit[] {
   const n = corpus.docs.length;
-  const unique = [...new Set(queryTokens)];
+  const totalWeight = [...weights.values()].reduce((a, b) => a + b, 0);
   const hits: SearchHit[] = [];
   for (const posting of corpus.docs) {
     let score = 0;
     let matched = 0;
-    for (const term of unique) {
+    for (const [term, weight] of weights) {
       const freq = posting.tf.get(term);
       if (!freq) continue;
-      matched++;
+      matched += weight;
       const df = corpus.df.get(term) ?? 0;
       const idf = Math.log(1 + (n - df + 0.5) / (df + 0.5));
-      score += (idf * freq * (K1 + 1)) / (freq + K1 * (1 - B + (B * posting.length) / corpus.avgLength));
+      score += (weight * idf * freq * (K1 + 1)) / (freq + K1 * (1 - B + (B * posting.length) / corpus.avgLength));
     }
     if (score > 0) {
       // Reward pages that cover more of the question, not just one repeated word.
-      hits.push({ ...posting.doc, score: score * (0.5 + (0.5 * matched) / unique.length) });
+      hits.push({ ...posting.doc, score: score * (0.5 + (0.5 * matched) / totalWeight) });
     }
   }
   return hits.sort((a, b) => b.score - a.score);
@@ -244,17 +254,24 @@ function formularyHits(query: string): PageDoc[] {
   return out;
 }
 
+/**
+ * `context`: the user's earlier turns, so a follow-up ("what about in kids?")
+ * searches the topic it follows on from. Its terms count half as much as the
+ * question's, so a change of topic still wins.
+ */
 export function searchPages(
   query: string,
-  options: { types?: DocType[]; limit?: number } = {}
+  options: { types?: DocType[]; limit?: number; context?: string } = {}
 ): SearchHit[] {
   const types = options.types ?? ["cpg", "cpm", "sop"];
   const limit = options.limit ?? 8;
   const queryTokens = normaliseTokens(query);
-  if (queryTokens.length === 0) return [];
+  const contextTokens = options.context ? normaliseTokens(options.context) : [];
+  if (queryTokens.length === 0 && contextTokens.length === 0) return [];
+  const weights = termWeights(queryTokens, contextTokens);
 
   const all = getCorpora();
-  const ranked = types.flatMap((type) => bm25(all[type], queryTokens).slice(0, limit));
+  const ranked = types.flatMap((type) => bm25(all[type], weights).slice(0, limit));
   ranked.sort((a, b) => b.score - a.score);
 
   const best = ranked[0]?.score ?? 0;
@@ -269,22 +286,41 @@ export function searchPages(
 
   // Interleave the named drug's formulary pages (most relevant first) with the
   // ranked protocol pages, so neither crowds the other out.
-  const cpgScores = types.includes("cpg") ? bm25(all.cpg, queryTokens) : [];
+  const cpgScores = types.includes("cpg") ? bm25(all.cpg, weights) : [];
   const scoreOf = (doc: PageDoc) => cpgScores.find((h) => h.page === doc.page)?.score ?? 0;
+  // A drug named in the question goes first. One named only earlier in the
+  // conversation competes on score, so a change of topic isn't pulled back.
   const formulary = types.includes("cpg")
     ? formularyHits(query)
         .map((doc) => ({ ...doc, score: scoreOf(doc) }))
         .sort((a, b) => b.score - a.score)
         .slice(0, 2)
     : [];
-  const relevant = ranked.filter((hit) => hit.score >= best * 0.3);
+  const fromContext = types.includes("cpg") && !formulary.length && options.context
+    ? formularyHits(options.context).map((doc) => ({ ...doc, score: scoreOf(doc) }))
+    : [];
+  const pool = [...ranked, ...fromContext.filter((d) => !ranked.some((h) => h.type === "cpg" && h.page === d.page))].sort((a, b) => b.score - a.score);
+  const relevant = pool.filter((hit) => hit.score >= best * 0.3);
 
-  for (let i = 0; results.length < limit && (i < formulary.length || i < relevant.length); i++) {
+  // With earlier turns, keep the last slots for the earlier question's own best
+  // pages: a follow-up of generic words ("how much for a 3 year old?") can't find
+  // its topic by itself, and a new topic still ranks first.
+  const reserved = options.context ? Math.min(CONTEXT_SLOTS, limit - 1) : 0;
+  for (let i = 0; results.length < limit - reserved && (i < formulary.length || i < relevant.length); i++) {
     if (formulary[i]) push(formulary[i]);
     if (relevant[i]) push(relevant[i]);
   }
+  if (reserved) {
+    for (const hit of searchPages(options.context!, { types, limit: limit })) {
+      if (results.length >= limit) break;
+      push(hit);
+    }
+  }
   return results;
 }
+
+/** Result slots kept for the earlier question's own pages when searching with context. */
+const CONTEXT_SLOTS = 3;
 
 /** Fetch specific pages by printed page number. */
 export function getPages(type: DocType, printedPages: number[]): PageDoc[] {

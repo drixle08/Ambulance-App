@@ -320,7 +320,8 @@ export default function CpgChatPage() {
     setMessages((prev) => [...prev, userMsg]);
     setIsSending(true);
 
-    const history = [...messages, userMsg]
+    // Earlier turns only: the server adds this question itself.
+    const history = messages
       .slice(-6)
       .map((m) => ({ role: m.role, content: m.content }));
 

@@ -20,6 +20,8 @@ const DEFAULT_MODEL = "claude-opus-5-5";
 /** Extra search rounds Claude may take before it must answer. */
 const MAX_TOOL_ROUNDS = 3;
 const INITIAL_PAGES = 8;
+/** Earlier user questions searched alongside the current one. */
+const CONTEXT_TURNS = 2;
 
 const DOC_LABEL: Record<DocType, string> = { cpg: `CPG ${CPG.tag}`, cpm: "CPM v4.0", sop: "SOP v4.4" };
 
@@ -273,9 +275,19 @@ async function askClaude(
 export async function POST(req: NextRequest) {
   const parsed = await parseChatRequest(req);
   if ("error" in parsed) return parsed.error;
-  const { query, history } = parsed;
+  const { query } = parsed;
+  // Older clients send the current question as the last history entry too; it is
+  // added below as this turn's message, so drop it here rather than send it twice.
+  const last = parsed.history[parsed.history.length - 1];
+  const trimmed = last?.role === "user" && last.content.trim() === query ? parsed.history.slice(0, -1) : parsed.history;
+  // The conversation sent to the model must open with a user turn.
+  const firstUser = trimmed.findIndex((m) => m.role === "user");
+  const history = firstUser < 0 ? [] : trimmed.slice(firstUser);
 
-  const initialPages = searchPages(query, { limit: INITIAL_PAGES });
+  // Search this question in the light of the user's last two questions, so a
+  // follow-up ("what about in kids?") finds the topic it follows on from.
+  const context = history.filter((m) => m.role === "user").slice(-CONTEXT_TURNS).map((m) => m.content).join("\n");
+  const initialPages = searchPages(query, { limit: INITIAL_PAGES, context });
 
   if (initialPages.length === 0) {
     return NextResponse.json({

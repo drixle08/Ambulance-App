@@ -231,7 +231,7 @@ export default function GcsPage() {
 
         {/* ── Running score ── */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4 space-y-3">
-          <div className="flex items-end justify-between">
+          <div className="flex flex-col">
             <div>
               <p className="text-[10px] text-slate-500 uppercase tracking-wider">Total GCS</p>
               <div className="flex items-baseline gap-2">

@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useDevice } from "@/app/_components/DeviceProvider";
-import { ClipboardCheck, FileText, Home, LayoutGrid, MessageCircle, Pill, Search, Timer, WifiOff, X } from "lucide-react";
+import { ClipboardCheck, FileText, Home, LayoutGrid, MessageCircle, Pill, Search, Timer, ActivitySquare, WifiOff, X } from "lucide-react";
 import { useOnline } from "@/lib/useOnline";
+import { useResusCase } from "../(app)/tools/resus-timer/resusStore";
 import {
   CPG_ENTRIES,
   cpgViewerHref,
@@ -302,6 +303,8 @@ export function BottomNav() {
       pathname !== "/tools/resus-timer");
   const isChat = pathname === "/tools/cpg-chat";
   const isResus = pathname === "/tools/resus-timer";
+  const { startedAt, runningSince } = useResusCase();
+  const isResusRunning = !!startedAt && !!runningSince;
 
   const tabBase =
     "flex min-h-16 flex-1 flex-col items-center justify-center gap-1.5 py-3 transition-colors active:opacity-70";
@@ -371,6 +374,13 @@ export function BottomNav() {
         >
           <Timer className="h-6 w-6" />
           <span className="text-[0.65rem] font-black tracking-wide">Resus</span>
+          {isResusRunning && (
+            <span className="ml-1.5 inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[0.55rem] font-black tracking-wide text-emerald-400">
+              <ActivitySquare className="h-3 w-3" />
+              <span className="hidden sm:inline">Resuscitation in progress</span>
+              <span className="sm:hidden">CPR in progress</span>
+            </span>
+          )}
         </Link>
       </nav>
 

@@ -150,7 +150,7 @@ export default function GcsPage() {
   const summaryText = `GCS ${total} (E${eye} V${verbal} M${motor}) — ${bs.summary}. E: ${eyeLabel}. V: ${verbalOptions.find((o) => o.score === verbal)?.label}. M: ${motorLabel}. CPG 1.4 Glasgow Coma Scale.`;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-40">
+    <div className="min-h-screen bg-slate-950 text-slate-100 pb-56">
       {/* ── Sticky Header ── */}
       <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
         <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-3">
@@ -341,8 +341,8 @@ export default function GcsPage() {
       <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-30 border-t border-slate-800 bg-slate-950/95 backdrop-blur-sm">
         <div className="mx-auto max-w-2xl px-4 py-3">
           <div className={`rounded-xl border p-3 ${bs.border} ${bs.bg}`}>
-            <div className="flex items-center gap-4">
-              {/* Big GCS */}
+            {/* Score row: total, then E / V / M */}
+            <div className="flex items-center gap-3">
               <div className="flex-shrink-0 text-center">
                 <p className="text-[10px] text-slate-500 uppercase tracking-wider leading-none">GCS</p>
                 <p className={`text-3xl font-black tabular-nums leading-none mt-0.5 ${bs.text}`}>
@@ -350,29 +350,33 @@ export default function GcsPage() {
                 </p>
               </div>
               <div className="w-px h-10 bg-slate-700 flex-shrink-0" />
-              {/* Component breakdown */}
-              <div className="flex min-w-0 flex-1 gap-3">
+              <div className="grid min-w-0 flex-1 grid-cols-3 gap-2">
                 {[
-                  { l: "E", v: eye, c: SCORE_COLOR[eye] },
-                  { l: "V", v: verbal, c: SCORE_COLOR[verbal] },
-                  { l: "M", v: motor, c: SCORE_COLOR[motor] },
-                ].map(({ l, v, c }) => (
-                  <div key={l} className="flex items-center justify-center"><div className="w-16 flex items-center justify-center">
-                    <p className="text-[10px] text-slate-500">{l}</p>
-                    <CriticalValue
-                  value={String(v)}
-                  tone={v === 1 ? "critical" : v === 2 || v === 3 ? "warning" : "ok"}
-                />
-                </div>
+                  { l: "E", v: eye },
+                  { l: "V", v: verbal },
+                  { l: "M", v: motor },
+                ].map(({ l, v }) => (
+                  <div
+                    key={l}
+                    className="relative flex items-baseline justify-center gap-1.5 overflow-hidden rounded-lg border border-slate-800 bg-slate-900/40 py-1.5"
+                  >
+                    {/* Severity accent (a strip, since the theme overrides border colours) */}
+                    <span
+                      aria-hidden
+                      className={`absolute inset-y-0 left-0 w-1 ${
+                        v === 1 ? "bg-red-500" : v === 2 || v === 3 ? "bg-amber-500" : "bg-slate-600"
+                      }`}
+                    />
+                    <span className="text-xs font-semibold text-slate-500">{l}</span>
+                    <span className="text-xl font-black tabular-nums leading-none text-white">{v}</span>
                   </div>
                 ))}
               </div>
-              <div className="w-px h-10 bg-slate-700 flex-shrink-0" />
-              {/* CPG interpretation */}
-              <div className="min-w-0 flex-shrink-0 text-right">
-                <p className={`text-sm font-bold ${bs.text}`}>{bs.label}</p>
-                <p className="text-[10px] text-slate-400 break-words">{bs.detail}</p>
-              </div>
+            </div>
+            {/* CPG interpretation, on its own line so it never overlaps the scores */}
+            <div className="mt-2.5 border-t border-slate-700/60 pt-2">
+              <p className={`text-sm font-bold leading-snug ${bs.text}`}>{bs.label}</p>
+              {bs.detail && <p className="mt-0.5 text-xs text-slate-400 leading-snug">{bs.detail}</p>}
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import { ToolHeader } from "@/app/_components/ToolHeader";
 import {
   ArrowLeft,
   Flame,
@@ -159,39 +160,22 @@ export default function BurnsToolPage() {
     <div className="min-h-screen bg-slate-950 text-slate-50 pb-36">
 
       {/* ── Sticky header ────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
-          <Link
-            href="/dashboard/trauma"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <div className="flex-1 min-w-0">
-            <p className="text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-orange-400">
-              Trauma · CPG 10.9
-            </p>
-            <h1 className="text-sm font-semibold leading-tight text-slate-50">
-              Burn Surface Area Calculator
-            </h1>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
+      <ToolHeader
+        title="Burn Surface Area Calculator"
+        meta="CPG 10.9"
+        showBack
+        showReset
+        onReset={resetAll}
+        rightContent={
+          <>
             {totalBsa > 0 && (
               <span className={`rounded-full border px-2 py-0.5 text-[0.65rem] font-bold ${outcomeStyle.badge}`}>
                 {totalBsa}% TBSA
               </span>
             )}
-            <button
-              type="button"
-              onClick={resetAll}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200"
-              aria-label="Reset"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 pt-4">
 

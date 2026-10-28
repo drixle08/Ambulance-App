@@ -243,7 +243,7 @@ export default function GcsPage() {
             </div>
             <div className="text-right">
               <p className={`text-sm font-bold ${bs.text}`}>{bs.label}</p>
-              <p className="text-[10px] text-slate-400">{bs.detail}</p>
+              <p className="text-[10px] text-slate-400 break-words">{bs.detail}</p>
             </div>
           </div>
           {/* Progress bar 3–15 */}
@@ -351,26 +351,27 @@ export default function GcsPage() {
               </div>
               <div className="w-px h-10 bg-slate-700 flex-shrink-0" />
               {/* Component breakdown */}
-              <div className="flex gap-3 flex-1">
+              <div className="flex min-w-0 flex-1 gap-3">
                 {[
                   { l: "E", v: eye, c: SCORE_COLOR[eye] },
                   { l: "V", v: verbal, c: SCORE_COLOR[verbal] },
                   { l: "M", v: motor, c: SCORE_COLOR[motor] },
                 ].map(({ l, v, c }) => (
-                  <div key={l} className="text-center">
+                  <div key={l} className="flex items-center justify-center"><div className="w-16 flex items-center justify-center">
                     <p className="text-[10px] text-slate-500">{l}</p>
                     <CriticalValue
                   value={String(v)}
                   tone={v === 1 ? "critical" : v === 2 || v === 3 ? "warning" : "ok"}
                 />
+                </div>
                   </div>
                 ))}
               </div>
               <div className="w-px h-10 bg-slate-700 flex-shrink-0" />
               {/* CPG interpretation */}
-              <div className="text-right flex-shrink min-w-0">
+              <div className="min-w-0 flex-shrink-0 text-right">
                 <p className={`text-sm font-bold ${bs.text}`}>{bs.label}</p>
-                <p className="text-[10px] text-slate-400">{bs.detail}</p>
+                <p className="text-[10px] text-slate-400 break-words">{bs.detail}</p>
               </div>
             </div>
           </div>
@@ -437,7 +438,7 @@ function ScoreOption({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors active:scale-[0.99] ${
+      className={`min-w-0 w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors active:scale-[0.99] overflow-hidden ${
         selected
           ? c.selected
           : "border-slate-700 bg-slate-800 hover:border-slate-600"
@@ -451,7 +452,7 @@ function ScoreOption({
         {score}
       </span>
       <span
-        className={`text-sm font-medium leading-snug ${
+        className={`min-w-0 max-w-full text-sm font-medium leading-snug break-words ${
           selected ? "text-white" : "text-slate-400"
         }`}
       >

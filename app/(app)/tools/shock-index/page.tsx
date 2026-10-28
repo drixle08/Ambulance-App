@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, Activity, Heart, Droplets, AlertTriangle, CheckCircle, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ToolHeader } from "@/app/_components/ToolHeader";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 
 export default function ShockIndexPage() {

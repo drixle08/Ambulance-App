@@ -102,7 +102,7 @@ body {
 .app-shell [class~="dark:bg-slate-950"],
 .app-shell [class~="dark:bg-slate-950/90"],
 .app-shell [class~="dark:bg-slate-950/80"] {
-  background-color: var(--app-dark-base) !important;
+  background-color: var(--app-dark-base) ;
 }
 
 .app-shell [class~="bg-slate-900"],
@@ -119,7 +119,7 @@ body {
 .app-shell [class~="dark:bg-slate-900/80"],
 .app-shell [class~="dark:bg-slate-800"],
 .app-shell [class~="dark:bg-slate-800/50"] {
-  background-color: var(--app-dark-surface-soft) !important;
+  background-color: var(--app-dark-surface-soft) ;
 }
 
 .app-shell [class~="bg-white"],
@@ -129,7 +129,7 @@ body {
 .app-shell [class~="bg-slate-50/90"],
 .app-shell [class~="bg-slate-100"],
 .app-shell [class~="bg-slate-100/70"] {
-  background-color: var(--app-light-surface) !important;
+  background-color: var(--app-light-surface) ;
 }
 
 .app-shell [class~="border-slate-800"],
@@ -141,12 +141,12 @@ body {
 .app-shell [class~="dark:border-slate-700"],
 .app-shell [class~="border-slate-200"],
 .app-shell [class~="border-slate-300"] {
-  border-color: var(--app-border) !important;
+  border-color: var(--app-border) ;
 }
 
 .app-shell [class~="bg-emerald-500"],
 .app-shell [class~="hover:bg-emerald-400"]:hover {
-  background-color: var(--app-accent-bright) !important;
+  background-color: var(--app-accent-bright) ;
 }
 
 .app-shell [class~="text-emerald-500"],
@@ -154,5 +154,5 @@ body {
 .app-shell [class~="text-emerald-300"],
 .app-shell [class~="dark:text-emerald-400"],
 .app-shell [class~="dark:text-emerald-300"] {
-  color: var(--app-accent) !important;
+  color: var(--app-accent) ;
 }

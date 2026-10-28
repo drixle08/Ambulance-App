@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import { useWakeLock } from "@/lib/useWakeLock";
 import {
   ArrowLeft,
   Baby,
@@ -109,6 +110,7 @@ export default function PedsArrestPage() {
   const [ageMonths, setAgeMonths] = useState(0);
   const [hasAge, setHasAge] = useState(false);
   const [weightOverride, setWeightOverride] = useState("");
+  useWakeLock(true);
 
   const estWeight = hasAge ? estimateWeightKg(ageYears, ageMonths) : null;
   const parsedOverride = parseFloat(weightOverride);

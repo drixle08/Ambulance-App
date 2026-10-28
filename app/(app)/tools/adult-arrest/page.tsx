@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import { useWakeLock } from "@/lib/useWakeLock";
 import {
   ArrowLeft,
   Zap,
@@ -607,6 +608,7 @@ export default function AdultArrestPage() {
   const [tab, setTab] = useState<Tab>("algorithm");
   const [roscOpen, setRoscOpen] = useState(false);
   const [noRoscOpen, setNoRoscOpen] = useState(false);
+  useWakeLock(true);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 pb-8">

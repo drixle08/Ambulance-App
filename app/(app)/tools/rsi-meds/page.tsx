@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import { useWakeLock } from "@/lib/useWakeLock";
 import { CriticalValue } from "@/components/CriticalValue";
 import {
   ArrowLeft,
@@ -865,6 +866,7 @@ function AccordionRow({
 
 export default function RsiMedsPage() {
   const [activeId, setActiveId] = useState<SectionId | null>("prepare");
+  useWakeLock(true);
 
   function toggleSection(id: SectionId) {
     setActiveId((prev) => (prev === id ? null : id));

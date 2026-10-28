@@ -89,6 +89,11 @@ export default function ShockIndexPage() {
     ? `Shock index: HR ${Math.round(hrNum)}/min, SBP ${Math.round(sbpNum)} mmHg → SI ${shockIndex.toFixed(2)} (${siConfig.label.toLowerCase()}).${Number.isFinite(map) ? ` MAP ≈ ${Math.round(map)} mmHg.` : ""} ${siBand === "high" ? "Treat as time-critical — consider occult shock, follow sepsis/trauma/shock CPG, prenotify receiving hospital." : siBand === "borderline" ? "Elevated SI — monitor trends, repeat vitals, be alert for early shock." : "SI not elevated — continue routine monitoring."}`
     : "Shock index tool used — insufficient data to calculate SI. Enter HR and SBP to generate summary.";
 
+  const copySummary = (text: string) => {
+    if (!navigator.clipboard?.writeText) return;
+    void navigator.clipboard.writeText(text);
+  };
+
   const handleReset = () => {
     setSbp("");
     setDbp("");
@@ -103,26 +108,14 @@ export default function ShockIndexPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-24">
       {/* Sticky header */}
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-amber-400">
-              Reference
-            </p>
-            <h1 className="text-base font-bold leading-tight text-slate-100 truncate">
-              Shock Index & MAP Calculator
-            </h1>
-          </div>
-          <CopySummaryButton summaryText={summaryText} />
-        </div>
-      </header>
+      <ToolHeader
+        title="Shock Index & MAP Calculator"
+        meta="Reference"
+        showBack
+        showCopy
+        copyText={summaryText}
+        onCopy={copySummary}
+      />
 
       <div className="max-w-2xl mx-auto px-4 pt-5 space-y-4">
 

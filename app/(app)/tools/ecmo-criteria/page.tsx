@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import { ToolHeader } from "@/app/_components/ToolHeader";
 import {
   ArrowLeft,
   RotateCcw,
@@ -242,6 +243,11 @@ export default function ECMOCriteriaPage() {
     alternativeSelected,
   ]);
 
+  const copySummary = (text: string) => {
+    if (!navigator.clipboard?.writeText) return;
+    void navigator.clipboard.writeText(text);
+  };
+
   const toneCls = {
     neutral:
       "border-slate-700 bg-slate-900 text-slate-300",
@@ -263,35 +269,15 @@ export default function ECMOCriteriaPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-32">
       {/* ── Sticky Header ── */}
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
-        <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-3">
-          <Link
-            href="/dashboard/resuscitation"
-            className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 text-slate-300" />
-          </Link>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
-              Resuscitation
-            </p>
-            <h1 className="text-base font-bold text-white leading-tight">
-              ECMO CPR (e-CPR) Criteria
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={reset}
-              className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
-              aria-label="Reset checklist"
-            >
-              <RotateCcw className="w-4 h-4 text-slate-300" />
-            </button>
-            <CopySummaryButton summaryText={summaryText} />
-          </div>
-        </div>
-      </header>
+      <ToolHeader
+              title="ECMO CPR (e-CPR) Criteria"
+              meta="Resuscitation"
+              showBack
+              showReset
+              rightContent={
+                <CopySummaryButton summaryText={summaryText} />
+              }
+            />
 
       <main className="mx-auto max-w-2xl px-4 pt-4 space-y-4">
         {/* ── Context note ── */}

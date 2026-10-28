@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ToolHeader } from "@/app/_components/ToolHeader";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -187,29 +188,15 @@ export default function DocumentationPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 pb-8 text-slate-100">
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-100"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <div className="min-w-0 flex-1">
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-blue-400">
-              Documentation
-            </p>
-            <h1 className="truncate text-base font-bold leading-tight text-slate-100">
-              CHART Documentation
-            </h1>
-          </div>
+      <ToolHeader
+        title="CHART Documentation"
+        showBack
+        rightContent={
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-300">
             <FilePenLine className="h-5 w-5" />
           </div>
-        </div>
-      </header>
+        }
+      />
 
       <main className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pt-4">
         <section className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-4 py-3">

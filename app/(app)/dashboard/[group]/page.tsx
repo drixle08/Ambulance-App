@@ -118,11 +118,11 @@ export default async function GroupPage({ params }: GroupPageProps) {
                 <ToolIcon className={`h-7 w-7 ${color.icon}`} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-base font-black text-slate-900 dark:text-slate-50">
+                <p className="line-clamp-2 text-base font-black text-slate-900 dark:text-slate-50">
                   {tool.name}
                 </p>
                 {tool.meta && (
-                  <span className="text-[0.68rem] font-medium text-slate-500 dark:text-slate-400">
+                  <span className="text-[0.68rem] font-medium text-slate-500 dark:text-slate-400 block">
                     {tool.meta}
                   </span>
                 )}

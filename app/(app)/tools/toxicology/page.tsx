@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ToolHeader } from "@/app/_components/ToolHeader";
 import { useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -151,6 +152,11 @@ export default function ToxicologyPage() {
     return `Toxicology findings: ${labels}. Top matches: ${top || "none"}.${mixedNote}`;
   }, [result, selectedIds, selectedSet, matches, mixed]);
 
+  const copySummary = (text: string) => {
+    if (!navigator.clipboard?.writeText) return;
+    void navigator.clipboard.writeText(text);
+  };
+
   function toggleSymptom(id: string) {
     setSelectedIds((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   }
@@ -174,41 +180,15 @@ export default function ToxicologyPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 pb-36 text-slate-100">
-      {/* ── Header ── */}
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
-          <Link
-            href="/dashboard/toxicology"
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 transition-colors hover:border-slate-500"
-          >
-            <ArrowLeft className="h-4 w-4 text-slate-300" />
-          </Link>
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-rose-400">
-              Toxicology & Toxinology
-            </p>
-            <h1 className="truncate text-sm font-bold text-white">Toxidrome Finder</h1>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {selectedIds.length > 0 && (
-              <button
-                type="button"
-                onClick={resetAll}
-                className="flex h-8 items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900 px-3 text-[11px] font-medium text-slate-300 transition-colors hover:border-rose-400/50 hover:text-rose-300"
-              >
-                <RefreshCcw className="h-3 w-3" />
-                Clear ({selectedIds.length})
-              </button>
-            )}
-            <CopySummaryButton
-              summaryText={summaryText}
-              label="Copy"
-              copiedLabel="Copied"
-              className="px-2.5"
-            />
-          </div>
-        </div>
-      </header>
+      <ToolHeader
+        title="Toxidrome Finder"
+        meta="Toxicology & Toxinology"
+        showBack
+        showReset
+        showCopy
+        copyText={summaryText}
+        onCopy={copySummary}
+      />
 
       <main className="mx-auto max-w-5xl space-y-4 px-4 pt-4">
         {/* ── Intro ── */}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ToolHeader } from "@/app/_components/ToolHeader";
 import { ArrowLeft, Heart, Wind, Activity, Droplets, Gauge } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";

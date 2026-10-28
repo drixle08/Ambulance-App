@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ToolHeader } from "@/app/_components/ToolHeader";
 import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 
@@ -139,30 +140,13 @@ export default function SepsisReferencePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 md:py-8 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-emerald-500">
-            Reference
-          </p>
-          <h1 className="mt-1 text-xl md:text-2xl font-semibold text-slate-900 dark:text-slate-50">
-            Sepsis & QEWS quick reference
-          </h1>
-          <p className="mt-1 text-xs md:text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-            Checklist-style support for suspected sepsis, combining adult qSOFA, paediatric sepsis
-            criteria, and QEWS triggers. Use alongside the full sepsis and QEWS CPGs. This tool does
-            not replace clinical judgement or local protocols.
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <CopySummaryButton summaryText={summaryText} />
-          <Link
-            href="/dashboard"
-            className="text-[0.7rem] text-emerald-700 hover:text-emerald-600 dark:text-emerald-300 dark:hover:text-emerald-200"
-          >
-            ← Back to tools
-          </Link>
-        </div>
-      </div>
+      <ToolHeader
+        title="Sepsis & QEWS quick reference"
+        meta="CPG 2.6"
+        showBack
+        showCopy
+        copyText={summaryText}
+      />
 
       {/* Adult qSOFA section */}
       <section className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)] items-start">

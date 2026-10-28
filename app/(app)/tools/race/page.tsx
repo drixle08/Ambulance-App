@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ToolHeader } from "@/app/_components/ToolHeader";
 import Link from "next/link";
 import { ArrowLeft, RotateCcw, Brain, AlertTriangle, PlayCircle } from "lucide-react";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";

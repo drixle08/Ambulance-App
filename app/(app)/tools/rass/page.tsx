@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ToolHeader } from "@/app/_components/ToolHeader";
 
 // ─── RASS data ────────────────────────────────────────────────────────────────
 
@@ -273,13 +274,11 @@ export default function RassPage() {
   return (
     <div className="mx-auto max-w-lg px-4 pt-4 pb-24">
       {/* Header */}
-      <header className="mb-4 space-y-0.5">
-        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-violet-500">
-          Assessment & Screening
-        </p>
-        <h1 className="text-xl font-bold tracking-tight text-slate-100">Sedation Assessment (RASS)</h1>
-        <p className="text-xs text-slate-500">Richmond Agitation-Sedation Scale · −5 to +4</p>
-      </header>
+      <ToolHeader
+        title="Sedation Assessment (RASS)"
+        meta="CPG 3.1 · {EDITION.short}"
+        showBack={false}
+      />
 
       {/* Target banner */}
       <div className="mb-4 rounded-xl border border-sky-800/50 bg-sky-950/30 px-3 py-2 flex items-start gap-2">

@@ -1,10 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { Plus, ChevronDown, ChevronUp, Pencil, Trash2, X } from "lucide-react";
-import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
-import { UndoToast } from "@/app/_components/UndoToast";
-import { useWakeLock } from "@/lib/useWakeLock";
+import { useRouter } from "next/navigation";
+import { ToolHeader } from "@/app/_components/ToolHeader";
 import {
   clearTreatmentCase,
   restoreTreatmentCase,
@@ -15,6 +12,11 @@ import {
   type PatientType,
   type TreatmentCase,
 } from "./treatmentStore";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { ChevronUp, ChevronDown, X, Pencil, Trash2, Plus } from "lucide-react";
+import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import { UndoToast } from "@/app/_components/UndoToast";
+import { useWakeLock } from "@/lib/useWakeLock";
 
 /* ════════════════════════════════════════════════════════════
    TYPES
@@ -819,40 +821,42 @@ export default function TreatmentLogPage() {
   const activeStages = visStages(pt);
 
   return (
-    <div className="mx-auto max-w-lg px-4 pt-4 pb-32 space-y-4">
-      <header>
-        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-teal-500">Clinical Management</p>
-        <h1 className="text-xl font-bold tracking-tight text-slate-100">Treatment Log</h1>
-        <p className="text-xs text-slate-500">Tap each intervention as you perform it — timestamps auto-set.</p>
-      </header>
+    <div className="min-h-screen bg-slate-950 pb-32 text-slate-100">
+      <ToolHeader
+        title="Treatment Log"
+        meta="Clinical Management"
+        showBack
+      />
 
-      {/* Patient type selector */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <p className="text-[0.65rem] font-black uppercase tracking-widest text-slate-600">Patient type</p>
-          {hasStarted && <span className="text-[0.6rem] border border-slate-800 rounded-full px-2 py-0.5 text-slate-700">locked — reset to change</span>}
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {(Object.keys(PT_META) as PatientType[]).map((type) => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => { if (!hasStarted) setPt(type); }}
-              disabled={hasStarted && pt !== type}
-              className={`flex flex-col gap-0.5 rounded-xl border px-3 py-2.5 text-left transition-all ${
-                pt === type ? PT_CLR[type].active : "bg-slate-900/60 text-slate-500 border-slate-800 opacity-50"
-              } ${hasStarted ? "cursor-default" : "active:scale-95"}`}
-            >
-              <span className="text-sm font-bold">{PT_META[type].label}</span>
-              <span className="text-[0.6rem] opacity-60">{PT_META[type].sub}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      <main className="mx-auto max-w-lg px-4 pt-4 pb-32 space-y-4">
 
-      {/* Stage cards */}
-      <div className="space-y-2">
-        {activeStages.map((stage) => {
+        {/* Patient type selector */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <p className="text-[0.65rem] font-black uppercase tracking-widest text-slate-600">Patient type</p>
+            {hasStarted && <span className="text-[0.6rem] border border-slate-800 rounded-full px-2 py-0.5 text-slate-700">locked — reset to change</span>}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {(Object.keys(PT_META) as PatientType[]).map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => { if (!hasStarted) setPt(type); }}
+                disabled={hasStarted && pt !== type}
+                className={`flex flex-col gap-0.5 rounded-xl border px-3 py-2.5 text-left transition-all ${
+                  pt === type ? PT_CLR[type].active : "bg-slate-900/60 text-slate-500 border-slate-800 opacity-50"
+                } ${hasStarted ? "cursor-default" : "active:scale-95"}`}
+              >
+                <span className="text-sm font-bold">{PT_META[type].label}</span>
+                <span className="text-[0.6rem] opacity-60">{PT_META[type].sub}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Stage cards */}
+        <div className="space-y-2">
+          {activeStages.map((stage) => {
           const clr = CLR[stage.color] ?? CLR.slate;
           const items = vis(stage.items, pt);
           const doneCount = stage.isMeds ? meds.length : items.filter((i) => checked[i.id]).length;
@@ -1190,9 +1194,8 @@ export default function TreatmentLogPage() {
             </div>
           );
         })}
-      </div>
-
-      {/* Floating bar */}
+    </div>
+        {/* Floating bar */}
       <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-800 bg-slate-950/95 backdrop-blur-sm px-4 py-3">
         <div className="mx-auto max-w-lg flex items-center gap-3">
           <div className="flex-1 min-w-0">
@@ -1220,6 +1223,7 @@ export default function TreatmentLogPage() {
       {undoSnapshot && (
         <UndoToast message="Patient log cleared" onUndo={undoReset} onExpire={dismissUndo} />
       )}
+</main>
     </div>
   );
 }

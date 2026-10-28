@@ -261,6 +261,7 @@ function Connector() {
 
 function TwoRescuerFlow({ defib }: { defib: Defib }) {
   const e = DEFIB_ENERGY[defib];
+  const [rhythm, setRhythm] = useState<"shockable" | "nonShockable" | null>(null);
   return (
     <div className="flex flex-col gap-1.5">
       <StepCard n={1} label="Confirm witnessed arrest — both rescuers present">
@@ -268,8 +269,8 @@ function TwoRescuerFlow({ defib }: { defib: Defib }) {
           text="Unresponsive + absent or agonal breathing"
           sub="Patient already on monitor with AP pads"
         />
-        <ActionItem text="R1: confirm arrest · call for help · notify NCC" />
-        <ActionItem text="R2: take position at defibrillator" />
+        <ActionItem text="AP1: confirm arrest · call for help · notify NCC" />
+        <ActionItem text="AP2: take position at defibrillator" />
       </StepCard>
 
       <Connector />
@@ -280,47 +281,104 @@ function TwoRescuerFlow({ defib }: { defib: Defib }) {
 
       <Connector />
 
-      <RhythmFork
-        shockContent={
-          <>
-            <p className="text-[0.7rem] text-amber-200/90 leading-relaxed">
-              R2 charges while R1 continues compressions. Deliver shock — immediate CPR after.
-            </p>
-            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1.5 mt-0.5">
-              <p className="text-[0.72rem] font-bold text-amber-300">
-                {e[0]} → {e[1]} → {e[2]}
-              </p>
-              <p className="text-[0.6rem] text-amber-500">Single shock per cycle</p>
-            </div>
-            <div className="rounded-lg border border-violet-500/20 bg-violet-500/8 px-2 py-1.5">
-              <div className="flex items-center gap-1 mb-0.5">
-                <CcpBadge />
-              </div>
-              <p className="text-[0.68rem] text-slate-300 leading-relaxed">
-                3 stacked shocks option — consecutive shocks without CPR between for witnessed VF/VT
-              </p>
-            </div>
-          </>
-        }
-        noShockContent={
-          <>
-            <p className="text-[0.7rem] text-sky-200/90 leading-relaxed">
-              R1 starts CPR immediately + 2-min timer.
-            </p>
-            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2 py-1.5 mt-0.5">
-              <p className="text-[0.72rem] font-bold text-emerald-300">Adrenaline 1 mg IV/IO</p>
-              <p className="text-[0.6rem] text-emerald-500">ASAP — may give before airway if IV/IO in</p>
-            </div>
-          </>
-        }
-      />
+      <section className="space-y-2">
+        <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-slate-500 px-1">
+          Select presenting rhythm
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setRhythm(rhythm === "shockable" ? null : "shockable")}
+            className={`flex flex-col items-center gap-1.5 rounded-2xl border py-4 text-center transition-all active:scale-[0.97] ${
+              rhythm === "shockable"
+                ? "border-amber-500/70 bg-amber-500/15 text-amber-100"
+                : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700"
+            }`}
+          >
+            <Zap
+              className={`h-7 w-7 ${
+                rhythm === "shockable" ? "text-amber-400" : "text-slate-600"
+              }`}
+            />
+            <span className="text-sm font-bold">VF / VT</span>
+            <span className="text-[0.65rem] text-slate-500">Shockable</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setRhythm(rhythm === "nonShockable" ? null : "nonShockable")}
+            className={`flex flex-col items-center gap-1.5 rounded-2xl border py-4 text-center transition-all active:scale-[0.97] ${
+              rhythm === "nonShockable"
+                ? "border-sky-500/70 bg-sky-500/15 text-sky-100"
+                : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700"
+            }`}
+          >
+            <XCircle
+              className={`h-7 w-7 ${
+                rhythm === "nonShockable" ? "text-sky-400" : "text-slate-600"
+              }`}
+            />
+            <span className="text-sm font-bold">Asystole / PEA</span>
+            <span className="text-[0.65rem] text-slate-500">Non-shockable</span>
+          </button>
+        </div>
+        {rhythm === null && (
+          <p className="text-center text-[0.7rem] text-slate-600 pt-2">
+            Select rhythm to display treatment pathway
+          </p>
+        )}
 
+        {/* Shockable pathway */}
+        {rhythm === "shockable" && (
+          <div className="space-y-2">
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-amber-500/80 px-1">
+              Shockable pathway — VF / VT
+            </p>
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
+              <p className="text-[0.7rem] text-amber-200/90 leading-relaxed">
+                AP2 charges while AP1 continues compressions. Deliver shock — immediate CPR after.
+              </p>
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1.5">
+                <p className="text-[0.72rem] font-bold text-amber-300">
+                  {e[0]} → {e[1]} → {e[2]}
+                </p>
+                <p className="text-[0.6rem] text-amber-500">Single shock per cycle</p>
+              </div>
+              <div className="rounded-lg border border-violet-500/20 bg-violet-500/8 px-2 py-1.5">
+                <div className="flex items-center gap-1 mb-0.5">
+                  <CcpBadge />
+                </div>
+                <p className="text-[0.68rem] text-slate-300 leading-relaxed">
+                  3 stacked shocks option — consecutive shocks without CPR between for witnessed VF/VT
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Non-shockable pathway */}
+        {rhythm === "nonShockable" && (
+          <div className="space-y-2">
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.22em] text-sky-500/80 px-1">
+              Non-shockable pathway — Asystole / PEA
+            </p>
+            <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 p-3 space-y-2">
+              <p className="text-[0.7rem] text-sky-200/90 leading-relaxed">
+                AP1 starts CPR immediately + 2-min timer.
+              </p>
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2 py-1.5">
+                <p className="text-[0.72rem] font-bold text-emerald-300">Adrenaline 1 mg IV/IO</p>
+                <p className="text-[0.6rem] text-emerald-500">ASAP — may give before airway if IV/IO in</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
       <Connector />
 
       <StepCard n={3} label="Continue — standard adult arrest algorithm">
         <ActionItem
           text="2-min CPR cycles · rhythm check after each cycle"
-          sub="R1: compressions · R2: defib, drugs, airway"
+          sub="AP1: compressions · AP2: defib, drugs, airway"
         />
         <ActionItem
           text="Insert SGA → continuous compressions"

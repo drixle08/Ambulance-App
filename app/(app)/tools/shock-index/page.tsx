@@ -1,13 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowLeft, Activity, Heart, Droplets, AlertTriangle, CheckCircle, AlertCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Activity, Heart, Droplets, AlertTriangle, CheckCircle, AlertCircle } from "lucide-react";
 import { ToolHeader } from "@/app/_components/ToolHeader";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 
 export default function ShockIndexPage() {
-  const router = useRouter();
   const [sbp, setSbp] = useState<string>("");
   const [dbp, setDbp] = useState<string>("");
   const [hr, setHr] = useState<string>("");

@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+
 import { ToolHeader } from "@/app/_components/ToolHeader";
-import { ArrowLeft, GitBranch } from "lucide-react";
+import { GitBranch } from "lucide-react";
 import { FlowGuide } from "./FlowGuide";
 
 export default function ToxidromePage() {

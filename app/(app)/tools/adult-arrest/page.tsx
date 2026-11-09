@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+
 import { useWakeLock } from "@/lib/useWakeLock";
 import { ToolHeader } from "@/app/_components/ToolHeader";
 import {
-  ArrowLeft,
   Zap,
   XCircle,
   HeartPulse,

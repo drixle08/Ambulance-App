@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { ToolHeader } from "@/app/_components/ToolHeader";
 import {
   clearTreatmentCase,

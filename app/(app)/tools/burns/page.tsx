@@ -1,13 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 import { ToolHeader } from "@/app/_components/ToolHeader";
 import {
-  ArrowLeft,
   Flame,
-  RotateCcw,
   Plus,
   Minus,
   Wind,

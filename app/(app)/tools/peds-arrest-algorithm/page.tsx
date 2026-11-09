@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ToolHeader } from "@/app/_components/ToolHeader";
+
 import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 import { useWakeLock } from "@/lib/useWakeLock";
@@ -15,7 +15,6 @@ import {
   Pill,
   AlertTriangle,
   Calculator,
-  ChevronRight,
 } from "lucide-react";
 import { cpgEdition } from "@/lib/cpgEdition";
 

@@ -1,11 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { ToolHeader } from "@/app/_components/ToolHeader";
 import {
   AlertTriangle,
-  ArrowLeft,
   Clipboard,
   ClipboardCheck,
   Copy,
@@ -143,7 +141,6 @@ async function writeClipboard(text: string) {
 }
 
 export default function DocumentationPage() {
-  const router = useRouter();
   const draft = useChartDraft();
   const savedCharts = useSavedCharts();
   const [copiedId, setCopiedId] = useState<string | null>(null);

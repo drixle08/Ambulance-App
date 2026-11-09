@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ToolHeader } from "@/app/_components/ToolHeader";
-import Link from "next/link";
+
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 
 type Criterion = {

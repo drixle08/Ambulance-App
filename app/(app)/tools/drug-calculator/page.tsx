@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ToolHeader } from "@/app/_components/ToolHeader";
-import { ArrowLeft, FlaskConical, Calculator, ChevronRight } from "lucide-react";
+import { ArrowLeft, FlaskConical, Calculator, ChevronRight, Check } from "lucide-react";
 import { cpgEdition } from "@/lib/cpgEdition";
 import { NumberStepper } from "@/components/NumberStepper";
 import { CriticalValue, type CriticalValueTone } from "@/components/CriticalValue";
@@ -548,16 +548,16 @@ const DRUGS: Drug[] = [
 /* ════════════════════════════════════════════════════════════
    COLOUR MAP
 ════════════════════════════════════════════════════════════ */
-const CLR: Record<string, { card: string; border: string; label: string; badge: string; result: string; resultBorder: string; tab: string; tabActive: string }> = {
-  red:     { card: "bg-red-950/30",     border: "border-red-800/50",     label: "text-red-400",     badge: "bg-red-900/50 text-red-300",     result: "bg-red-950/50",     resultBorder: "border-red-700/60",     tab: "hover:text-red-300",     tabActive: "text-red-300 border-b-2 border-red-500" },
-  amber:   { card: "bg-amber-950/30",   border: "border-amber-800/50",   label: "text-amber-400",   badge: "bg-amber-900/50 text-amber-300",   result: "bg-amber-950/50",   resultBorder: "border-amber-700/60",   tab: "hover:text-amber-300",   tabActive: "text-amber-300 border-b-2 border-amber-500" },
-  violet:  { card: "bg-violet-950/30",  border: "border-violet-800/50",  label: "text-violet-400",  badge: "bg-violet-900/50 text-violet-300",  result: "bg-violet-950/50",  resultBorder: "border-violet-700/60",  tab: "hover:text-violet-300",  tabActive: "text-violet-300 border-b-2 border-violet-500" },
-  sky:     { card: "bg-sky-950/30",     border: "border-sky-800/50",     label: "text-sky-400",     badge: "bg-sky-900/50 text-sky-300",     result: "bg-sky-950/50",     resultBorder: "border-sky-700/60",     tab: "hover:text-sky-300",     tabActive: "text-sky-300 border-b-2 border-sky-500" },
-  orange:  { card: "bg-orange-950/30",  border: "border-orange-800/50",  label: "text-orange-400",  badge: "bg-orange-900/50 text-orange-300",  result: "bg-orange-950/50",  resultBorder: "border-orange-700/60",  tab: "hover:text-orange-300",  tabActive: "text-orange-300 border-b-2 border-orange-500" },
-  teal:    { card: "bg-teal-950/30",    border: "border-teal-800/50",    label: "text-teal-400",    badge: "bg-teal-900/50 text-teal-300",    result: "bg-teal-950/50",    resultBorder: "border-teal-700/60",    tab: "hover:text-teal-300",    tabActive: "text-teal-300 border-b-2 border-teal-500" },
-  rose:    { card: "bg-rose-950/30",    border: "border-rose-800/50",    label: "text-rose-400",    badge: "bg-rose-900/50 text-rose-300",    result: "bg-rose-950/50",    resultBorder: "border-rose-700/60",    tab: "hover:text-rose-300",    tabActive: "text-rose-300 border-b-2 border-rose-500" },
-  emerald: { card: "bg-emerald-950/30", border: "border-emerald-800/50", label: "text-emerald-400", badge: "bg-emerald-900/50 text-emerald-300", result: "bg-emerald-950/50", resultBorder: "border-emerald-700/60", tab: "hover:text-emerald-300", tabActive: "text-emerald-300 border-b-2 border-emerald-500" },
-  blue:    { card: "bg-blue-950/30",    border: "border-blue-800/50",    label: "text-blue-400",    badge: "bg-blue-900/50 text-blue-300",    result: "bg-blue-950/50",    resultBorder: "border-blue-700/60",    tab: "hover:text-blue-300",    tabActive: "text-blue-300 border-b-2 border-blue-500" },
+const CLR: Record<string, { card: string; border: string; label: string; badge: string; result: string; resultBorder: string; chipActive: string }> = {
+  red:     { card: "bg-red-950/30",     border: "border-red-800/50",     label: "text-red-400",     badge: "bg-red-900/50 text-red-300",     result: "bg-red-950/50",     resultBorder: "border-red-700/60", chipActive: "border-red-400 bg-red-900/60 text-red-100" },
+  amber:   { card: "bg-amber-950/30",   border: "border-amber-800/50",   label: "text-amber-400",   badge: "bg-amber-900/50 text-amber-300",   result: "bg-amber-950/50",   resultBorder: "border-amber-700/60", chipActive: "border-amber-400 bg-amber-900/60 text-amber-100" },
+  violet:  { card: "bg-violet-950/30",  border: "border-violet-800/50",  label: "text-violet-400",  badge: "bg-violet-900/50 text-violet-300",  result: "bg-violet-950/50",  resultBorder: "border-violet-700/60", chipActive: "border-violet-400 bg-violet-900/60 text-violet-100" },
+  sky:     { card: "bg-sky-950/30",     border: "border-sky-800/50",     label: "text-sky-400",     badge: "bg-sky-900/50 text-sky-300",     result: "bg-sky-950/50",     resultBorder: "border-sky-700/60", chipActive: "border-sky-400 bg-sky-900/60 text-sky-100" },
+  orange:  { card: "bg-orange-950/30",  border: "border-orange-800/50",  label: "text-orange-400",  badge: "bg-orange-900/50 text-orange-300",  result: "bg-orange-950/50",  resultBorder: "border-orange-700/60", chipActive: "border-orange-400 bg-orange-900/60 text-orange-100" },
+  teal:    { card: "bg-teal-950/30",    border: "border-teal-800/50",    label: "text-teal-400",    badge: "bg-teal-900/50 text-teal-300",    result: "bg-teal-950/50",    resultBorder: "border-teal-700/60", chipActive: "border-teal-400 bg-teal-900/60 text-teal-100" },
+  rose:    { card: "bg-rose-950/30",    border: "border-rose-800/50",    label: "text-rose-400",    badge: "bg-rose-900/50 text-rose-300",    result: "bg-rose-950/50",    resultBorder: "border-rose-700/60", chipActive: "border-rose-400 bg-rose-900/60 text-rose-100" },
+  emerald: { card: "bg-emerald-950/30", border: "border-emerald-800/50", label: "text-emerald-400", badge: "bg-emerald-900/50 text-emerald-300", result: "bg-emerald-950/50", resultBorder: "border-emerald-700/60", chipActive: "border-emerald-400 bg-emerald-900/60 text-emerald-100" },
+  blue:    { card: "bg-blue-950/30",    border: "border-blue-800/50",    label: "text-blue-400",    badge: "bg-blue-900/50 text-blue-300",    result: "bg-blue-950/50",    resultBorder: "border-blue-700/60", chipActive: "border-blue-400 bg-blue-900/60 text-blue-100" },
 };
 
 const WEIGHT_PRESETS = [50, 60, 70, 80, 90, 100];
@@ -870,15 +870,19 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
 
       {/* Mode tabs */}
       {drug.modes.length > 1 && (
-        <div className="flex gap-0 border-b border-slate-800">
-          {drug.modes.map((m, i) => (
-            <button key={m.id} type="button" onClick={() => handleModeChange(i)}
-              className={`min-h-11 px-4 pb-2 pt-1.5 text-sm font-semibold transition-colors ${
-                i === modeIdx ? clr.tabActive : `text-slate-500 ${clr.tab}`
-              }`}>
-              {m.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Patient case">
+          {drug.modes.map((m, i) => {
+            const active = i === modeIdx;
+            return (
+              <button key={m.id} type="button" onClick={() => handleModeChange(i)} aria-pressed={active}
+                className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300/60 ${
+                  active ? clr.chipActive : "border-slate-500 bg-slate-800/60 text-slate-100 hover:border-slate-300 active:bg-slate-700"
+                }`}>
+                {active && <Check className="h-4 w-4 shrink-0" aria-hidden="true" />}
+                {m.label}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -1167,7 +1171,7 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
                   }
                 }}
                 aria-invalid={!num(drawDose)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
               <UnitSelector value={doseUnit} onChange={setDoseUnit} label="Required dose" />
             </div>
             {doseError && <p className="text-xs font-medium text-rose-400">{doseError}</p>}
@@ -1185,7 +1189,7 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
                   }
                 }}
                 aria-invalid={!num(drawStockConc)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
               <UnitSelector value={concUnit} onChange={setConcUnit} label="Stock concentration" />
             </div>
             {doseError && <p className="text-xs font-medium text-rose-400">{doseError}</p>}
@@ -1210,7 +1214,7 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
                   }
                 }}
                 aria-invalid={!num(infVol)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
               <span className="text-xs text-slate-500 w-16">mL</span>
             </div>
             {infError && <p className="text-xs font-medium text-rose-400">{infError}</p>}
@@ -1228,7 +1232,7 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
                   }
                 }}
                 aria-invalid={!num(infDose)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
               <span className="text-xs text-slate-500 w-16">mcg/kg/min</span>
             </div>
             {infError && <p className="text-xs font-medium text-rose-400">{infError}</p>}
@@ -1246,7 +1250,7 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
                   }
                 }}
                 aria-invalid={!num(infWeight)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
               <span className="text-xs text-slate-500 w-12">kg</span>
             </div>
             {infError && <p className="text-xs font-medium text-rose-400">{infError}</p>}
@@ -1264,7 +1268,7 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
                   }
                 }}
                 aria-invalid={!num(infConc)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
               <UnitSelector value={concUnit} onChange={setConcUnit} label="Total drug in bag" />
             </div>
             {infError && <p className="text-xs font-medium text-rose-400">{infError}</p>}
@@ -1289,7 +1293,7 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
                   }
                 }}
                 aria-invalid={!num(dripRate)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
               <span className="text-xs text-slate-500 w-16">mL/h</span>
             </div>
             {dripError && <p className="text-xs font-medium text-rose-400">{dripError}</p>}
@@ -1307,7 +1311,7 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
                   }
                 }}
                 aria-invalid={!num(dripFactor)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
               <span className="text-xs text-slate-500 w-16">gtt/mL</span>
             </div>
             {dripError && <p className="text-xs font-medium text-rose-400">{dripError}</p>}
@@ -1332,7 +1336,7 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
                   }
                 }}
                 aria-invalid={!num(vtVol)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
               <span className="text-xs text-slate-500 w-16">mL</span>
             </div>
             {vtError && <p className="text-xs font-medium text-rose-400">{vtError}</p>}
@@ -1350,7 +1354,7 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
                   }
                 }}
                 aria-invalid={!num(vtTime)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
               <span className="text-xs text-slate-500 w-16">min</span>
             </div>
             {vtError && <p className="text-xs font-medium text-rose-400">{vtError}</p>}
@@ -1375,7 +1379,7 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
                   }
                 }}
                 aria-invalid={!num(backFr)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
               <span className="text-xs text-slate-500 w-16">mL/h</span>
             </div>
             {backError && <p className="text-xs font-medium text-rose-400">{backError}</p>}
@@ -1393,7 +1397,7 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
                   }
                 }}
                 aria-invalid={!num(backConc)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
               <UnitSelector value={concUnit} onChange={setConcUnit} label="Solution concentration" />
             </div>
             {backError && <p className="text-xs font-medium text-rose-400">{backError}</p>}
@@ -1411,7 +1415,7 @@ function GeneralFormulas({ onBack }: { onBack: () => void }) {
                   }
                 }}
                 aria-invalid={!num(backWeight)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
+                className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-right text-sm font-bold tabular-nums text-slate-50 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25" />
               <span className="text-xs text-slate-500 w-12">kg</span>
             </div>
             {backError && <p className="text-xs font-medium text-rose-400">{backError}</p>}

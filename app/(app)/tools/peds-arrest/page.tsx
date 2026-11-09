@@ -24,20 +24,12 @@ import {
 import { CPG, cpgEdition } from "@/lib/cpgEdition";
 import { cpgRef, type CpgProvenance } from "@/lib/cpgProvenance";
 import { CriticalValue, type CriticalValueTone } from "@/components/CriticalValue";
+import { estimateWeightKg } from "@/lib/paedsWeight";
 
 // Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
 const EDITION = cpgEdition("2.6");
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-function estimateWeightKg(ageYears: number, ageMonths: number): number | null {
-  const totalMonths = ageYears * 12 + ageMonths;
-  if (totalMonths <= 0) return null;
-  if (ageYears === 0) return totalMonths * 0.5 + 4;
-  if (ageYears >= 1 && ageYears <= 5) return ageYears * 2 + 8;
-  if (ageYears >= 6 && ageYears <= 14) return ageYears * 3 + 7;
-  return null;
-}
 
 function getSGASize(weight: number): string {
   if (weight <= 5) return "1";

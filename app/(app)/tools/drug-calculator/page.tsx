@@ -6,6 +6,7 @@ import { ArrowLeft, FlaskConical, Calculator, ChevronRight, Check } from "lucide
 import { cpgEdition } from "@/lib/cpgEdition";
 import { NumberStepper } from "@/components/NumberStepper";
 import { CriticalValue, type CriticalValueTone } from "@/components/CriticalValue";
+import { estimateWeightKg, PAEDS_WEIGHT_FORMULA } from "@/lib/paedsWeight";
 
 // Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
 const EDITION = cpgEdition("2.6");
@@ -62,6 +63,8 @@ interface DoseMode {
   durationMax?: number;
   durationDefault?: number;
   note?: string;
+  /** Paediatric mode: child weight presets + default weight, reset on mode switch. */
+  paediatric?: true;
   /** Cap on the weight-based total dose (mg), e.g. paediatric TXA max 1 g. */
   maxTotalMg?: number;
   rsiPhase?: number;
@@ -142,6 +145,7 @@ const DRUGS: Drug[] = [
       {
         id: "paeds",
         label: "Paediatric",
+        paediatric: true,
         description: "5 mg/kg over 20 – 60 min",
         type: "mg/kg",
         doseMin: 5,
@@ -387,6 +391,7 @@ const DRUGS: Drug[] = [
       {
         id: "paeds",
         label: "Paediatric",
+        paediatric: true,
         description: "25 – 50 mg/kg over 20 min",
         type: "mg/kg",
         doseMin: 25,
@@ -528,6 +533,7 @@ const DRUGS: Drug[] = [
       {
         id: "paeds",
         label: "Paediatric",
+        paediatric: true,
         description: "15 mg/kg over 10 min",
         type: "mg/kg",
         doseMin: 15,
@@ -560,7 +566,13 @@ const CLR: Record<string, { card: string; border: string; label: string; badge: 
   blue:    { card: "bg-blue-950/30",    border: "border-blue-800/50",    label: "text-blue-400",    badge: "bg-blue-900/50 text-blue-300",    result: "bg-blue-950/50",    resultBorder: "border-blue-700/60", chipActive: "border-blue-400 bg-blue-900/60 text-blue-100" },
 };
 
-const WEIGHT_PRESETS = [50, 60, 70, 80, 90, 100];
+const ADULT_WEIGHT_PRESETS = [50, 60, 70, 80, 90, 100];
+const ADULT_DEFAULT_WEIGHT = 70;
+// Paediatric presets span ~1–11 y on the CPG estimate used by the paeds arrest
+// tool: 1–5 y (age × 2) + 8, 6–14 y (age × 3) + 7. 20 kg ≈ 6 y.
+const PAEDS_WEIGHT_PRESETS = [10, 15, 20, 25, 30, 40];
+const PAEDS_DEFAULT_WEIGHT = 20;
+const defaultWeightFor = (mode: DoseMode) => (mode.paediatric ? PAEDS_DEFAULT_WEIGHT : ADULT_DEFAULT_WEIGHT);
 
 /* ════════════════════════════════════════════════════════════
    CALCULATION ENGINE
@@ -788,7 +800,11 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
   const [modeIdx, setModeIdx] = useState(0);
   const [depthIdx, setDepthIdx] = useState(0);
   const [routeIdx, setRouteIdx] = useState(0);
-  const [weight, setWeight] = useState(70);
+  const [weight, setWeight] = useState(() => defaultWeightFor(drug.modes[0]));
+  // Paediatric age (0 y 0 m = not set). Setting an age fills the weight with the
+  // CPG estimate; the weight stays editable for when the real weight is known.
+  const [ageYears, setAgeYears] = useState(0);
+  const [ageMonths, setAgeMonths] = useState(0);
   const [dose, setDose] = useState(() => {
     const m = drug.modes[0];
     return m.sedationGrid?.cells[0]?.[0]?.doseDefault ?? m.doseDefault;
@@ -813,11 +829,28 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
 
   const handleModeChange = (idx: number) => {
     const newMode = drug.modes[idx];
+    // Switching between adult and paediatric cases must not carry a 70 kg adult
+    // weight into a child dose (or vice versa).
+    if (!!newMode.paediatric !== !!mode.paediatric) {
+      setWeight(defaultWeightFor(newMode));
+      setAgeYears(0);
+      setAgeMonths(0);
+    }
     setModeIdx(idx);
     setDepthIdx(0);
     setRouteIdx(0);
     setDose(newMode.sedationGrid?.cells[0]?.[0]?.doseDefault ?? newMode.doseDefault);
     setDuration(newMode.durationDefault ?? 30);
+  };
+
+  const ageEstimateKg =
+    Number.isFinite(ageYears) && Number.isFinite(ageMonths) ? estimateWeightKg(ageYears, ageMonths) : null;
+
+  const handleAgeChange = (years: number, months: number) => {
+    setAgeYears(years);
+    setAgeMonths(months);
+    const est = Number.isFinite(years) && Number.isFinite(months) ? estimateWeightKg(years, months) : null;
+    if (est != null) setWeight(est);
   };
 
   const handleDepthChange = (idx: number) => {
@@ -917,12 +950,30 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
 
       {/* Inputs */}
       <div className={`rounded-2xl border p-4 space-y-5 ${clr.card} ${clr.border}`}>
+        {needsWeight && mode.paediatric && (
+          <div className="space-y-3 border-b border-slate-700/60 pb-4">
+            <NumberStepper label="Age" unit="years" value={ageYears} min={0} max={14} step={1}
+              onChange={(y) => handleAgeChange(y, y >= 1 ? 0 : ageMonths)} />
+            {ageYears === 0 && (
+              <NumberStepper label="Months" unit="months" value={ageMonths} min={0} max={11} step={1}
+                onChange={(m) => handleAgeChange(0, m)} />
+            )}
+            <p className="text-xs text-slate-400">
+              {ageEstimateKg == null
+                ? "Set age to estimate weight, or enter the weight directly."
+                : weight === ageEstimateKg
+                  ? `Weight set to ${fmtNum(ageEstimateKg)} kg (CPG estimate for age). Change it if the actual weight is known.`
+                  : `CPG estimate for age: ${fmtNum(ageEstimateKg)} kg. Using the weight entered below.`}
+            </p>
+          </div>
+        )}
+
         {needsWeight && (
           <div className="space-y-3">
             <NumberStepper label="Weight" unit="kg" value={weight} min={3} max={150} step={1}
               onChange={setWeight} />
             <div className="grid grid-cols-3 gap-2">
-              {WEIGHT_PRESETS.map((preset) => {
+              {(mode.paediatric ? PAEDS_WEIGHT_PRESETS : ADULT_WEIGHT_PRESETS).map((preset) => {
                 const selected = weight === preset;
                 return (
                   <button key={preset} type="button" onClick={() => setWeight(preset)}
@@ -934,6 +985,9 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
                 );
               })}
             </div>
+            {mode.paediatric && (
+              <p className="text-xs text-slate-500">{PAEDS_WEIGHT_FORMULA}</p>
+            )}
           </div>
         )}
 
@@ -948,7 +1002,7 @@ function DrugCalculator({ drug, onBack }: { drug: Drug; onBack: () => void }) {
             <span className="text-xs font-semibold uppercase tracking-widest text-slate-500">Fixed Dose</span>
             <span className={`text-lg font-bold ${clr.label}`}>
               {em.doseDefault}{" "}
-              <span className="text-xs font-normal text-slate-500">{em.type === "g" ? "g" : "mg"}</span>
+              <span className="text-xs font-normal text-slate-500">{doseUnit}</span>
             </span>
           </div>
         )}

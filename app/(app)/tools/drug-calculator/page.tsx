@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { ToolHeader } from "@/app/_components/ToolHeader";
+import { useState } from "react";
+
 import { ArrowLeft, FlaskConical, Calculator, ChevronRight, Check } from "lucide-react";
 import { cpgEdition } from "@/lib/cpgEdition";
 import { NumberStepper } from "@/components/NumberStepper";
-import { CriticalValue, type CriticalValueTone } from "@/components/CriticalValue";
+import { CriticalValue } from "@/components/CriticalValue";
 import { estimateWeightKg, PAEDS_WEIGHT_FORMULA } from "@/lib/paedsWeight";
 
 // Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
@@ -1510,12 +1511,10 @@ export default function DrugCalculatorPage() {
   }
 
   return (
+    <>
+    <ToolHeader title="Drug Infusion Calculator" meta="CCP / CCA Tools" />
     <div className="mx-auto max-w-lg px-4 pt-4 pb-24">
-      <header className="mb-4 space-y-0.5">
-        <p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-teal-500">CCP / CCA Tools</p>
-        <h1 className="text-xl font-bold tracking-tight text-slate-100">Drug Infusion Calculator</h1>
-        <p className="text-xs text-slate-500">Select a drug to calculate flow rates, draw-up volumes, and mixing.</p>
-      </header>
+      <p className="mb-4 text-xs text-slate-500">Select a drug to calculate flow rates, draw-up volumes, and mixing.</p>
 
       <div className="grid grid-cols-2 gap-3">
         {DRUGS.map((drug) => {
@@ -1551,5 +1550,6 @@ export default function DrugCalculatorPage() {
         </button>
       </div>
     </div>
+    </>
   );
 }

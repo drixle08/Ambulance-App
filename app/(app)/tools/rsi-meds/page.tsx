@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { ToolHeader } from "@/app/_components/ToolHeader";
-import Link from "next/link";
+import { useState } from "react";
+
+
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 import { useWakeLock } from "@/lib/useWakeLock";
 import { CriticalValue } from "@/components/CriticalValue";
 import {
-  ArrowLeft,
   Wind,
   Pill,
   ChevronDown,
@@ -881,27 +881,11 @@ export default function RsiMedsPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-10">
       {/* ── Sticky header ── */}
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
-        <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-3">
-          <Link
-            href="/dashboard/respiratory-airway"
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 transition-colors shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4 text-slate-300" />
-          </Link>
-          <div className="flex-1 min-w-0">
-            <p className="text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-violet-400">
-              CPG 11.1 · {EDITION.short} · CCP
-            </p>
-            <h1 className="text-sm font-semibold leading-tight text-slate-50">
-              RSI Medications — Pre &amp; Post Dosing
-            </h1>
-          </div>
-          <div className="shrink-0">
-            <CopySummaryButton summaryText={summaryText} />
-          </div>
-        </div>
-      </header>
+      <ToolHeader
+        title="RSI Medications — Pre & Post Dosing"
+        meta={`CPG 11.1 · ${EDITION.short} · CCP`}
+        rightContent={<CopySummaryButton summaryText={summaryText} />}
+      />
 
       <main className="mx-auto max-w-2xl px-4 pt-4 space-y-2">
         {/* ── Phase flow diagram ── */}

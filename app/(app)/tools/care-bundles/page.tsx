@@ -1,11 +1,18 @@
 "use client";
 
-import { useState } from "react";
 import { ToolHeader } from "@/app/_components/ToolHeader";
-import Link from "next/link";
+import { useState } from "react";
+
+
 import {
-  ArrowLeft, CheckCircle2, Circle, RotateCcw, CheckCheck,
-  ChevronDown, ChevronUp, AlertTriangle, Info, Wind,
+  CheckCircle2,
+  Circle,
+  CheckCheck,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  Info,
+  Wind,
 } from "lucide-react";
 import { cpgAbsent, cpgRef, type CpgProvenance } from "@/lib/cpgProvenance";
 
@@ -963,30 +970,10 @@ export default function CareBundlesPage() {
 
   if (!bundle) {
     return (
+      <>
+      <ToolHeader title="Care Bundles" meta="CCP / CCA" showReset resetLabel="Reset all" onReset={resetAll} />
       <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 pb-24 pt-4">
-        <div className="flex items-center justify-between">
-          <Link
-            href="/dashboard/ccp-cca"
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-teal-500 transition-colors"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            CCP / CCA
-          </Link>
-          <button
-            type="button"
-            onClick={resetAll}
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:border-rose-500 hover:text-rose-400 transition-colors"
-          >
-            <RotateCcw className="h-3 w-3" />
-            Reset all
-          </button>
-        </div>
-
-        <header className="space-y-0.5">
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.25em] text-teal-500">CCP / CCA</p>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-50">Care Bundles</h1>
-          <p className="text-xs text-slate-400">Tap a bundle to open the checklist</p>
-        </header>
+        <p className="text-xs text-slate-400">Tap a bundle to open the checklist</p>
 
         <div className="flex flex-col gap-2">
           {BUNDLES.map((b) => {
@@ -1028,6 +1015,7 @@ export default function CareBundlesPage() {
           })}
         </div>
       </div>
+      </>
     );
   }
 
@@ -1040,42 +1028,24 @@ export default function CareBundlesPage() {
   const complete = done === total;
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 pb-24 pt-4">
-      {/* Top bar */}
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setSelectedId(null)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-teal-500 transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          All bundles
-        </button>
-        <button
-          type="button"
-          onClick={() => resetBundle(bundle.id)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-slate-400 hover:border-rose-500 hover:text-rose-400 transition-colors"
-        >
-          <RotateCcw className="h-3 w-3" />
-          Reset
-        </button>
+    <>
+    {/* Back returns to the bundle list (in-page), not the dashboard. */}
+    <ToolHeader
+      title={bundle.title}
+      meta="CCP / CCA · Care Bundles"
+      onBack={() => setSelectedId(null)}
+      showReset
+      onReset={() => resetBundle(bundle.id)}
+    >
+      <div className="flex items-center gap-2">
+        <span className={`text-xs font-bold tabular-nums ${c.icon}`}>{done}/{total}</span>
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-800">
+          <div className={`h-full rounded-full transition-all duration-300 ${c.bar}`} style={{ width: `${pct}%` }} />
+        </div>
+        <span className="text-xs font-semibold text-slate-400">{pct}%</span>
       </div>
-
-      {/* Header */}
-      <header className="flex items-center gap-3">
-        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${c.bg}`}>
-          <span className={`text-lg font-bold ${c.icon}`}>{done}/{total}</span>
-        </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-semibold text-slate-50">{bundle.title}</h1>
-          <div className="mt-1.5 flex items-center gap-2">
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-800">
-              <div className={`h-full rounded-full transition-all duration-300 ${c.bar}`} style={{ width: `${pct}%` }} />
-            </div>
-            <span className="text-xs font-semibold text-slate-400">{pct}%</span>
-          </div>
-        </div>
-      </header>
+    </ToolHeader>
+    <div className="mx-auto flex max-w-2xl flex-col gap-4 px-4 pb-24 pt-4">
 
       {/* Tip */}
       {bundle.tip && (
@@ -1239,5 +1209,6 @@ export default function CareBundlesPage() {
         })}
       </div>
     </div>
+    </>
   );
 }

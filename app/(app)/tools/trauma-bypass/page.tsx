@@ -1,17 +1,16 @@
 "use client";
 
-import { useState } from "react";
 import { ToolHeader } from "@/app/_components/ToolHeader";
-import Link from "next/link";
+import { useState } from "react";
+
+
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 import {
-  ArrowLeft,
   AlertTriangle,
   Activity,
   Layers,
   Users,
   Check,
-  RotateCcw,
   Navigation,
   Hospital,
 } from "lucide-react";
@@ -263,39 +262,19 @@ export default function TraumaBypassPage() {
     <div className="min-h-screen bg-slate-950 text-slate-50 pb-36">
 
       {/* ── Sticky header ─────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
-          <Link
-            href="/dashboard/trauma"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <div className="flex-1 min-w-0">
-            <p className="text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-orange-400">
-              Trauma · CPG 10.10
-            </p>
-            <h1 className="text-sm font-semibold leading-tight text-slate-50">
-              Trauma Bypass Criteria
-            </h1>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {totalSelected > 0 && (
-              <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-[0.65rem] font-bold text-orange-300 border border-orange-500/30">
-                {totalSelected} criteria
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={resetAll}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200"
-              aria-label="Reset all"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-      </header>
+      <ToolHeader
+        title="Trauma Bypass Criteria"
+        meta="Trauma · CPG 10.10"
+        showReset
+        onReset={resetAll}
+        rightContent={
+          totalSelected > 0 ? (
+            <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-[0.65rem] font-bold text-orange-300 border border-orange-500/30">
+              {totalSelected} criteria
+            </span>
+          ) : null
+        }
+      />
 
       <main className="mx-auto flex max-w-2xl flex-col gap-5 px-4 pt-4">
 

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { ToolHeader } from "@/app/_components/ToolHeader";
-import Link from "next/link";
+import { useState } from "react";
+
+
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 import {
   EMPTY_RACE,
@@ -14,8 +15,6 @@ import {
   type RaceScores,
 } from "@/lib/race";
 import {
-  ArrowLeft,
-  RotateCcw,
   Clock,
   Footprints,
   Eye,
@@ -212,35 +211,13 @@ export default function StrokeBefastPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-48">
       {/* ── Sticky Header ── */}
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
-        <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-3">
-          <Link
-            href="/dashboard/assessment-screening"
-            className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 text-slate-300" />
-          </Link>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-violet-400">
-              Neurological
-            </p>
-            <h1 className="text-base font-bold text-white leading-tight">
-              Stroke BEFAST Screen
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleReset}
-              className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors"
-              aria-label="Reset"
-            >
-              <RotateCcw className="w-4 h-4 text-slate-300" />
-            </button>
-            <CopySummaryButton summaryText={summaryText} />
-          </div>
-        </div>
-      </header>
+      <ToolHeader
+        title="Stroke BEFAST Screen"
+        meta="Neurological"
+        showReset
+        onReset={handleReset}
+        rightContent={<CopySummaryButton summaryText={summaryText} />}
+      />
 
       <main className="mx-auto max-w-2xl px-4 pt-4 space-y-4">
         {/* ── T: Time / Onset ── */}

@@ -1,10 +1,9 @@
 "use client";
 
+import { ToolHeader } from "@/app/_components/ToolHeader";
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   BookOpen,
   FileText,
   ListChecks,
@@ -315,7 +314,6 @@ function getCpgHref(change: CpgChange): string {
 }
 
 export default function CpgLatestChangesPage() {
-  const router = useRouter();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<ChangeCategory>("All");
 
@@ -335,33 +333,19 @@ export default function CpgLatestChangesPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 pb-8 text-slate-100">
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-100"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <div className="min-w-0 flex-1">
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-amber-400">
-              Reference - CPG {EDITION.tag}
-            </p>
-            <h1 className="truncate text-base font-bold leading-tight text-slate-100">
-              Latest CPG Changes
-            </h1>
-          </div>
+      <ToolHeader
+        title="Latest CPG Changes"
+        meta={`Reference - CPG ${EDITION.tag}`}
+        rightContent={
           <Link
             href="/tools/cpg"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-300 transition-colors hover:bg-amber-500/20"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-300 transition-colors hover:bg-amber-500/20"
           >
             <BookOpen className="h-3.5 w-3.5" />
             CPG
           </Link>
-        </div>
-      </header>
+        }
+      />
 
       <main className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pt-4">
         <section className="grid grid-cols-3 gap-2">

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { ToolHeader } from "@/app/_components/ToolHeader";
-import { ArrowLeft, Heart, Wind, Activity, Droplets, Gauge } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+import { Heart, Wind, Activity, Droplets, Gauge } from "lucide-react";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 import { CriticalValue } from "@/components/CriticalValue";
 
@@ -196,7 +196,6 @@ const VITAL_CARDS: VitalCard[] = [
 ];
 
 export default function VitalsByAgePage() {
-  const router = useRouter();
   const [selectedId, setSelectedId] = useState<AgeBandId>("adult");
 
   const band = AGE_BANDS.find((b) => b.id === selectedId) ?? AGE_BANDS[AGE_BANDS.length - 1];
@@ -206,26 +205,11 @@ export default function VitalsByAgePage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-8">
       {/* Sticky header */}
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-amber-400">
-              Reference
-            </p>
-            <h1 className="text-base font-bold leading-tight text-slate-100 truncate">
-              Normal Vitals by Age
-            </h1>
-          </div>
-          <CopySummaryButton summaryText={summaryText} />
-        </div>
-      </header>
+      <ToolHeader
+        title="Normal Vitals by Age"
+        meta="Reference"
+        rightContent={<CopySummaryButton summaryText={summaryText} />}
+      />
 
       <div className="max-w-2xl mx-auto px-4 pt-5 space-y-5">
 

@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { ToolHeader } from "@/app/_components/ToolHeader";
+import { useState } from "react";
 import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 import { useWakeLock } from "@/lib/useWakeLock";
 import {
-  ArrowLeft,
   Zap,
   XCircle,
   HeartPulse,
@@ -808,27 +807,13 @@ export default function WitnessedAdultArrestPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 pb-8">
       {/* ── Sticky header ──────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
-          <Link
-            href="/dashboard/resuscitation"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-200 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <div className="flex-1 min-w-0">
-            <p className="text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-red-400">
-              Resuscitation · CPG 2.1 · {EDITION.short}
-            </p>
-            <h1 className="text-sm font-semibold leading-tight text-slate-50">
-              Adult Cardiac Arrest — Witnessed
-            </h1>
-          </div>
-          <CopySummaryButton summaryText={summaryText} />
-        </div>
-
+      <ToolHeader
+        title="Adult Cardiac Arrest — Witnessed"
+        meta={`Resuscitation · CPG 2.1 · ${EDITION.short}`}
+        rightContent={<CopySummaryButton summaryText={summaryText} />}
+      >
         {/* Tab bar */}
-        <div className="mx-auto max-w-2xl px-4 pb-2">
+        <div className="mx-auto max-w-2xl">
           <div className="flex gap-1 rounded-xl bg-slate-900 p-1">
             {(["algorithm", "reference"] as Tab[]).map((t) => (
               <button
@@ -846,7 +831,7 @@ export default function WitnessedAdultArrestPage() {
             ))}
           </div>
         </div>
-      </header>
+      </ToolHeader>
 
       <main className="mx-auto flex max-w-2xl flex-col gap-4 px-4 pt-4">
         {/* ══════════════ ALGORITHM TAB ══════════════ */}

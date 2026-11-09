@@ -1,9 +1,9 @@
 "use client";
 
+import { ToolHeader } from "@/app/_components/ToolHeader";
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft,
   AlertTriangle,
   BookOpen,
   Check,
@@ -385,36 +385,26 @@ export default function CpgChatPage() {
   return (
     <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100">
       {/* Sticky header */}
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="flex-1 min-w-0 flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400 shrink-0">
-              <MessageCircle className="w-4 h-4" />
-            </span>
-            <div>
-              <p className="text-[0.65rem] font-semibold tracking-[0.25em] uppercase text-emerald-400 leading-none">Reference</p>
-              <h1 className="text-sm font-bold text-slate-100 leading-tight">Clinical Assistant</h1>
-            </div>
-          </div>
-          {!isEmpty && (
+      {/* The assistant opens from the floating bubble on any page, so back returns
+          to wherever the user came from; a fresh launch has no history, so fall
+          back to its dashboard category. */}
+      <ToolHeader
+        title="Clinical Assistant"
+        meta="Reference"
+        onBack={() => (window.history.length > 1 ? router.back() : router.push("/dashboard/reference"))}
+        rightContent={
+          !isEmpty ? (
             <button
               type="button"
               onClick={clearChat}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-400 hover:border-slate-500 hover:text-slate-200 transition-colors"
+              className="flex min-h-11 items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-400 hover:border-slate-500 hover:text-slate-200 transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               New chat
             </button>
-          )}
-        </div>
-      </header>
+          ) : null
+        }
+      />
 
       {/* Clinical Assistant verify warning — always visible so no dose is used uncritically */}
       <div

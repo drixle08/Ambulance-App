@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { ToolHeader } from "@/app/_components/ToolHeader";
-import Link from "next/link";
+import { useState } from "react";
+
+
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 import { CriticalValue } from "@/components/CriticalValue";
 import {
-  ArrowLeft,
   Wind,
   HeartPulse,
   Brain,
@@ -17,7 +17,6 @@ import {
   ChevronDown,
   ChevronUp,
   CheckCircle2,
-  RotateCcw,
   ChevronRight,
   Thermometer,
   Droplets,
@@ -699,51 +698,28 @@ export default function RoscPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-10">
       {/* ── Sticky Header ── */}
-      <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 backdrop-blur-sm">
-        <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-3">
-          <Link
-            href="/dashboard/resuscitation"
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 transition-colors shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4 text-slate-300" />
-          </Link>
-
-          <div className="flex-1 min-w-0">
-            <p className="text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-emerald-400">
-              CPG 2.6 · {EDITION.short}
-            </p>
-            <h1 className="text-sm font-semibold leading-tight text-slate-50">
-              Post-Cardiac Arrest (ROSC) Care
-            </h1>
-            {/* Progress bar */}
-            <div className="flex items-center gap-2 mt-1.5">
-              <div className="flex-1 h-1 rounded-full bg-slate-800">
-                <div
-                  className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                  style={{
-                    width: `${(doneCount / totalCount) * 100}%`,
-                  }}
-                />
-              </div>
-              <span className="text-[0.6rem] text-slate-500 shrink-0 tabular-nums">
-                {doneCount}/{totalCount}
-              </span>
-            </div>
+      <ToolHeader
+        title="Post-Cardiac Arrest (ROSC) Care"
+        meta={`CPG 2.6 · ${EDITION.short}`}
+        showReset
+        onReset={reset}
+        rightContent={<CopySummaryButton summaryText={summaryText} />}
+      >
+        {/* Checklist progress */}
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-1 rounded-full bg-slate-800">
+            <div
+              className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+              style={{
+                width: `${(doneCount / totalCount) * 100}%`,
+              }}
+            />
           </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={reset}
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 transition-colors"
-              aria-label="Reset checklist"
-            >
-              <RotateCcw className="w-4 h-4 text-slate-400" />
-            </button>
-            <CopySummaryButton summaryText={summaryText} />
-          </div>
+          <span className="text-[0.6rem] text-slate-500 shrink-0 tabular-nums">
+            {doneCount}/{totalCount}
+          </span>
         </div>
-      </header>
+      </ToolHeader>
 
       <main className="mx-auto max-w-2xl px-4 pt-4 space-y-2">
         {/* ── Quick target reference — always visible ── */}

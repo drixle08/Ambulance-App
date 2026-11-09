@@ -299,7 +299,7 @@ export default function RassPage() {
             key={t.id}
             type="button"
             onClick={() => { setTab(t.id); setSelected(null); resetGuided(); }}
-            className={`flex-1 pb-2 pt-1.5 text-xs font-semibold transition-colors ${
+            className={`flex-1 min-h-11 pb-2 pt-1.5 text-sm font-semibold transition-colors ${
               tab === t.id
                 ? "text-violet-300 border-b-2 border-violet-500"
                 : "text-slate-500 hover:text-slate-300"

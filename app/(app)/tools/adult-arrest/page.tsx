@@ -628,7 +628,7 @@ export default function AdultArrestPage() {
                 key={t}
                 type="button"
                 onClick={() => setTab(t)}
-                className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition-colors capitalize ${
+                className={`flex-1 min-h-11 rounded-lg py-1.5 text-sm font-semibold transition-colors capitalize ${
                   tab === t
                     ? "bg-slate-700 text-slate-100"
                     : "text-slate-500 hover:text-slate-300"

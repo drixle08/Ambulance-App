@@ -5,7 +5,6 @@ import { ToolHeader } from "@/app/_components/ToolHeader";
 import { useMemo, useState } from "react";
 import {
   AlertTriangle,
-  ArrowLeft,
   Bug,
   Check,
   ChevronDown,
@@ -15,12 +14,10 @@ import {
   FlaskConical,
   GitMerge,
   Pill,
-  RefreshCcw,
   ShieldAlert,
   Wind,
   XCircle,
 } from "lucide-react";
-import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 import { cpgViewerHref } from "@/lib/cpgIndex";
 import {
   TOXICOLOGY_GROUP_ORDER,
@@ -185,6 +182,7 @@ export default function ToxicologyPage() {
         meta="Toxicology & Toxinology"
         showBack
         showReset
+        onReset={resetAll}
         showCopy
         copyText={summaryText}
         onCopy={copySummary}

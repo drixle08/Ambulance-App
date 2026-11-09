@@ -321,3 +321,16 @@ export const TOOL_GROUPS: ToolGroup[] = [
     ],
   },
 ];
+
+/**
+ * The dashboard category page a tool belongs to, e.g. "/tools/burns" ->
+ * "/dashboard/trauma". Used as the tool header's back target, so back works
+ * even when the tool was opened directly (deep link, installed PWA launch).
+ * Returns null for routes that aren't listed in any group.
+ */
+export function categoryHrefFor(pathname: string | null | undefined): string | null {
+  if (!pathname) return null;
+  const path = pathname.replace(/\/+$/, "");
+  const group = TOOL_GROUPS.find((g) => g.tools.some((t) => t.href === path));
+  return group ? `/dashboard/${group.slug}` : null;
+}

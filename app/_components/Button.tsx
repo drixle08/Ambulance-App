@@ -53,7 +53,7 @@ export function Button({
         className
       )}
     >
-      <span className="flex items-center justify-center px-3 py-1">
+      <span className="flex items-center justify-center gap-1.5 px-3 py-1">
         {children}
       </span>
     </button>

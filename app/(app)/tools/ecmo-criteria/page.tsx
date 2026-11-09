@@ -1,12 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
 import { ToolHeader } from "@/app/_components/ToolHeader";
 import {
-  ArrowLeft,
-  RotateCcw,
   CheckCircle,
   Circle,
   Zap,
@@ -274,6 +271,7 @@ export default function ECMOCriteriaPage() {
               meta="Resuscitation"
               showBack
               showReset
+              onReset={reset}
               rightContent={
                 <CopySummaryButton summaryText={summaryText} />
               }

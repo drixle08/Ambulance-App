@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { ToolHeader } from "@/app/_components/ToolHeader";
+import { cpgEdition } from "@/lib/cpgEdition";
+
+// Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
+const EDITION = cpgEdition("2.6");
 
 // ─── RASS data ────────────────────────────────────────────────────────────────
 
@@ -276,8 +280,7 @@ export default function RassPage() {
       {/* Header */}
       <ToolHeader
         title="Sedation Assessment (RASS)"
-        meta="CPG 3.1 · {EDITION.short}"
-        showBack={false}
+        meta={`CPG 3.1 · ${EDITION.short}`}
       />
 
       {/* Target banner */}

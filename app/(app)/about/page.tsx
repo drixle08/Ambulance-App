@@ -17,7 +17,7 @@ export default function AboutPage() {
       <section className="space-y-2 text-xs text-slate-300">
         <p>
           This toolkit is a teaching and decision-support aid for HMCAS-style
-          ambulance practice. It mirrors wording and thresholds from CPG {APP_ALIGNED_EDITION.tag}
+          ambulance practice. It mirrors wording and thresholds from CPG {APP_ALIGNED_EDITION.tag}{" "}
           where possible.
         </p>
         <p>

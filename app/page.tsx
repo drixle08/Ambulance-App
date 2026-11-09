@@ -138,7 +138,7 @@ function AboutCard({ compact = false }: { compact?: boolean }) {
         </div>
         <p className="mb-1">
           This toolkit is a teaching and decision-support aid for HMCAS-style
-          ambulance practice. It mirrors wording and thresholds from CPG {APP_ALIGNED_EDITION.tag}
+          ambulance practice. It mirrors wording and thresholds from CPG {APP_ALIGNED_EDITION.tag}{" "}
           where possible.
         </p>
         <p>

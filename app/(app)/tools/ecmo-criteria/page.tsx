@@ -240,11 +240,6 @@ export default function ECMOCriteriaPage() {
     alternativeSelected,
   ]);
 
-  const copySummary = (text: string) => {
-    if (!navigator.clipboard?.writeText) return;
-    void navigator.clipboard.writeText(text);
-  };
-
   const toneCls = {
     neutral:
       "border-slate-700 bg-slate-900 text-slate-300",

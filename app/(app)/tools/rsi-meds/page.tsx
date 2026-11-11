@@ -305,18 +305,6 @@ function CautionItem({ text, sub }: { text: string; sub?: string }) {
   );
 }
 
-function OmitItem({ text, sub }: { text: string; sub?: string }) {
-  return (
-    <div className="flex items-start gap-2 rounded-xl border border-rose-600/30 bg-rose-600/5 px-3 py-2">
-      <XCircle className="h-3.5 w-3.5 shrink-0 mt-[3px] text-rose-500" />
-      <div>
-        <p className="text-xs font-medium text-rose-200">{text}</p>
-        {sub && <p className="mt-0.5 text-[0.65rem] text-rose-500">{sub}</p>}
-      </div>
-    </div>
-  );
-}
-
 function RsiDrugCard({
   name,
   dose,

@@ -15,7 +15,6 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
-  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -146,7 +145,7 @@ export function DashboardGrid() {
     })
   );
 
-  function handleDragStart(_e: DragStartEvent) {
+  function handleDragStart() {
     setAnyDragging(true);
     try { navigator.vibrate?.(18); } catch { /* ignore */ }
   }

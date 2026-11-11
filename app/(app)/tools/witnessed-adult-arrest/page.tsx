@@ -13,7 +13,6 @@ import {
   User,
   ChevronDown,
   ChevronUp,
-  Pill,
   AlertTriangle,
   Clock,
   Timer,
@@ -81,76 +80,6 @@ function InfoItem({ text, sub }: { text: string; sub?: string }) {
       <div>
         <p className="text-sm text-sky-200">{text}</p>
         {sub && <p className="mt-0.5 text-[0.68rem] text-sky-400">{sub}</p>}
-      </div>
-    </div>
-  );
-}
-
-function DrugItem({
-  name,
-  dose,
-  sub,
-  ccp,
-}: {
-  name: string;
-  dose: string;
-  sub?: string;
-  ccp?: boolean;
-}) {
-  return (
-    <div className="flex items-start gap-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3 py-2.5">
-      <Pill className="h-4 w-4 shrink-0 mt-0.5 text-emerald-400" />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-bold text-emerald-200">{name}</span>
-          {ccp && <CcpBadge />}
-        </div>
-        <p className="text-sm font-semibold text-emerald-300">{dose}</p>
-        {sub && <p className="mt-0.5 text-[0.68rem] text-emerald-500">{sub}</p>}
-      </div>
-    </div>
-  );
-}
-
-function ShockItem({
-  energy,
-  label,
-  defib,
-  sub,
-}: {
-  energy: string;
-  label: string;
-  defib: Defib;
-  sub?: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-amber-500/50 bg-amber-500/10 px-3 py-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 border border-amber-500/30">
-        <Zap className="h-5 w-5 text-amber-400" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-black tabular-nums text-amber-300">{energy}</span>
-          <span className="text-xs text-amber-500 font-medium">
-            {defib === "lp15" ? "LP15" : "Zoll"} · biphasic
-          </span>
-        </div>
-        <p className="mt-0.5 text-[0.65rem] text-amber-500/80">{label}</p>
-        {sub && <p className="text-[0.65rem] text-amber-400/70">{sub}</p>}
-      </div>
-    </div>
-  );
-}
-
-function NoShockItem() {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-sky-500/40 bg-sky-500/10 px-3 py-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/15 border border-sky-500/30">
-        <XCircle className="h-5 w-5 text-sky-400" />
-      </div>
-      <div>
-        <p className="text-base font-bold text-sky-300">No shock</p>
-        <p className="text-[0.65rem] text-sky-600">CPR only — do not charge defibrillator</p>
       </div>
     </div>
   );

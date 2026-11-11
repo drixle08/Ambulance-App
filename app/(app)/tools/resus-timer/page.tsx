@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CopySummaryButton } from "@/app/_components/CopySummaryButton";
+import { IconButton } from "@/app/_components/IconButton";
 import { UndoToast } from "@/app/_components/UndoToast";
 import { useWakeLock } from "@/lib/useWakeLock";
 import {
-  HeartPulse,
+  ArrowLeft,
   ActivitySquare,
   Volume2,
   VolumeX,
@@ -50,6 +52,7 @@ type SpeechRecognitionInstance = {
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
 
 const DEFAULT_BPM = 110;
+const BACK_HREF = "/dashboard/resuscitation";
 const RESET_CONFIRM_MS = 8000; // confirm prompt closes itself if not acted on
 
 // Voice phrases are matched as whole words, so "start" no longer fires on
@@ -107,6 +110,15 @@ export default function ResuscitationTimerPage() {
   const [otherDialogOpen, setOtherDialogOpen] = useState(false);
   const [otherText, setOtherText] = useState("");
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const router = useRouter();
+  // Leaving mid-case doesn't stop the clock (the case is persisted and the
+  // bottom bar shows "CPR in progress"), but this screen's metronome, audio
+  // reminders, voice control and wake lock stop — so a running case asks first.
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  const handleBack = () => {
+    if (isRunning) setLeaveConfirmOpen(true);
+    else router.push(BACK_HREF);
+  };
   const [undoSnapshot, setUndoSnapshot] = useState<{ previous: ResusCase; kind: "reset" | "newCase" } | null>(null);
   // Time of the last stale-case check (set after mount, on return to the
   // screen, and every minute) — null until the client has read the store.
@@ -531,11 +543,11 @@ export default function ResuscitationTimerPage() {
       <main className="mx-auto flex min-h-screen max-w-lg flex-col gap-5 px-4 pb-6 pt-4">
         {/* Header */}
         <header className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300">
-              <HeartPulse className="h-4 w-4" />
-            </span>
-            <div className="flex flex-col">
+          <div className="flex min-w-0 items-center gap-1">
+            <IconButton ariaLabel="Go back" onClick={handleBack} className="-ml-3">
+              <ArrowLeft className="h-5 w-5" />
+            </IconButton>
+            <div className="flex min-w-0 flex-col">
               <span className="text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-emerald-400">
                 Resuscitation
               </span>
@@ -546,7 +558,7 @@ export default function ResuscitationTimerPage() {
             <button
               type="button"
               onClick={() => setMetronomeOn((on) => !on)}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-200"
+              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-200"
             >
               {metronomeOn ? (
                 <>
@@ -564,7 +576,7 @@ export default function ResuscitationTimerPage() {
               type="button"
               onClick={() => setVoiceEnabled((on) => !on)}
               disabled={!voiceSupported}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-200 disabled:opacity-50"
+              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-200 disabled:opacity-50"
             >
               {voiceEnabled ? (
                 <>
@@ -901,6 +913,48 @@ export default function ResuscitationTimerPage() {
             >
               <span className="text-base font-bold">Keep previous case</span>
               <span className="text-sm text-slate-300">Continue it, or copy its log for the PCR</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Back while the clock runs: staying is the default, leaving is deliberate */}
+      {leaveConfirmOpen && (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="leave-title"
+          aria-describedby="leave-desc"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 px-4 pb-6 sm:items-center"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setLeaveConfirmOpen(false);
+          }}
+        >
+          <div className="w-full max-w-md space-y-4 rounded-3xl border border-slate-600 bg-slate-950 p-5 shadow-2xl">
+            <div className="space-y-1">
+              <h2 id="leave-title" className="text-xl font-black text-slate-50">
+                Leave the timer?
+              </h2>
+              <p id="leave-desc" className="text-base text-slate-300">
+                The clock and log keep running. The metronome, audio reminders and voice control stop
+                until you come back, and the screen may lock.
+              </p>
+            </div>
+            <button
+              type="button"
+              autoFocus
+              onClick={() => setLeaveConfirmOpen(false)}
+              className="flex min-h-16 w-full items-center justify-center rounded-3xl bg-emerald-500 px-4 py-3 text-xl font-black text-slate-950 shadow-lg active:translate-y-[1px]"
+            >
+              Stay on timer
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push(BACK_HREF)}
+              className="flex min-h-14 w-full flex-col items-center justify-center gap-0.5 rounded-2xl border border-slate-500 px-4 py-2 text-slate-100"
+            >
+              <span className="text-base font-bold">Leave</span>
+              <span className="text-sm text-slate-300">You can come back to it any time</span>
             </button>
           </div>
         </div>

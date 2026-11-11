@@ -147,7 +147,7 @@ export default function ToxicologyPage() {
         ? ` Mixed signal: ${mixed.map((mx) => `${mx.primary.toxidrome} + ${mx.secondary.toxidrome}`).join("; ")}.`
         : "";
     return `Toxicology findings: ${labels}. Top matches: ${top || "none"}.${mixedNote}`;
-  }, [result, selectedIds, selectedSet, matches, mixed]);
+  }, [selectedIds, selectedSet, matches, mixed]);
 
   const copySummary = (text: string) => {
     if (!navigator.clipboard?.writeText) return;

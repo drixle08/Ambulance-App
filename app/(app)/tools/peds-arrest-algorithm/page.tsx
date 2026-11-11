@@ -25,7 +25,6 @@ const EDITION = cpgEdition("2.6");
 
 type Rhythm = "shockable" | "nonShockable" | null;
 type Tab = "algorithm" | "reference";
-type Defib = "lp15" | "zoll";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -574,7 +573,6 @@ function ReferenceTab() {
 
 export default function PedsArrestAlgorithmPage() {
   const [rhythm, setRhythm] = useState<Rhythm>(null);
-  const [defib, setDefib] = useState<Defib>("lp15");
   const [tab, setTab] = useState<Tab>("algorithm");
   const [roscOpen, setRoscOpen] = useState(false);
   const [noRoscOpen, setNoRoscOpen] = useState(false);

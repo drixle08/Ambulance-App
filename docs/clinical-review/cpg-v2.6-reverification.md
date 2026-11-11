@@ -315,4 +315,31 @@ Checked against the PDF text layer, not only the search index. Decided by the ap
 11. **Droperidol missing from Medication Privileges (p.399–400).** **No action:** Droperidol is an extended-scope medication, not part of the CPG privileges. The tool's "not listed" text stays.
 12. **Paediatric table age labels for the 12–15 kg band:** "2-3 years" in Paracetamol (p.379), Rocuronium (p.386), Salbutamol (p.389) and Vecuronium (p.397); "1-3 years" elsewhere. **Resolved: weight governs weight-based dosing.** Each table's age label is shown as printed; the tool selects and emphasises weight.
 
-Two further formulary/condition-CPG differences already listed above are now shown the same way: **Magnesium, adult asthma** (CPG 5.1 p.91 "Magnesium 1-2g IV" vs formulary 2 g) and **GTN IV, adult APO** (CPG 4.5 p.82: 100 mcg/min; 100–300 mcg/min if SBP > 160; 400–500 mcg/min for ≈2 min if SBP > 200, vs formulary 100 mcg/min). Not yet done: a full sweep of every formulary dose against its condition CPGs.
+### Formulary vs condition CPG sweep (2026-11-11, approved)
+
+All 37 formulary drugs were checked against every condition CPG (pp.1–294): 280 dose lines from the page text, plus the image-only pages read from the rendered PDF (p.36 adult medical arrest algorithm, p.40 adult trauma arrest, p.218 RSI checklist; the other 18 image-only pages are chapter dividers). Every difference below is shown in the Formulary tool as "Follow CPG x.x" above the formulary text, or under "Condition-specific doses". Data and quotes: `lib/formularyConditions.ts` (all quotes verified by `cpg:reverify`).
+
+| Drug / situation | Condition CPG (followed) | Formulary |
+|---|---|---|
+| TXA, adult TBI | CPG 10.2 p.175: 2 g | IV row "Add 1g" |
+| Amiodarone, adult arrest | CPG 2.1 p.35 (and p.36, CPG 2.2 p.39): 150 mg after the **5th** shock | after the 4th |
+| Amiodarone, paediatric arrest | CPG 2.3 p.43 / 2.4 p.47: 5 mg/kg (max 300) after 3rd; 5 mg/kg (max 150) after 5th — 2 doses | 3 doses to 15 mg/kg |
+| Dextrose 10%, paediatric arrest | CPG 2.3/2.4: 2 ml/kg | 2.5 ml/kg (text and table) |
+| Naloxone, adult | CPG 8.6 p.150: 100–200 mcg q60s (max 2000 mcg); peri-arrest 400 → 800 → 2000 mcg | 0.4–2 mg q2–3 min, max 10 mg |
+| Adrenaline push dose, adult | CPG 6.2 p.116, 5.1 p.91, 4.2 p.75, 4.6 p.84: 20–50 mcg | 1 mcg/kg max 50 |
+| Atropine, organophosphate (adult) | CPG 8.7 p.152: 1–2 mg q5 min | 1 mg |
+| Atropine, β-blocker / CCB toxicity | CPG 8.2 p.142 / 8.3 p.144: adult 1 mg; paeds 0.05 mg/kg (max 0.5) | 0.5 mg; 0.02 mg/kg |
+| Atropine, HAZMAT | CPG 13.5 p.261: 2 mg IM by age band, repeat q15 min; IV 1–2 mg / 0.05 mg/kg | not listed |
+| Midazolam: ABD, psychostimulants, procedural sedation | CPG 7.1 p.137, 8.8 p.155, 11.3 p.213 | weight-based only |
+| Ketamine: procedural sedation, post-RSI | CPG 11.3 p.213; CPG 11.1 p.208 (0.25–0.5 mg/kg q15 min) | 0.5 mg/kg |
+| GTN, APO | CPG 4.5 p.82: SL and IV rates by BP | 100 mcg/min; SL PRN |
+| Magnesium, adult asthma | CPG 5.1 p.91: 1–2 g IV | 2 g |
+| Salbutamol / Ipratropium, paediatric anaphylaxis | CPG 6.2 p.116: 2.5 mg / 0.25 mg | 2.5–5 mg / up to 0.5 mg |
+| Dexamethasone, COVID (adult) | CPG 17.1 p.293: 6 mg IV, adults ≥ 18, criteria; IM/PO if no IV | PO or IV/IO/IM |
+| Dexamethasone, croup | CPG 5.3 p.96: PO for mild/moderate; PO/IM/IV for severe | all routes |
+| Fentanyl, procedural sedation | CPG 11.3 p.213: 0.5 mcg/kg in 20 mcg aliquots | not listed |
+| Paracetamol / Ibuprofen | CPG 9.1 p.166: heat stroke — DO NOT administer | — |
+
+No differences: adenosine, aspirin, clopidogrel, budesonide, calcium chloride, diphenhydramine, glucagon, hydrocortisone, magnesium (torsades, eclampsia), methoxyflurane, noradrenaline, ondansetron, phenylephrine, rocuronium, TXA (all trauma). No condition-CPG doses: diclofenac, ketorolac, droperidol, metoclopramide, prochlorperazine, suxamethonium, vecuronium, furosemide. Excluded: CPG 15.3 transfer drug chart (interfacility infusion concentrations).
+
+The app's arrest tools (adult-arrest, witnessed-adult-arrest, resus-timer, peds arrest pages) already used the CPG amiodarone timing; only the formulary differed.

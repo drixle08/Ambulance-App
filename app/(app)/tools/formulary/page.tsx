@@ -13,8 +13,12 @@ import {
   bandKey,
   findDrug,
   pairCells,
-  conditionCpgDose,
+  conditionCpgDoses,
+  conditionCpgExtras,
+  conditionCpgWarnings,
+  conditionTableNotes,
   type ConditionCpgDose,
+  type ConditionCpgExtra,
   type Bullet,
   type DoseRow,
   type FormularyDrug,
@@ -179,6 +183,19 @@ function DrugView({
         </Link>
       </section>
 
+      {/* Condition CPG "do not give" instructions, for any patient */}
+      {conditionCpgWarnings(drug).map((w) => (
+        <div key={w.cpg} className="flex gap-3 rounded-2xl border-2 border-rose-500/60 bg-rose-500/10 p-4">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-rose-300" aria-hidden />
+          <div className="text-sm text-rose-100">
+            <p className="font-bold">{w.text}</p>
+            <p className="mt-0.5 text-xs text-rose-200/80">
+              {w.cpg} · p.{w.page}
+            </p>
+          </div>
+        </div>
+      ))}
+
       {/* Dosing — the priority */}
       {population ? (
         <Dosing drug={drug} population={population} />
@@ -290,24 +307,26 @@ function Dosing({ drug, population }: { drug: FormularyDrug; population: Populat
       </p>
       <div className="divide-y divide-slate-800">
         {groups.map((g, gi) => {
-          const condition = conditionCpgDose(drug, population, g.indication);
+          const conditions = conditionCpgDoses(drug, population, g.indication);
           return (
             <div key={`${g.indication}-${gi}`} className="px-4 py-3">
               {g.indication && <h4 className="mb-2 text-base font-bold text-slate-50">{g.indication}</h4>}
-              {condition && <ConditionCpgBox condition={condition} />}
+              {conditions.map((c) => (
+                <ConditionCpgBox key={c.cpg + (c.scope ?? "")} condition={c} />
+              ))}
               <ul className="space-y-2.5">
-                {g.rows.map((r, ri) => (
-                  <DoseLine
-                    key={`${r.route}-${ri}`}
-                    row={r}
-                    pointer={condition?.formularyRows?.find((f) => f.route === r.route)?.note}
-                  />
-                ))}
+                {g.rows.map((r, ri) => {
+                  const pointers = conditions.flatMap(
+                    (c) => c.formularyRows?.filter((f) => f.route === r.route).map((f) => f.note) ?? [],
+                  );
+                  return <DoseLine key={`${r.route}-${ri}`} row={r} pointer={pointers.join(" ") || undefined} />;
+                })}
               </ul>
             </div>
           );
         })}
       </div>
+      <ConditionExtras drug={drug} population={population} />
     </section>
   );
 }
@@ -316,19 +335,59 @@ function Dosing({ drug, population }: { drug: FormularyDrug; population: Populat
 function ConditionCpgBox({ condition }: { condition: ConditionCpgDose }) {
   return (
     <div className="mb-3 rounded-xl border-2 border-sky-400/70 bg-sky-500/10 p-3">
+      {condition.scope && (
+        <p className="mb-1 inline-block rounded-md bg-sky-400/20 px-2 py-0.5 text-xs font-bold text-sky-100">
+          {condition.scope}
+        </p>
+      )}
       <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-sky-300">
-        <BookOpen className="h-3.5 w-3.5" aria-hidden />
+        <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden />
         Follow {condition.cpg} · p.{condition.page}
       </p>
-      <ul className="mt-1.5 space-y-1">
-        {condition.lines.map((line) => (
-          <li key={line} className="text-base font-bold leading-snug text-white">
-            {line}
-          </li>
-        ))}
-      </ul>
+      <CpgLines lines={condition.lines} />
       {condition.note && <p className="mt-1.5 text-xs leading-5 text-sky-100/90">{condition.note}</p>}
-      <p className="mt-1.5 text-xs leading-5 text-slate-400">The formulary differs; its text is below for reference.</p>
+      <p className="mt-1.5 text-xs leading-5 text-slate-400">
+        {condition.scope
+          ? `For ${condition.scope.toLowerCase()}, this replaces the formulary dose below.`
+          : "The formulary differs; its text is below for reference."}
+      </p>
+    </div>
+  );
+}
+
+function CpgLines({ lines }: { lines: string[] }) {
+  return (
+    <ul className="mt-1.5 space-y-1">
+      {lines.map((line) => (
+        <li key={line} className="text-base font-bold leading-snug text-white">
+          {line}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Condition CPG doses for situations the formulary does not list separately. */
+function ConditionExtras({ drug, population }: { drug: FormularyDrug; population: Population }) {
+  const extras: ConditionCpgExtra[] = conditionCpgExtras(drug, population);
+  if (!extras.length) return null;
+  return (
+    <div className="border-t-2 border-sky-400/40 bg-sky-500/5 px-4 py-3">
+      <h4 className="text-sm font-black uppercase tracking-widest text-sky-300">Condition-specific doses</h4>
+      <p className="mb-2 text-xs leading-5 text-slate-400">From the condition CPGs, for situations the formulary doesn&apos;t list.</p>
+      <div className="space-y-3">
+        {extras.map((x) => (
+          <div key={x.situation + x.cpg} className="rounded-xl border-2 border-sky-400/70 bg-sky-500/10 p-3">
+            <p className="text-base font-bold text-sky-100">{x.situation}</p>
+            <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-sky-300">
+              <BookOpen className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              {x.cpg} · p.{x.page}
+            </p>
+            <CpgLines lines={x.lines} />
+            {x.note && <p className="mt-1.5 text-xs leading-5 text-sky-100/90">{x.note}</p>}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -459,6 +518,15 @@ function PaedsTables({ drug, band, onBand }: { drug: FormularyDrug; band: string
                         ))}
                       </ul>
                     )}
+                    {conditionTableNotes(drug, name).map((n) => (
+                      <p
+                        key={n}
+                        className="mt-2 flex gap-1.5 rounded-lg border border-amber-500/50 bg-amber-500/10 px-2.5 py-1.5 text-xs leading-5 text-amber-100"
+                      >
+                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
+                        <span>{n}</span>
+                      </p>
+                    ))}
                   </div>
                 ))}
                 {t.notes.length > 0 && (

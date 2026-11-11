@@ -4,10 +4,13 @@ import { CPG } from "../cpgEdition";
 import { MEDICATION_ENTRIES } from "../cpgIndex";
 import {
   CONDITION_CPG_DOSES,
+  CONDITION_CPG_EXTRAS,
+  CONDITION_CPG_WARNINGS,
   FORMULARY,
   FORMULARY_DATA_EDITION,
   FORMULARY_EDITION,
-  conditionCpgDose,
+  conditionCpgDoses,
+  conditionTableNotes,
   findDrug,
   pairCells,
 } from "../formulary";
@@ -79,27 +82,54 @@ describe("Formulary data", () => {
     expect(penthrox.dosing.paediatric).toEqual(penthrox.dosing.adult);
   });
 
-  it("condition-CPG doses attach to real formulary indications and rows, quoting their own page", () => {
-    expect(CONDITION_CPG_DOSES.length).toBeGreaterThan(0);
+  it("condition-CPG doses attach to real formulary indications, rows and table columns", () => {
+    expect(CONDITION_CPG_DOSES.length).toBeGreaterThanOrEqual(20);
     for (const c of CONDITION_CPG_DOSES) {
-      const group = findDrug(c.drug)?.dosing[c.population]?.find((g) => g.indication === c.indication);
-      expect(group, `${c.drug} ${c.population} "${c.indication}"`).toBeTruthy();
-      for (const f of c.formularyRows ?? [])
-        expect(group!.rows.some((r) => r.route === f.route), `${c.drug} row ${f.route}`).toBe(true);
-      expect(c.refs.length).toBeGreaterThan(0);
-      for (const ref of c.refs) {
-        expect(ref.v).toBe(FORMULARY_EDITION.version);
-        expect([c.page, c.page - 1]).toContain(ref.page);
+      const drug = findDrug(c.drug);
+      expect(drug, c.drug).toBeTruthy();
+      for (const indication of c.indications) {
+        const group = drug!.dosing[c.population]?.find((g) => g.indication === indication);
+        expect(group, `${c.drug} ${c.population} "${indication}"`).toBeTruthy();
+        for (const f of c.formularyRows ?? [])
+          expect(group!.rows.some((r) => r.route === f.route), `${c.drug} "${indication}" row ${f.route}`).toBe(true);
       }
+      for (const t of c.tableGroups ?? [])
+        expect(
+          drug!.paediatricTables.some((tbl) => Object.keys(tbl.groupNotes ?? {}).includes(t.group)),
+          `${c.drug} table column ${t.group}`,
+        ).toBe(true);
+      expect(c.refs.length, c.drug).toBeGreaterThan(0);
+      for (const ref of c.refs) expect(ref.v).toBe(FORMULARY_EDITION.version);
+      // The headline page is one the entry actually quotes
+      expect(c.refs.map((r) => r.page), `${c.drug} ${c.cpg}`).toContain(c.page);
     }
   });
 
-  it("TXA for adult TBI follows CPG 10.2 (2 g), not the formulary IV misprint", () => {
-    const txa = findDrug("tranexamic-acid")!;
-    const c = conditionCpgDose(txa, "adult", "Traumatic Brain Injury GCS ≤ 12")!;
-    expect(c.cpg).toBe("CPG 10.2 Traumatic Brain Injury");
-    expect(c.lines).toEqual(["TXA 2g"]);
-    expect(c.formularyRows?.map((r) => r.route)).toEqual(["IV"]);
+  it("condition-specific extras and warnings name real drugs and quote their page", () => {
+    for (const x of [...CONDITION_CPG_EXTRAS, ...CONDITION_CPG_WARNINGS]) {
+      expect(findDrug(x.drug), x.drug).toBeTruthy();
+      expect(x.refs.map((r) => r.page), `${x.drug} ${x.cpg}`).toContain(x.page);
+    }
+    expect(CONDITION_CPG_EXTRAS.length).toBeGreaterThanOrEqual(9);
+    expect(CONDITION_CPG_WARNINGS.map((w) => w.drug).sort()).toEqual(["ibuprofen", "paracetamol"]);
+  });
+
+  it("follows the condition CPG for the approved high-priority conflicts", () => {
+    const one = (id: string, pop: "adult" | "paediatric", indication: string) => {
+      const list = conditionCpgDoses(findDrug(id)!, pop, indication);
+      expect(list.length, `${id} ${pop} ${indication}`).toBe(1);
+      return list[0];
+    };
+    expect(one("tranexamic-acid", "adult", "Traumatic Brain Injury GCS ≤ 12").lines).toEqual(["TXA 2g"]);
+    expect(one("amiodarone", "adult", "Cardiac Arrest").lines[0]).toContain("150mg after the 5th shock");
+    expect(one("amiodarone", "paediatric", "Cardiac Arrest").lines[0]).toContain("5mg/kg (max 150mg) after the 5th shock");
+    expect(one("dextrose", "paediatric", "Hypoglycaemia")).toMatchObject({ scope: "Cardiac arrest", lines: ["Sugar: 2ml/kg of 10% Dextrose (0.2g/kg)"] });
+    expect(one("naloxone", "adult", "Opioid Overdose").lines[0]).toContain("(max 2000mcg)");
+    // Scoped entries stack with others on the same indication without replacing them
+    expect(conditionCpgDoses(findDrug("atropine")!, "adult", "Bradycardia")[0].scope).toBe(
+      "Beta-blocker or calcium channel blocker toxicity",
+    );
+    expect(conditionTableNotes(findDrug("dextrose")!, "Hypoglycaemia in cardiac arrest & ROSC")).toHaveLength(1);
   });
 
   it("pairs each table dose with its volume", () => {

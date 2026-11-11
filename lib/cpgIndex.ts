@@ -837,6 +837,19 @@ export const CPG_OTHER_SECTIONS: { code: string; title: string; printedPage: num
   { code: "CPG", title: "References", printedPage: 401 },
 ];
 
+/**
+ * The Formulary tool's id for a medication ("Tranexamic Acid" -> "tranexamic-acid").
+ * Same rule as scripts/build-formulary.mjs; kept here so links to the tool don't
+ * pull the formulary data into other bundles. Tested against lib/formulary.json.
+ */
+export function formularyId(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+export function formularyHref(med: Pick<MedicationEntry, "name">): string {
+  return `/tools/formulary?drug=${formularyId(med.name)}`;
+}
+
 export function searchMedications(query: string): MedicationEntry[] {
   if (!query.trim()) return [];
   const q = query.toLowerCase().trim();

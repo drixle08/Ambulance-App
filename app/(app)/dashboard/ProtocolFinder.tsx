@@ -5,6 +5,7 @@ import { FileText, Pill, Search, ClipboardCheck } from "lucide-react";
 import {
   CPG_ENTRIES,
   cpgViewerHref,
+  formularyHref,
   searchMedications,
   type CpgEntry,
   type MedicationEntry,
@@ -92,7 +93,14 @@ export function ProtocolFinder() {
     setQuery("");
   };
 
+  // A medication opens the Formulary tool, which shows the dose with any
+  // condition-CPG override; the PDF page stays one tap away.
   const openMedication = (med: MedicationEntry) => {
+    window.location.assign(formularyHref(med));
+    setQuery("");
+  };
+
+  const openMedicationPdf = (med: MedicationEntry) => {
     const targetPdfPage = med.formularyPage + PDF_PAGE_OFFSET;
     if (isMobile) {
       window.location.assign(cpgViewerHref({ code: "Formulary", page: med.formularyPage, pdfPage: targetPdfPage }));
@@ -260,7 +268,7 @@ export function ProtocolFinder() {
                             {entry.title}
                           </p>
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {entry.section} Â· p.{entry.printedPage}
+                            {entry.section} · p.{entry.printedPage}
                           </p>
                         </div>
                         <span className="shrink-0 rounded-full bg-cyan-100 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-cyan-700 dark:bg-cyan-500/20 dark:text-cyan-400">
@@ -281,11 +289,11 @@ export function ProtocolFinder() {
                     </span>
                   </li>
                   {medResults.map((med) => (
-                    <li key={med.name}>
+                    <li key={med.name} className="flex items-stretch">
                       <button
                         type="button"
                         onClick={() => openMedication(med)}
-                        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-violet-50 dark:hover:bg-violet-500/10"
+                        className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left hover:bg-violet-50 dark:hover:bg-violet-500/10"
                       >
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400">
                           <Pill className="h-3.5 w-3.5" />
@@ -295,12 +303,18 @@ export function ProtocolFinder() {
                             {med.name}
                           </p>
                           <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {med.class ? `${med.class} · ` : ""}Formulary p.{med.formularyPage}
+                            {med.class ? `${med.class} · ` : ""}Dose &amp; notes
                           </p>
                         </div>
-                        <span className="shrink-0 rounded-full bg-violet-100 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-violet-600 dark:bg-violet-500/20 dark:text-violet-400">
-                          Formulary
-                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openMedicationPdf(med)}
+                        aria-label={`Open ${med.name} in the CPG PDF, page ${med.formularyPage}`}
+                        className="flex min-w-[3.5rem] shrink-0 flex-col items-center justify-center border-l border-slate-100 px-3 text-violet-600 hover:bg-violet-50 dark:border-slate-800 dark:text-violet-400 dark:hover:bg-violet-500/10"
+                      >
+                        <span className="text-[0.65rem] font-bold uppercase tracking-wide">PDF</span>
+                        <span className="text-[0.65rem] text-slate-500 dark:text-slate-400">p.{med.formularyPage}</span>
                       </button>
                     </li>
                   ))}

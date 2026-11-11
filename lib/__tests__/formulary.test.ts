@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import index from "../../public/cpg-index.json";
 import { CPG } from "../cpgEdition";
-import { MEDICATION_ENTRIES } from "../cpgIndex";
+import { MEDICATION_ENTRIES, formularyHref, formularyId } from "../cpgIndex";
 import {
   CONDITION_CPG_DOSES,
   CONDITION_CPG_EXTRAS,
@@ -28,6 +28,13 @@ describe("Formulary data", () => {
     expect(FORMULARY_EDITION.version).toBe(CPG.version);
     expect(FORMULARY_DATA_EDITION).toBe(FORMULARY_EDITION.version);
     expect((index as { source: string }).source).toBe(CPG.pdfFile);
+  });
+
+  it("search links (formularyId/formularyHref) resolve to the generated drug ids", () => {
+    for (const m of MEDICATION_ENTRIES) {
+      expect(findDrug(formularyId(m.name))?.name, m.name).toBe(m.name);
+      expect(formularyHref(m)).toBe(`/tools/formulary?drug=${formularyId(m.name)}`);
+    }
   });
 
   it("covers every formulary medication in the CPG index, in order", () => {

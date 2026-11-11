@@ -10,6 +10,7 @@ import { useResusCase } from "../(app)/tools/resus-timer/resusStore";
 import {
   CPG_ENTRIES,
   cpgViewerHref,
+  formularyHref,
   searchMedications,
   type CpgEntry,
   type MedicationEntry,
@@ -90,7 +91,14 @@ function SearchResults({
     onClose();
   };
 
+  // A medication opens the Formulary tool, which shows the dose with any
+  // condition-CPG override; the PDF page stays one tap away.
   const openMed = (med: MedicationEntry) => {
+    window.location.assign(formularyHref(med));
+    onClose();
+  };
+
+  const openMedPdf = (med: MedicationEntry) => {
     if (isMobile) {
       window.location.assign(cpgViewerHref({ code: "Formulary", page: med.formularyPage }));
     } else {
@@ -239,25 +247,32 @@ function SearchResults({
             </span>
           </div>
           {meds.map((med) => (
-            <button
-              key={med.name}
-              type="button"
-              onClick={() => openMed(med)}
-              className="flex w-full items-center gap-3 px-5 py-4 text-left hover:bg-violet-500/5 active:bg-violet-500/10"
-            >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-500/15 text-violet-400">
-                <Pill className="h-4 w-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-slate-100">{med.name}</p>
-                <p className="text-xs text-slate-500">
-                  {med.class ? `${med.class} · ` : ""}Formulary p.{med.formularyPage}
-                </p>
-              </div>
-              <span className="shrink-0 rounded-full border border-violet-500/30 bg-violet-500/15 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-violet-400">
-                Formulary
-              </span>
-            </button>
+            <div key={med.name} className="flex items-stretch">
+              <button
+                type="button"
+                onClick={() => openMed(med)}
+                className="flex min-w-0 flex-1 items-center gap-3 px-5 py-4 text-left hover:bg-violet-500/5 active:bg-violet-500/10"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-500/15 text-violet-400">
+                  <Pill className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-100">{med.name}</p>
+                  <p className="text-xs text-slate-500">
+                    {med.class ? `${med.class} · ` : ""}Dose &amp; notes
+                  </p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => openMedPdf(med)}
+                aria-label={`Open ${med.name} in the CPG PDF, page ${med.formularyPage}`}
+                className="flex min-w-[3.75rem] shrink-0 flex-col items-center justify-center border-l border-slate-800 px-3 text-violet-400 hover:bg-violet-500/5 active:bg-violet-500/10"
+              >
+                <span className="text-[0.65rem] font-bold uppercase tracking-wide">PDF</span>
+                <span className="text-[0.65rem] text-slate-500">p.{med.formularyPage}</span>
+              </button>
+            </div>
           ))}
         </>
       )}

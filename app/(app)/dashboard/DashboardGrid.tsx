@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
   ShieldAlert, HeartPulse, Wind, Brain, BookOpen, Activity,
-  FlaskConical, FilePenLine, Globe,
+  FlaskConical, FilePenLine, Globe, Pill,
 } from "lucide-react";
 import {
   DndContext,
@@ -23,7 +23,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { TOOL_GROUPS, type ToolGroup } from "./data";
+import { TOOL_GROUPS, tileHrefFor, type ToolGroup } from "./data";
 
 const ORDER_KEY = "dashboard-group-order";
 
@@ -38,8 +38,13 @@ function applyOrder(saved: string | null): ToolGroup[] {
     const sorted = order
       .map((slug) => TOOL_GROUPS.find((g) => g.slug === slug))
       .filter(Boolean) as ToolGroup[];
-    const missing = TOOL_GROUPS.filter((g) => !order.includes(g.slug));
-    return sorted.length > 0 ? [...sorted, ...missing] : TOOL_GROUPS;
+    if (sorted.length === 0) return TOOL_GROUPS;
+    // Tiles added since the order was saved go in at their default position
+    // (e.g. a new first tile stays first) rather than at the end.
+    TOOL_GROUPS.forEach((g, i) => {
+      if (!order.includes(g.slug)) sorted.splice(Math.min(i, sorted.length), 0, g);
+    });
+    return sorted;
   } catch {
     return TOOL_GROUPS;
   }
@@ -49,7 +54,7 @@ const noopSubscribe = () => () => {};
 
 const ICON_MAP: Record<string, LucideIcon> = {
   ShieldAlert, HeartPulse, Wind, Brain, BookOpen, Activity,
-  FlaskConical, FilePenLine, Globe,
+  FlaskConical, FilePenLine, Globe, Pill,
 };
 
 const COLOR_MAP: Record<string, { bg: string; icon: string; hover: string; ring: string }> = {
@@ -95,7 +100,7 @@ const SortableCard = memo(function SortableCard({
       className={`select-none ${isDragging ? "z-50 relative" : ""}`}
     >
       <Link
-        href={`/dashboard/${group.slug}`}
+        href={tileHrefFor(group)}
         draggable={false}
         onClick={(e) => { if (anyDragging) e.preventDefault(); }}
         className={`app-card group flex min-h-40 flex-col items-center justify-center gap-4 rounded-3xl border p-6 text-center shadow-sm transition-all
@@ -121,7 +126,7 @@ const SortableCard = memo(function SortableCard({
             {group.shortTitle ?? group.title}
           </h2>
           <span className="inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[0.65rem] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-            {group.tools.length} {group.tools.length === 1 ? "tool" : "tools"}
+            {group.badge ?? `${group.tools.length} ${group.tools.length === 1 ? "tool" : "tools"}`}
           </span>
         </div>
       </Link>

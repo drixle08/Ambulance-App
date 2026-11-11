@@ -1,4 +1,5 @@
 import { CPG, cpgEdition } from "@/lib/cpgEdition";
+import { MEDICATION_ENTRIES } from "@/lib/cpgIndex";
 export type Tool = {
   name: string;
   href: string;
@@ -15,9 +16,34 @@ export type ToolGroup = {
   icon: string;
   color: string;
   tools: Tool[];
+  /**
+   * A single-tool tile on the Tools dashboard: it opens tools[0] directly
+   * instead of a category page, and the tool's back button returns to /dashboard.
+   */
+  direct?: boolean;
+  /** Tile badge text; defaults to the tool count. */
+  badge?: string;
 };
 
 export const TOOL_GROUPS: ToolGroup[] = [
+  {
+    title: "Formulary",
+    slug: "formulary",
+    description: "CPG formulary dosing for every medication.",
+    icon: "Pill",
+    color: "violet",
+    direct: true,
+    badge: `${MEDICATION_ENTRIES.length} medications`,
+    tools: [
+      {
+        name: "Formulary",
+        href: "/tools/formulary",
+        tagline: "Adult or paediatric dose for every CPG formulary medication, with age/weight dosing tables, contraindications and notes.",
+        meta: `CPG ${cpgEdition("2.6").tag} Formulary`,
+        icon: "Pill",
+      },
+    ],
+  },
   {
     title: "Toxicology & Toxinology",
     shortTitle: "Toxicology",
@@ -270,13 +296,6 @@ export const TOOL_GROUPS: ToolGroup[] = [
     color: "amber",
     tools: [
       {
-        name: "Formulary",
-        href: "/tools/formulary",
-        tagline: "Adult or paediatric dose for every CPG formulary medication, with age/weight dosing tables, contraindications and notes.",
-        meta: `CPG ${cpgEdition("2.6").tag} Formulary`,
-        icon: "Pill",
-      },
-      {
         name: "Normal Vitals by Age",
         href: "/tools/vitals",
         tagline: "Normal ranges and red-flag values for adult and paediatric patients.",
@@ -333,11 +352,18 @@ export const TOOL_GROUPS: ToolGroup[] = [
  * The dashboard category page a tool belongs to, e.g. "/tools/burns" ->
  * "/dashboard/trauma". Used as the tool header's back target, so back works
  * even when the tool was opened directly (deep link, installed PWA launch).
+ * A tool with its own tile (`direct`) goes back to the Tools dashboard.
  * Returns null for routes that aren't listed in any group.
  */
 export function categoryHrefFor(pathname: string | null | undefined): string | null {
   if (!pathname) return null;
   const path = pathname.replace(/\/+$/, "");
   const group = TOOL_GROUPS.find((g) => g.tools.some((t) => t.href === path));
-  return group ? `/dashboard/${group.slug}` : null;
+  if (!group) return null;
+  return group.direct ? "/dashboard" : `/dashboard/${group.slug}`;
+}
+
+/** Where a dashboard tile goes: the tool itself for a direct tile, else its category page. */
+export function tileHrefFor(group: ToolGroup): string {
+  return group.direct ? group.tools[0].href : `/dashboard/${group.slug}`;
 }

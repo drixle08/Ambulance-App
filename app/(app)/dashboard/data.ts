@@ -270,6 +270,13 @@ export const TOOL_GROUPS: ToolGroup[] = [
     color: "amber",
     tools: [
       {
+        name: "Formulary",
+        href: "/tools/formulary",
+        tagline: "Adult or paediatric dose for every CPG formulary medication, with age/weight dosing tables, contraindications and notes.",
+        meta: `CPG ${cpgEdition("2.6").tag} Formulary`,
+        icon: "Pill",
+      },
+      {
         name: "Normal Vitals by Age",
         href: "/tools/vitals",
         tagline: "Normal ranges and red-flag values for adult and paediatric patients.",

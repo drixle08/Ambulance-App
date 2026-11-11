@@ -14,7 +14,8 @@
     "build:cpm-index": "node scripts/build-cpm-index.mjs",
     "build:cpm-search-index": "node scripts/build-cpm-search-index.mjs",
     "cpg:reverify": "node scripts/cpg-provenance.mjs",
-    "check:deploy": "node scripts/check-deploy.mjs"
+    "check:deploy": "node scripts/check-deploy.mjs",
+    "build:formulary": "node scripts/build-formulary.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",

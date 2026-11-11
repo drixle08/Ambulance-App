@@ -2,6 +2,12 @@ import data from "./formulary.json";
 import { cpgEdition, type CpgVersion } from "./cpgEdition";
 import { cpgRef, type CpgRef } from "./cpgProvenance";
 
+// Paediatric dosing tables are banded by weight AND age, and the CPG's age labels
+// are not consistent between tables (12-15kg is "1-3 years" in most, "2-3 years" in
+// Paracetamol, Rocuronium, Salbutamol, Vecuronium). Rule (HMCAS practice): for
+// weight-based dosing, weight governs. The tool selects and emphasises weight and
+// shows each table's age label as printed.
+
 /**
  * CPG formulary data for the Formulary tool.
  *
@@ -79,31 +85,84 @@ export const PRIVILEGE_LEVELS: Record<number, { short: string; long: string }> =
 };
 
 /**
- * Places where the CPG text contradicts itself. Shown as printed, with a flag,
- * so the crew checks before acting. Keyed by drug id / population / indication / route.
+ * Rule (HMCAS practice): when the formulary and the CPG for the patient's
+ * condition differ, follow the condition CPG.
+ *
+ * Each entry is a formulary indication whose condition CPG gives a different
+ * dose. The tool shows the formulary text as printed, with the condition CPG's
+ * dose above it to follow instead. `refs` quote the condition CPG and are
+ * checked against the shipped PDF by `npm run cpg:reverify`.
+ * `formularyRows` marks formulary rows that conflict, so they carry a pointer.
  */
-export const SOURCE_FLAGS: {
+export type ConditionCpgDose = {
   drug: string;
   population: Population;
+  /** The formulary indication heading, exactly as in lib/formulary.json. */
   indication: string;
-  route: string;
-  note: string;
-  ref: CpgRef;
-}[] = [
+  cpg: string;
+  page: number;
+  /** The condition CPG's own wording. */
+  lines: string[];
+  note?: string;
+  formularyRows?: { route: string; note: string }[];
+  refs: CpgRef[];
+};
+
+export const CONDITION_CPG_DOSES: ConditionCpgDose[] = [
   {
     drug: "tranexamic-acid",
     population: "adult",
     indication: "Traumatic Brain Injury GCS ≤ 12",
-    route: "IV",
-    note: "The CPG gives a 2 g dose here but says to add 1 g to 100 ml NS. The IV/IO row above says add 2 g. Confirm with the Clinical Desk if unsure.",
-    ref: cpgRef("2.6", 393, "IV 2g (4 x 500mg amps) Add 1g to 100ml NS"),
+    cpg: "CPG 10.2 Traumatic Brain Injury",
+    page: 175,
+    lines: ["TXA 2g"],
+    note: "Consider within the first 3 hours of injury, GCS ≤ 12.",
+    formularyRows: [
+      { route: "IV", note: "Formulary misprint: give the full 2 g as per CPG 10.2 (the IV/IO row adds 2 g to 100 ml NS)." },
+    ],
+    refs: [
+      cpgRef("2.6", 175, "TXA 2g"),
+      cpgRef("2.6", 174, "Consider TXA within first 3 hours of injury GCS ≤ 12"),
+    ],
+  },
+  {
+    drug: "magnesium-sulphate",
+    population: "adult",
+    indication: "Severe asthma/Torsade’s de pointes",
+    cpg: "CPG 5.1 Asthma",
+    page: 91,
+    lines: [
+      "Moderate: Magnesium 1-2g IV (consider if no response to other therapy)",
+      "Severe: Magnesium 1-2g IV",
+    ],
+    note: "Asthma only. For Torsade’s de pointes the formulary dose below applies.",
+    refs: [
+      cpgRef("2.6", 91, "Magnesium 1-2g IV (consider if no response to other therapy)"),
+      cpgRef("2.6", 91, "Magnesium 1-2g IV"),
+    ],
+  },
+  {
+    drug: "glycerol-trinitrate",
+    population: "adult",
+    indication: "Acute Pulmonary Oedema",
+    cpg: "CPG 4.5 Acute Pulmonary Oedema",
+    page: 82,
+    lines: [
+      "Normal to high BP: GTN Infusion (if no response to S/L GTN) – 100mcg/min",
+      "High BP (SBP > 160mmHg): GTN Infusion – 100 - 300mcg/min. Adjust infusion based on the patients response",
+      "SBP > 200mmHg – consider starting infusion at a higher dose of 400- 500mcg/min for ≈2 minutes and titrate down",
+    ],
+    formularyRows: [{ route: "IV/IO INF", note: "For high BP the CPG 4.5 rates above apply." }],
+    refs: [
+      cpgRef("2.6", 82, "GTN Infusion (if no response to S/L GTN) – 100mcg/min"),
+      cpgRef("2.6", 82, "GTN Infusion – 100 - 300mcg/min. Adjust infusion based on the patients response"),
+      cpgRef("2.6", 82, "SBP > 200mmHg – consider starting infusion at a higher dose of 400- 500mcg/min for ≈2 minutes and titrate down"),
+    ],
   },
 ];
 
-export function sourceFlag(drug: FormularyDrug, population: Population, indication: string, route: string) {
-  return SOURCE_FLAGS.find(
-    (f) => f.drug === drug.id && f.population === population && f.indication === indication && f.route === route,
-  );
+export function conditionCpgDose(drug: FormularyDrug, population: Population, indication: string) {
+  return CONDITION_CPG_DOSES.find((c) => c.drug === drug.id && c.population === population && c.indication === indication);
 }
 
 /** A weight band's identity across drugs: weight when the table has it ("12-15kg"), else age. */

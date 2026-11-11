@@ -304,3 +304,15 @@ The heaviest files are `dashboard/data.ts` (9), `care-bundles` (7) and the four 
 7. **ETCO₂ 35–45 targets** in the sedated and critical bundles, given v2.6 p.54 ("Do not try to normalise EtCO₂ prehospitally" post-ROSC).
 8. **Still open from August:** the 15 mL/week Methoxyflurane cap; "penetrating torso SBP ~80"; the stroke active-BP thresholds; Ketamine in the ACS analgesia set. v2.6 settles none of these.
 9. **Previously reported:** the WAAFELSS 6 J/kg row (v2.6 says +2 J increments after 5 shocks); the GCS "Mild" label for 15.
+
+### Found while building the Formulary tool (2026-11-11)
+
+Checked against the PDF text layer, not only the search index. Decided by the app owner the same day.
+
+**Standing rule:** where the formulary and the CPG for the patient's condition differ, follow the condition CPG. The Formulary tool shows the formulary text as printed and puts the condition CPG's dose above it (`CONDITION_CPG_DOSES` in `lib/formulary.ts`, quotes checked by `cpg:reverify`).
+
+10. **TXA, adult, Traumatic Brain Injury GCS ≤ 12, IV row (p.393):** "2g (4 x 500mg amps) / Add **1g** to 100ml NS". **Resolved: 2 g.** CPG 10.2 (p.175) gives "TXA 2g"; the IV row's "Add 1g" is a formulary misprint. The tool shows CPG 10.2's dose and marks the IV row.
+11. **Droperidol missing from Medication Privileges (p.399–400).** **No action:** Droperidol is an extended-scope medication, not part of the CPG privileges. The tool's "not listed" text stays.
+12. **Paediatric table age labels for the 12–15 kg band:** "2-3 years" in Paracetamol (p.379), Rocuronium (p.386), Salbutamol (p.389) and Vecuronium (p.397); "1-3 years" elsewhere. **Resolved: weight governs weight-based dosing.** Each table's age label is shown as printed; the tool selects and emphasises weight.
+
+Two further formulary/condition-CPG differences already listed above are now shown the same way: **Magnesium, adult asthma** (CPG 5.1 p.91 "Magnesium 1-2g IV" vs formulary 2 g) and **GTN IV, adult APO** (CPG 4.5 p.82: 100 mcg/min; 100–300 mcg/min if SBP > 160; 400–500 mcg/min for ≈2 min if SBP > 200, vs formulary 100 mcg/min). Not yet done: a full sweep of every formulary dose against its condition CPGs.

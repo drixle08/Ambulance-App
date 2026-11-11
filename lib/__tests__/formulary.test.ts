@@ -2,7 +2,15 @@ import { describe, expect, it } from "vitest";
 import index from "../../public/cpg-index.json";
 import { CPG } from "../cpgEdition";
 import { MEDICATION_ENTRIES } from "../cpgIndex";
-import { FORMULARY, FORMULARY_DATA_EDITION, FORMULARY_EDITION, SOURCE_FLAGS, findDrug, pairCells } from "../formulary";
+import {
+  CONDITION_CPG_DOSES,
+  FORMULARY,
+  FORMULARY_DATA_EDITION,
+  FORMULARY_EDITION,
+  conditionCpgDose,
+  findDrug,
+  pairCells,
+} from "../formulary";
 
 // The generator only changes whitespace (re-inserted line breaks), so every
 // value must still be on its cited page once whitespace is collapsed.
@@ -71,14 +79,27 @@ describe("Formulary data", () => {
     expect(penthrox.dosing.paediatric).toEqual(penthrox.dosing.adult);
   });
 
-  it("source flags point at real dose rows", () => {
-    for (const f of SOURCE_FLAGS) {
-      const d = findDrug(f.drug);
-      const row = d?.dosing[f.population]?.find((g) => g.indication === f.indication)?.rows.find((r) => r.route === f.route);
-      expect(row, `${f.drug} ${f.indication} ${f.route}`).toBeTruthy();
-      expect(f.ref.v).toBe(FORMULARY_EDITION.version);
-      expect(row!.page).toBe(f.ref.page);
+  it("condition-CPG doses attach to real formulary indications and rows, quoting their own page", () => {
+    expect(CONDITION_CPG_DOSES.length).toBeGreaterThan(0);
+    for (const c of CONDITION_CPG_DOSES) {
+      const group = findDrug(c.drug)?.dosing[c.population]?.find((g) => g.indication === c.indication);
+      expect(group, `${c.drug} ${c.population} "${c.indication}"`).toBeTruthy();
+      for (const f of c.formularyRows ?? [])
+        expect(group!.rows.some((r) => r.route === f.route), `${c.drug} row ${f.route}`).toBe(true);
+      expect(c.refs.length).toBeGreaterThan(0);
+      for (const ref of c.refs) {
+        expect(ref.v).toBe(FORMULARY_EDITION.version);
+        expect([c.page, c.page - 1]).toContain(ref.page);
+      }
     }
+  });
+
+  it("TXA for adult TBI follows CPG 10.2 (2 g), not the formulary IV misprint", () => {
+    const txa = findDrug("tranexamic-acid")!;
+    const c = conditionCpgDose(txa, "adult", "Traumatic Brain Injury GCS ≤ 12")!;
+    expect(c.cpg).toBe("CPG 10.2 Traumatic Brain Injury");
+    expect(c.lines).toEqual(["TXA 2g"]);
+    expect(c.formularyRows?.map((r) => r.route)).toEqual(["IV"]);
   });
 
   it("pairs each table dose with its volume", () => {

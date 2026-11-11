@@ -13,7 +13,8 @@ import {
   bandKey,
   findDrug,
   pairCells,
-  sourceFlag,
+  conditionCpgDose,
+  type ConditionCpgDose,
   type Bullet,
   type DoseRow,
   type FormularyDrug,
@@ -243,8 +244,8 @@ function DrugView({
       </details>
 
       <p className="px-1 pb-2 text-xs leading-5 text-slate-500">
-        {FORMULARY_EDITION.label} formulary, p.{drug.pages.start}–{drug.pages.end}, shown as printed. A
-        condition CPG may give a specific dose for that condition, so check the relevant CPG. Give only
+        {FORMULARY_EDITION.label} formulary, p.{drug.pages.start}–{drug.pages.end}, shown as printed. Where
+        the CPG for the patient&apos;s condition gives a different dose, follow the condition CPG. Give only
         what your privileging level allows.
       </p>
     </>
@@ -284,30 +285,58 @@ function Dosing({ drug, population }: { drug: FormularyDrug; population: Populat
         </h3>
         <span className="text-xs font-semibold text-emerald-300/80">CPG p.{groups[0].rows[0]?.page}</span>
       </div>
+      <p className="border-b border-slate-800 px-4 py-2 text-xs leading-5 text-slate-400">
+        If the CPG for the patient&apos;s condition gives a different dose, follow the condition CPG.
+      </p>
       <div className="divide-y divide-slate-800">
-        {groups.map((g, gi) => (
-          <div key={`${g.indication}-${gi}`} className="px-4 py-3">
-            {g.indication && <h4 className="mb-2 text-base font-bold text-slate-50">{g.indication}</h4>}
-            <ul className="space-y-2.5">
-              {g.rows.map((r, ri) => (
-                <DoseLine
-                  key={`${r.route}-${ri}`}
-                  row={r}
-                  flag={sourceFlag(drug, population, g.indication, r.route)?.note}
-                />
-              ))}
-            </ul>
-          </div>
-        ))}
+        {groups.map((g, gi) => {
+          const condition = conditionCpgDose(drug, population, g.indication);
+          return (
+            <div key={`${g.indication}-${gi}`} className="px-4 py-3">
+              {g.indication && <h4 className="mb-2 text-base font-bold text-slate-50">{g.indication}</h4>}
+              {condition && <ConditionCpgBox condition={condition} />}
+              <ul className="space-y-2.5">
+                {g.rows.map((r, ri) => (
+                  <DoseLine
+                    key={`${r.route}-${ri}`}
+                    row={r}
+                    pointer={condition?.formularyRows?.find((f) => f.route === r.route)?.note}
+                  />
+                ))}
+              </ul>
+            </div>
+          );
+        })}
       </div>
     </section>
+  );
+}
+
+/** The condition CPG's dose for this indication — followed over the formulary rows below it. */
+function ConditionCpgBox({ condition }: { condition: ConditionCpgDose }) {
+  return (
+    <div className="mb-3 rounded-xl border-2 border-sky-400/70 bg-sky-500/10 p-3">
+      <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-sky-300">
+        <BookOpen className="h-3.5 w-3.5" aria-hidden />
+        Follow {condition.cpg} · p.{condition.page}
+      </p>
+      <ul className="mt-1.5 space-y-1">
+        {condition.lines.map((line) => (
+          <li key={line} className="text-base font-bold leading-snug text-white">
+            {line}
+          </li>
+        ))}
+      </ul>
+      {condition.note && <p className="mt-1.5 text-xs leading-5 text-sky-100/90">{condition.note}</p>}
+      <p className="mt-1.5 text-xs leading-5 text-slate-400">The formulary differs; its text is below for reference.</p>
+    </div>
   );
 }
 
 // A line that states an amount: "300mg …", "≥65 years …", "Light sedation: 0.5mg/kg", "Infant: 7.5mg/kg"
 const AMOUNT_LINE = /^(\d|[<>≤≥]|[A-Z][a-z]+( sedation)?: \d)/;
 
-function DoseLine({ row, flag }: { row: DoseRow; flag?: string }) {
+function DoseLine({ row, pointer }: { row: DoseRow; pointer?: string }) {
   const lines = row.dose.split("\n");
   return (
     <li className="flex gap-3">
@@ -326,13 +355,10 @@ function DoseLine({ row, flag }: { row: DoseRow; flag?: string }) {
             </p>
           ),
         )}
-        {flag && (
+        {pointer && (
           <p className="mt-1.5 flex gap-1.5 rounded-lg border border-amber-500/50 bg-amber-500/10 px-2.5 py-1.5 text-xs leading-5 text-amber-100">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-300" aria-hidden />
-            <span>
-              <span className="font-bold">CPG text inconsistency. </span>
-              {flag}
-            </span>
+            <span>{pointer}</span>
           </p>
         )}
       </div>
@@ -344,6 +370,9 @@ function PaedsTables({ drug, band, onBand }: { drug: FormularyDrug; band: string
   // Bands come from the drug's first table; later tables (Fentanyl, Ketamine) use the same bands.
   const bands = drug.paediatricTables[0].rows;
   const active = band && bands.some((r) => bandKey(r) === band) ? band : null;
+  // Weight governs weight-based dosing; the CPG's age labels differ between tables,
+  // so age is shown small and as printed. Ibuprofen's table has age only.
+  const byWeight = bands.some((r) => r.weight);
   const resultsRef = useRef<HTMLDivElement>(null);
   const pick = (key: string) => {
     onBand(key);
@@ -354,7 +383,9 @@ function PaedsTables({ drug, band, onBand }: { drug: FormularyDrug; band: string
   return (
     <section aria-label="Paediatric dosing table" className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
       <div className="mb-2 flex items-baseline justify-between gap-2">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">Dose by age / weight</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+          {byWeight ? "Dose by weight" : "Dose by age"}
+        </h3>
         <span className="text-xs text-slate-500">CPG p.{drug.paediatricTables[0].page}</span>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -373,15 +404,25 @@ function PaedsTables({ drug, band, onBand }: { drug: FormularyDrug; band: string
                   : "border-slate-700 bg-slate-800 text-slate-200 hover:border-slate-500"
               }`}
             >
-              <span className="text-sm font-bold leading-tight">{r.age}</span>
-              {r.weight && <span className={`text-xs ${on ? "text-slate-900" : "text-slate-400"}`}>{r.weight}</span>}
+              {r.weight ? (
+                <>
+                  <span className="text-base font-black leading-tight">{r.weight}</span>
+                  <span className={`text-[0.7rem] ${on ? "text-slate-800" : "text-slate-400"}`}>{r.age}</span>
+                </>
+              ) : (
+                <span className="text-sm font-bold leading-tight">{r.age}</span>
+              )}
             </button>
           );
         })}
       </div>
 
       {!active ? (
-        <p className="mt-3 text-sm text-slate-400">Select the child&apos;s age or weight band.</p>
+        <p className="mt-3 text-sm text-slate-400">
+          {byWeight
+            ? "Select the child’s weight. Ages are as printed in the CPG table; weight takes priority."
+            : "Select the child’s age."}
+        </p>
       ) : (
         <div ref={resultsRef} className="mt-4 scroll-mt-24 space-y-4">
           {drug.paediatricTables.map((t, ti) => {

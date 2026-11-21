@@ -17,9 +17,14 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cpgEdition } from "@/lib/cpgEdition";
+import { cpgRef } from "@/lib/cpgProvenance";
 
 // Edition this tool's clinical content was last checked against (see lib/cpgEdition.ts).
 const EDITION = cpgEdition("2.6");
+
+// SGA size bands in the airway table — same WAAFELSS table in CPG 2.3 (p.43) and 2.4 (p.47);
+// the WAAFELSS calculator (/tools/peds-arrest getSGASize) uses the same bands.
+const SGA_SIZE_REF = cpgRef("2.6", 43, "size 1 = 2-5 kg, size 1.5 = 5-12 kg, size 2 = 10-25 kg, size 2.5 = 25-35 kg");
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -448,9 +453,9 @@ function ReferenceTab() {
             <div className="rounded-xl border border-slate-700 bg-slate-800/50 overflow-hidden">
               {[
                 ["Size 1", "2–5 kg", "Neonate / small infant"],
-                ["Size 1.5", "5–10 kg", "Infant"],
-                ["Size 2", "10–20 kg", "Child"],
-                ["Size 2.5", "20–30 kg", "Large child"],
+                ["Size 1.5", "5–12 kg", "Infant"],
+                ["Size 2", "10–25 kg", "Child"],
+                ["Size 2.5", "25–35 kg", "Large child"],
               ].map(([size, weight, label], i, arr) => (
                 <div
                   key={i}
@@ -468,6 +473,9 @@ function ReferenceTab() {
                 </div>
               ))}
             </div>
+            <p className="text-[0.65rem] text-slate-600 mt-1.5">
+              Bands overlap as printed in the CPG (WAAFELSS, p.{SGA_SIZE_REF.page})
+            </p>
           </div>
 
           <div>

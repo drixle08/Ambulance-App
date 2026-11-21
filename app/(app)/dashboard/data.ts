@@ -120,11 +120,25 @@ export const TOOL_GROUPS: ToolGroup[] = [
         icon: "Eye",
       },
       {
+        name: "Adult Trauma Arrest",
+        href: "/tools/adult-trauma-arrest",
+        tagline: "CPG 2.2 algorithm — HOTT reversible causes first, adrenaline only after ≥500 ml NS, LP15/Zoll energy, LUCAS and transport.",
+        meta: `CPG 2.2 · ${cpgEdition("2.6").short}`,
+        icon: "Ambulance",
+      },
+      {
         name: "Paediatric Medical Arrest",
         href: "/tools/peds-medical-arrest",
         tagline: "CPG 2.3 algorithm — rhythm selector, 4 J/kg shocks, cycle-by-cycle actions, H's & T's, and CCP scope.",
         meta: `CPG 2.3 · ${cpgEdition("2.6").short}`,
         icon: "Baby",
+      },
+      {
+        name: "Paediatric Trauma Arrest",
+        href: "/tools/peds-trauma-arrest",
+        tagline: "CPG 2.4 algorithm — HOTT reversible causes first, adrenaline after a 10 ml/kg bolus, 4 J/kg shocks, and CCP scope.",
+        meta: `CPG 2.4 · ${cpgEdition("2.6").short}`,
+        icon: "Ambulance",
       },
       {
         name: "Paediatric Arrest (WAAFELSS)",
